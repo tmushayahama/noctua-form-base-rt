@@ -1,39 +1,28 @@
-import apiService from '@/app/store/apiService'
-import { transformGraphData } from '../services/graphServices';
+import type { PayloadAction } from '@reduxjs/toolkit'
+import { createSlice } from '@reduxjs/toolkit'
+import type { GraphModel } from '../models/cam';
 
-export const addTagTypes = ['graph'] as const
+interface CamState {
+  model: GraphModel | null;
+  loading: boolean
+  error: string | null
+}
 
-const graphApi = apiService
-  .enhanceEndpoints({
-    addTagTypes,
-  })
-  .injectEndpoints({
-    endpoints: builder => ({
-      getGraphModel: builder.query({
-        query: (modelId) => {
-          const requests = encodeURIComponent(JSON.stringify([
-            {
-              entity: 'model',
-              operation: 'get',
-              arguments: { 'model-id': modelId }
-            }
-          ]));
+const initialState: CamState = {
+  model: null,
+  loading: false,
+  error: null,
+}
 
-          return {
-            url: `http://localhost:3400/api/minerva_local/m3Batch?token=&intention=query&requests=${requests}`,
-          };
-        },
-        providesTags: ['graph'],
-        transformResponse: (response: any) => {
-          console.log(response.data);
-          if (response && response.data) {
-            return transformGraphData(response.data);
-          }
-          return { id: '', nodes: [], edges: [] };
-        },
-      }),
-    }),
-  });
+export const camSlice = createSlice({
+  name: 'cam',
+  initialState,
+  reducers: {
+    setModel: (state, action: PayloadAction<GraphModel>) => {
+      state.model = action.payload
+    },
+  },
+})
 
-// Export hooks for usage in components
-export const { useGetGraphModelQuery } = graphApi;
+export const { setModel } = camSlice.actions
+export default camSlice.reducer

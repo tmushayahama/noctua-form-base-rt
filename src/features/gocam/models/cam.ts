@@ -71,9 +71,13 @@ export interface GraphModel {
   activityConnections: Edge[];
   conformsToGPAD?: boolean;
   state?: string;
-  contributor?: Contributor[];
+  comments?: string[];
+  contributors?: Contributor[];
   date?: string;
   title?: string;
   groups?: Group[];
 }
 
+export interface GraphModelApiResponse {
+  data: GraphModel;
+}

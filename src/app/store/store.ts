@@ -8,8 +8,10 @@ import { selectedAnnotationSlice } from '@/features/annotations/slices/selectedA
 import { geneSlice } from '@/features/genes/slices/genesSlice'
 import { searchSlice } from '@/features/search/searchSlice'
 import { termsSlice } from '@/features/terms/slices/termsSlice'
+import { camSlice } from '@/features/gocam/slices/camSlice'
 
 const rootReducer = combineSlices({
+  cam: camSlice.reducer,
   search: searchSlice.reducer,
   genes: geneSlice.reducer,
   terms: termsSlice.reducer,

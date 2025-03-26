@@ -14,6 +14,7 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import useTheme from '@mui/material/styles/useTheme'
 import Box from '@mui/material/Box'
 import Drawer from '@mui/material/Drawer'
+import MetaToolbar from './MetaToolbar'
 
 interface LayoutProps {
   leftDrawerContent?: React.ReactNode
@@ -45,9 +46,12 @@ const Layout: React.FC<LayoutProps> = ({ leftDrawerContent, rightDrawerContent }
 
   return (
     <Box className="flex h-screen w-full flex-col bg-gray-300">
-      <Toolbar showLoadingBar={false} />
+      <Toolbar />
+      <div className="fixed flex w-full flex-1 top-[80px]" >
+        <MetaToolbar />
+      </div>
 
-      <Box className="fixed flex w-full flex-1" style={{ top: 50, bottom: 0 }}>
+      <Box className="fixed flex w-full flex-1" style={{ top: 120, bottom: 0 }}>
         {leftDrawerContent && (
           <Box
             sx={{
