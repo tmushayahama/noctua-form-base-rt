@@ -68,6 +68,7 @@ export interface GraphModel {
   nodes: Node[];
   edges: Edge[];
   activities: Activity[];
+  activityConnections: Edge[];
   conformsToGPAD?: boolean;
   state?: string;
   contributor?: Contributor[];

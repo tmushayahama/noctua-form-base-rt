@@ -1,38 +1,25 @@
-import type { Edge, GraphModel, Contributor, Group, Node } from "../models/cam";
+import type { Edge, GraphModel, Contributor, Group, Node, Activity } from "../models/cam";
 
 export function extractActivities(nodes: Node[], edges: Edge[]): any[] {
-  const activities: any[] = [];
+  const activities: Activity[] = [];
 
   const enabledByEdges = edges.filter(edge => edge.id === 'RO:0002333');
 
   enabledByEdges.forEach(enabledByEdge => {
-    const molecularFunctionId = enabledByEdge.source;
-    const enablerNodeId = enabledByEdge.target;
+    const molecularFunction = enabledByEdge.source;
+    const enabledBy = enabledByEdge.target;
 
-    const molecularFunctionNode = nodes.find(node => node.id === molecularFunctionId);
-    const enablerNode = nodes.find(node => node.id === enablerNodeId);
+    if (!molecularFunction || !enabledBy) return;
 
-    if (!molecularFunctionNode || !enablerNode) return;
-
-    // Create a subgraph for this activity
-    const activityNodes = [molecularFunctionNode, enablerNode];
+    const activityNodes = [molecularFunction, enabledBy];
     const activityEdges = [enabledByEdge];
 
     // Find related edges connected to the molecular function
     edges.forEach(edge => {
       if (edge.id === enabledByEdge.id) return; // Skip the enabled by edge itself
 
-      // If source or target is our molecular function, include it and the related node
-      if (edge.source === molecularFunctionId || edge.target === molecularFunctionId) {
+      if (edge.sourceId === molecularFunction.uid || edge.targetId === molecularFunction.uid) {
         activityEdges.push(edge);
-
-        // Add the connected node if not already in our node list
-        const connectedNodeId = edge.source === molecularFunctionId ? edge.target : edge.source;
-        const connectedNode = nodes.find(node => node.id === connectedNodeId);
-
-        if (connectedNode && !activityNodes.some(node => node.id === connectedNodeId)) {
-          activityNodes.push(connectedNode);
-        }
       }
     });
 
@@ -47,12 +34,10 @@ export function extractActivities(nodes: Node[], edges: Edge[]): any[] {
       : null;
 
     activities.push({
-      id: `activity_${enabledByEdge.id}`,
-      molecularFunction: molecularFunctionNode.label,
-      molecularFunctionId: molecularFunctionNode.id,
-      enabledBy: enablerNode.label,
-      enabledById: enablerNode.id,
-      date: latestDate,
+      uid: molecularFunction.uid,
+      molecularFunction,
+      enabledBy,
+      date: latestDate ?? null,
       nodes: activityNodes,
       edges: activityEdges
     });
@@ -62,7 +47,7 @@ export function extractActivities(nodes: Node[], edges: Edge[]): any[] {
 }
 
 export const transformGraphData = (data: any): GraphModel => {
-  if (!data) return { id: '', nodes: [], edges: [], activities: [] };
+  if (!data) return { id: '', nodes: [], edges: [], activities: [], activityConnections: [] };
 
   const nodes: Node[] = [];
   const edges: Edge[] = [];
@@ -139,6 +124,7 @@ export const transformGraphData = (data: any): GraphModel => {
 
   // Extract activities from the graph
   const activities = extractActivities(nodes, edges);
+  const activityConnections: Edge[] = [];
 
   // Process model annotations
   const graphModel: GraphModel = {
@@ -146,7 +132,8 @@ export const transformGraphData = (data: any): GraphModel => {
     nodes,
     edges,
     groups,
-    activities
+    activities,
+    activityConnections
   };
 
   if (data.annotations && Array.isArray(data.annotations)) {
