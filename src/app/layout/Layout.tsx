@@ -20,7 +20,7 @@ interface LayoutProps {
   leftDrawerContent?: React.ReactNode
   rightDrawerContent?: React.ReactNode
 }
-
+// TODO update google analytics
 const drawerWidth = 420
 
 const Layout: React.FC<LayoutProps> = ({ leftDrawerContent, rightDrawerContent }) => {
@@ -37,7 +37,7 @@ const Layout: React.FC<LayoutProps> = ({ leftDrawerContent, rightDrawerContent }
   }
 
   useEffect(() => {
-    initGA('G-245RCHN2PQ')
+    //initGA('G-245RCHN2PQ')
   }, [])
 
   useEffect(() => {

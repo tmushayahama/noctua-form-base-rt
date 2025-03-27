@@ -8,7 +8,7 @@ import { setModel } from '@/features/gocam/slices/camSlice';
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();
-  const modelId = 'gomodel:67ae6b4d00000005'
+  const modelId = 'gomodel:61f34dd300001044' //'gomodel:66df835200000000'
 
   const { data: graphModel, error, isLoading, isSuccess } = useGetGraphModelQuery(modelId);
 

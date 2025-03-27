@@ -1,6 +1,7 @@
 import apiService from '@/app/store/apiService'
 import { transformGraphData } from '../services/graphServices';
 import type { GraphModelApiResponse } from '../models/cam';
+import { ENVIRONMENT } from '@/@pango.core/data/constants';
 
 export const addTagTypes = ['graph'] as const
 
@@ -21,7 +22,7 @@ const graphApi = apiService
           ]));
 
           return {
-            url: `http://localhost:3400/api/minerva_local/m3Batch?token=&intention=query&requests=${requests}`,
+            url: `${ENVIRONMENT.baristaUrl}?token=&intention=query&requests=${requests}`,
           };
         },
         providesTags: ['graph'],

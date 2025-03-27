@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.10.6",
+    "@dagrejs/graphlib": "^2.2.4",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@mui/base": "^5.0.0-beta.40",
@@ -41,6 +42,7 @@
     "dagre": "^0.8.5",
     "framer-motion": "^11.11.17",
     "golr-conf": "^0.0.3",
+    "graphlib": "^2.1.8",
     "graphql-request": "^7.0.1",
     "jointjs": "^3.7.7",
     "minerva-requests": "0.0.18",

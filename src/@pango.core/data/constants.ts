@@ -1,4 +1,8 @@
 export const ENVIRONMENT = {
+
+  baristaUrl: 'http://barista-dev.berkeleybop.org/api/minerva_public_dev/m3Batch/',
+  baristaLocalUrl: 'http://localhost:3400/api/minerva_local/m3Batch',
+
   contactUrl:
     'https://docs.google.com/forms/d/e/1FAIpQLScX_caoY-mqsyK5Y6M2bof7EXVG0UY5DhOQ67zBMoAKKlRF4Q/viewform?usp=sharing',
   amigoTermUrl: 'http://amigo.geneontology.org/amigo/term/',

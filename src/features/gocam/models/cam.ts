@@ -1,3 +1,31 @@
+
+export enum ActivityType {
+  DEFAULT = 'default',
+  BPONLY = 'bpOnly',
+  CCONLY = 'ccOnly',
+  MOLECULE = 'molecule',
+  PROTEIN_COMPLEX = 'proteinComplex',
+}
+
+export enum RootTypes {
+  PROTEIN_CONTAINING_COMPLEX = 'GO:0032991',
+  CELLULAR_COMPONENT = 'GO:0005575',
+  ROOT_CELLULAR_COMPONENT = 'GO:0005575',
+  ALL_CELLULAR_COMPONENT = 'GO:0005575',
+  CELLULAR_ANATOMICAL = 'GO:0110165',
+  BIOLOGICAL_PROCESS = 'GO:0008150',
+  MOLECULAR_FUNCTION = 'GO:0003674',
+  MOLECULAR_ENTITY = 'CHEBI:33695',
+  CHEMICAL_ENTITY = 'CHEBI:24431',
+  EVIDENCE = 'ECO:0000352',
+  EVIDENCE_NODE = 'ECO:0000000',
+  CELL_TYPE_ENTITY = 'CL:0000003',
+  ANATOMICAL_ENTITY = 'CARO:0000000',
+  ORGANISM = 'NCBITaxon',
+  BIOLOGICAL_PHASE = 'GO:0044848',
+  UBERON_STAGE = 'UBERON:0000105',
+}
+
 export interface Entity {
   id: string;
   label: string;
@@ -54,10 +82,17 @@ export interface Edge {
   group?: string;
 }
 
+export interface TreeNode extends Node {
+  edges: Edge[];
+  children: TreeNode[];
+}
+
 export interface Activity {
   uid: string;
-  molecularFunction: Entity
-  enabledBy: Entity
+  type: ActivityType;
+  rootNode: Node;
+  molecularFunction: Node | null
+  enabledBy: Node | null
   date: string | null;
   nodes: Node[];
   edges: Edge[];
