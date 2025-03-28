@@ -6,14 +6,8 @@ export enum GOAspect {
   CELLULAR_COMPONENT = 'cellular component',
 }
 
-export enum AutocompleteType {
-  GENE = 'gene',
-  SLIM_TERM = 'slim_term',
-}
 
-export interface AutocompleteFilterArgs {
-  autocompleteType: AutocompleteType
-}
+
 
 export interface GeneFilterArgs {
   geneIds: string[]

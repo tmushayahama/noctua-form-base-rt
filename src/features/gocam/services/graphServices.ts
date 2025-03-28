@@ -1,16 +1,15 @@
-import { type Edge, type GraphModel, type Contributor, type Group, type Node, type Activity, ActivityType, RootTypes } from "../models/cam";
+import { type Edge, type GraphModel, type Contributor, type Group, type Node, type Activity, ActivityType, RootTypes, Relations } from "../models/cam";
 
 export function extractActivities(nodes: Node[], edges: Edge[]): Activity[] {
   const activities: Activity[] = [];
-  const enabledByEdgeType = 'RO:0002333';
 
   // Pre-compute all enabledBy nodes for faster lookup
   const enabledBySourceIds = new Set(
-    edges.filter(edge => edge.id === enabledByEdgeType)
+    edges.filter(edge => edge.id === Relations.ENABLED_BY)
       .map(edge => edge.sourceId)
   );
 
-  const enabledByEdges = edges.filter(edge => edge.id === enabledByEdgeType);
+  const enabledByEdges = edges.filter(edge => edge.id === Relations.ENABLED_BY);
 
   enabledByEdges.forEach(enabledByEdge => {
     const molecularFunction = enabledByEdge.source;
@@ -144,6 +143,11 @@ export function extractActivityConnections(activities: Activity[], edges: Edge[]
 
     if (!sourceActivity || !targetActivity) return;
     if (sourceActivity.uid === targetActivity.uid) return;
+
+    if (edge.id === Relations.HAS_INPUT) {
+      edge.isReverseLink = true;
+      edge.reverseLinkLabel = 'input of'
+    }
 
     activityConnections.push(edge);
   });

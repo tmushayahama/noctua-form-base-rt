@@ -6,12 +6,9 @@ import CssBaseline from '@mui/material/CssBaseline'
 import theme from './@pango.core/theme/theme'
 
 import { defineCustomElements } from 'panther-overrep-form/loader'
-import Gene from './app/Gene'
 import LeftDrawerContent from './app/layout/LeftDrawer'
-import RightDrawerContent from './app/layout/RightDrawer'
 import Home from './app/Home'
-import About from './app/About'
-import Help from './app/Help'
+import ActivityForm from './features/gocam/components/forms/ActivityForm'
 defineCustomElements(window)
 
 const routes = [
@@ -21,19 +18,9 @@ const routes = [
     children: [{ path: '', element: <Home /> }],
   },
   {
-    path: 'gene/:id',
-    element: <Layout rightDrawerContent={<RightDrawerContent />} />,
-    children: [{ path: '', element: <Gene /> }],
-  },
-  {
-    path: 'about',
+    path: 'form',
     element: <Layout />,
-    children: [{ path: '', element: <About /> }],
-  },
-  {
-    path: 'help',
-    element: <Layout />,
-    children: [{ path: '', element: <Help /> }],
+    children: [{ path: '', element: <ActivityForm /> }],
   },
 ]
 

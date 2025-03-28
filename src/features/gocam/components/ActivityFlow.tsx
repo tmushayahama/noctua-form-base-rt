@@ -1,6 +1,6 @@
 import type React from 'react';
-import { useCallback, useEffect, useMemo } from 'react';
-import type { Node as FlowNode, Edge as FlowEdge } from 'reactflow';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import type { Node as FlowNode, Edge as FlowEdge, NodeTypes } from 'reactflow';
 import ReactFlow, {
   Controls,
   Background,
@@ -10,44 +10,36 @@ import ReactFlow, {
   ConnectionLineType,
   Panel,
   Handle,
-  Position
+  Position,
+  useReactFlow
 } from 'reactflow';
 import dagre from 'dagre';
 import 'reactflow/dist/style.css';
-import type { GraphModel, Activity, ActivityType } from '../models/cam';
+import type { GraphModel, Activity } from '../models/cam';
+import { ActivityType } from '../models/cam';
+
+// Constants for node dimensions
+const NODE_WIDTH = 220;
+const NODE_HEIGHT = 140;
+const MOLECULAR_NODE_SIZE = 150;
 
 // Custom node component for regular activities
 const ActivityNode = ({ data }: { data: any }) => {
-  // Function to render edges recursively
-  const renderEdges = (edges: any[], level = 0) => {
-    if (!edges || edges.length === 0) return null;
-
-    return (
-      <div className={`${level > 0 ? 'ml-3 border-l-2 border-gray-200 pl-2' : ''}`}>
-        {edges.map((edge: any) => (
-          <div key={edge.id} className="mb-2">
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-indigo-400 rounded-full mr-1"></div>
-              <span className="text-xs font-medium">{edge.source.label}</span>
-              <span className="mx-1 text-xs text-gray-400">→</span>
-              <span className="text-xs text-gray-700">{edge.label}</span>
-              <span className="mx-1 text-xs text-gray-400">→</span>
-              <span className="text-xs font-medium">{edge.target.label}</span>
-            </div>
-
-            {/* Recursively render nested edges if they exist */}
-            {edge.edges && renderEdges(edge.edges, level + 1)}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   return (
-    <div className="p-3 rounded-lg shadow-md border border-gray-200 bg-white min-w-64">
-      <Handle type="target" position={Position.Top} id="target" />
-      <Handle type="source" position={Position.Bottom} id="source" />
-
+    <div
+      className="p-3 rounded-lg shadow-md border border-gray-200 bg-white"
+      style={{ width: NODE_WIDTH, height: NODE_HEIGHT }}
+    >
+      <Handle
+        type="target"
+        position={Position.Top}
+        id="top-target"
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom-source"
+      />
       <div className="font-semibold text-sm truncate">{data.label}</div>
 
       {data.molecularFunction && (
@@ -64,13 +56,6 @@ const ActivityNode = ({ data }: { data: any }) => {
         </div>
       )}
 
-      {data.edges && data.edges.length > 0 && (
-        <div className="mt-2 bg-gray-50 p-2 rounded border border-gray-200">
-          <div className="text-xs font-medium mb-1">Edges:</div>
-          {renderEdges(data.edges)}
-        </div>
-      )}
-
       {data.date && (
         <div className="text-xs text-gray-400 mt-2">
           {new Date(data.date).toLocaleDateString()}
@@ -83,10 +68,20 @@ const ActivityNode = ({ data }: { data: any }) => {
 // Custom node component for molecular activities
 const MolecularNode = ({ data }: { data: any }) => {
   return (
-    <div className="flex items-center justify-center rounded-full w-32 h-32 shadow-md bg-blue-100 border border-blue-300">
-      <Handle type="target" position={Position.Top} id="target" />
-      <Handle type="source" position={Position.Bottom} id="source" />
-
+    <div
+      className="flex items-center justify-center rounded-full shadow-md bg-blue-100 border border-blue-300"
+      style={{ width: MOLECULAR_NODE_SIZE, height: MOLECULAR_NODE_SIZE }}
+    >
+      <Handle
+        type="target"
+        position={Position.Top}
+        id="top-target"
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom-source"
+      />
       <div className="text-center p-2">
         <div className="font-semibold text-sm">{data.rootNode.label}</div>
         {data.date && (
@@ -100,51 +95,110 @@ const MolecularNode = ({ data }: { data: any }) => {
 };
 
 // Node types for React Flow
-const nodeTypes = {
+const nodeTypes: NodeTypes = {
   activity: ActivityNode,
   molecular: MolecularNode,
 };
 
-// Dagre layout configuration
-const getLayoutedElements = (nodes: FlowNode[], edges: FlowEdge[], direction = 'TB') => {
-  const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({ rankdir: direction });
+// Custom hook for layout calculation
+const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[], direction = 'TB') => {
+  const { fitView } = useReactFlow();
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const layouting = useRef(false);
 
-  // Set node dimensions based on type
-  nodes.forEach((node) => {
-    if (node.type === 'molecular') {
-      dagreGraph.setNode(node.id, { width: 130, height: 130 });
-    } else {
-      dagreGraph.setNode(node.id, { width: 180, height: 100 });
-    }
-  });
+  const getLayoutedElements = useCallback((nodes: FlowNode[], edges: FlowEdge[], dir: string) => {
+    const dagreGraph = new dagre.graphlib.Graph();
+    dagreGraph.setDefaultEdgeLabel(() => ({}));
 
-  // Add edges to the graph
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
+    // Configure the layout with increased spacing
+    dagreGraph.setGraph({
+      rankdir: dir,
+      ranker: 'network-simplex', // Better for most layouts
+      ranksep: 150, // Increased vertical spacing between ranks
+      nodesep: 80,  // Increased horizontal spacing between nodes
+      marginx: 50,
+      marginy: 50,
+      acyclicer: 'greedy',
+      align: 'UL'
+    });
 
-  // Execute the layout
-  dagre.layout(dagreGraph);
+    // Set fixed node dimensions
+    nodes.forEach((node) => {
+      const isMolecular = node.type === 'molecular';
+      dagreGraph.setNode(node.id, {
+        width: isMolecular ? MOLECULAR_NODE_SIZE : NODE_WIDTH,
+        height: isMolecular ? MOLECULAR_NODE_SIZE : NODE_HEIGHT
+      });
+    });
 
-  // Apply the layout to the nodes
-  return {
-    nodes: nodes.map((node) => {
-      const nodeWithPosition = dagreGraph.node(node.id);
-      let xOffset = node.type === 'molecular' ? 65 : 90;
-      let yOffset = node.type === 'molecular' ? 65 : 50;
+    // Add edges to the graph
+    edges.forEach((edge) => {
+      dagreGraph.setEdge(edge.source, edge.target);
+    });
 
-      return {
-        ...node,
-        position: {
-          x: nodeWithPosition.x - xOffset,
-          y: nodeWithPosition.y - yOffset,
+    dagre.layout(dagreGraph);
+
+    return {
+      nodes: nodes.map((node) => {
+        const nodeWithPosition = dagreGraph.node(node.id);
+        const isMolecular = node.type === 'molecular';
+        const width = isMolecular ? MOLECULAR_NODE_SIZE : NODE_WIDTH;
+        const height = isMolecular ? MOLECULAR_NODE_SIZE : NODE_HEIGHT;
+
+        return {
+          ...node,
+          position: {
+            x: nodeWithPosition.x - width / 2,
+            y: nodeWithPosition.y - height / 2,
+          },
+          // Store the width/height for proper connection points
+          width,
+          height,
+          style: { width, height }
+        };
+      }),
+      edges: edges.map(edge => ({
+        ...edge,
+        type: 'straight', // Force straight edges
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: '#6366F1',
+          width: 15,
+          height: 15,
         },
-      };
-    }),
-    edges,
-  };
+      })),
+    };
+  }, []);
+
+  const applyLayout = useCallback(() => {
+    if (layouting.current || initialNodes.length === 0) return;
+
+    layouting.current = true;
+
+    requestAnimationFrame(() => {
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+        initialNodes,
+        initialEdges,
+        direction
+      );
+
+      setNodes(layoutedNodes);
+      setEdges(layoutedEdges);
+
+      // Fit view after layout
+      setTimeout(() => {
+        fitView({ padding: 0.3, duration: 400 });
+        layouting.current = false;
+      }, 100);
+    });
+  }, [initialNodes, initialEdges, direction, getLayoutedElements, setNodes, setEdges, fitView]);
+
+  useEffect(() => {
+    applyLayout();
+  }, [applyLayout]);
+
+  return { nodes, edges, onNodesChange, onEdgesChange, applyLayout };
 };
 
 interface ActivityFlowProps {
@@ -158,8 +212,8 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel }) => {
 
     return graphModel.activities.map((activity: Activity) => ({
       id: activity.uid,
-      type: activity.type === 'molecule' ? 'molecular' : 'activity',
-      position: { x: 0, y: 0 }, // Initial positions will be calculated by dagre
+      type: activity.type === ActivityType.MOLECULE ? 'molecular' : 'activity',
+      position: { x: 0, y: 0 },
       data: {
         label: activity.molecularFunction?.label || activity.rootNode.label,
         molecularFunction: activity.molecularFunction,
@@ -167,8 +221,6 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel }) => {
         date: activity.date,
         rootNode: activity.rootNode,
         type: activity.type,
-        nodes: activity.nodes,
-        edges: activity.edges,
       },
     }));
   }, [graphModel?.activities]);
@@ -177,19 +229,23 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel }) => {
   const initialEdges: FlowEdge[] = useMemo(() => {
     if (!graphModel?.activityConnections?.length) return [];
 
-    return graphModel.activityConnections.map((connection) => ({
-      id: connection.id,
-      source: connection.sourceId,
-      target: connection.targetId,
-      sourceHandle: 'source',  // Explicitly set source handle ID
-      targetHandle: 'target',  // Explicitly set target handle ID
-      label: connection.label,
-      type: 'smoothstep',
-      animated: true,
-      style: { stroke: '#6366F1' },
+    return graphModel.activityConnections.map((connection, index) => ({
+      id: connection.id + index,
+      source: connection.isReverseLink ? connection.targetId : connection.sourceId,
+      target: connection.isReverseLink ? connection.sourceId : connection.targetId,
+      sourceHandle: 'bottom-source',
+      targetHandle: 'top-target',
+      label: connection.isReverseLink ? connection.reverseLinkLabel : connection.label,
+      type: 'default',
+      style: {
+        stroke: '#6366F1',
+        strokeWidth: 1,
+      },
       markerEnd: {
         type: MarkerType.ArrowClosed,
         color: '#6366F1',
+        width: 15,
+        height: 15,
       },
       labelStyle: {
         fill: '#374151',
@@ -199,37 +255,13 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel }) => {
         padding: '2px 4px',
         borderRadius: '2px'
       },
-      labelBgStyle: { fill: '#F3F4F6' },
+      labelBgStyle: { fill: 'transparent' },
       data: { originalEdge: connection },
     }));
   }, [graphModel?.activityConnections]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-
-  // Apply layout and set nodes/edges when data changes
-  useEffect(() => {
-    if (initialNodes.length) {
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        initialNodes,
-        initialEdges,
-        'TB' // Top to Bottom layout
-      );
-      setNodes(layoutedNodes);
-      setEdges(layoutedEdges);
-    }
-  }, [initialNodes, initialEdges, setNodes, setEdges]);
-
-  // Handle manual layout adjustment
-  const onLayout = useCallback(() => {
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-      nodes,
-      edges,
-      'TB'
-    );
-    setNodes([...layoutedNodes]);
-    setEdges([...layoutedEdges]);
-  }, [nodes, edges, setNodes, setEdges]);
+  const { nodes, edges, onNodesChange, onEdgesChange, applyLayout } =
+    useLayoutedElements(initialNodes, initialEdges);
 
   if (!graphModel) return null;
 
@@ -241,19 +273,23 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel }) => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
-        connectionLineType={ConnectionLineType.SmoothStep}
-        fitView
+        connectionLineType={ConnectionLineType.Straight}
         minZoom={0.1}
-        maxZoom={1.5}
+        maxZoom={2}
+        fitView
+        fitViewOptions={{ padding: 0.3 }}
+        proOptions={{ hideAttribution: true }}
+        snapToGrid={true}
+        snapGrid={[15, 15]}
       >
-        <Background pattern="dots" gap={12} size={1} />
+        <Background gap={20} size={1} />
         <Controls />
         <Panel position="top-right" className="bg-white p-2 rounded shadow-md">
           <button
-            onClick={onLayout}
-            className="px-2 py-1 bg-indigo-600 text-white rounded text-sm"
+            onClick={applyLayout}
+            className="px-3 py-1.5 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700 transition-colors"
           >
-            Reset Layout
+            Recalculate Layout
           </button>
         </Panel>
       </ReactFlow>
