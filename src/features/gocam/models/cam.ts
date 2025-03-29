@@ -1,5 +1,9 @@
 export enum Relations {
   ENABLED_BY = "RO:0002333",
+  HAPPENS_DURING = 'RO:0002092',
+  LOCATED_IN = 'RO:0001025',
+  OCCURS_IN = 'BFO:0000066',
+  PART_OF = 'BFO:0000050',
   CAUSALLY_UPSTREAM_OF_POSITIVE_EFFECT = 'RO:0002304',
   CAUSALLY_UPSTREAM_OF_NEGATIVE_EFFECT = 'RO:0002305',
   CONSTITUTIVELY_UPSTREAM_OF = 'RO:0012009',
@@ -102,11 +106,6 @@ export interface Edge {
   reverseLinkLabel?: string;
 }
 
-export interface TreeNode extends Node {
-  edges: Edge[];
-  children: TreeNode[];
-}
-
 export interface Activity {
   uid: string;
   type: ActivityType;
@@ -137,3 +136,21 @@ export interface GraphModelApiResponse {
   data: GraphModel;
 }
 
+// Activity Form 
+
+export interface EvidenceForm {
+  uuid: string;
+  evidenceCode: Entity;
+  reference: string;
+  withFrom: string;
+}
+
+export interface TreeNode {
+  id: string;
+  term?: Entity
+  relation?: Entity
+  parentId: string | null;
+  evidence?: EvidenceForm;
+  rootTypes: Entity[];
+  children: TreeNode[];
+}

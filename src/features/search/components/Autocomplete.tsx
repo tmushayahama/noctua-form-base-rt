@@ -10,7 +10,7 @@ import { FaFileMedical } from 'react-icons/fa';
 interface TermAutocompleteProps {
   label: string;
   name: string;
-  rootTypeIds: string[];
+  rootTypeIds?: string[];
   autocompleteType?: AutocompleteType;
   value: any;
   onChange: (value: any) => void;
