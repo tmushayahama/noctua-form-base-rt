@@ -36,5 +36,4 @@ const graphApi = apiService
     }),
   });
 
-// Export hooks for usage in components
 export const { useGetGraphModelQuery } = graphApi;

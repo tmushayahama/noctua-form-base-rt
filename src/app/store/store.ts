@@ -10,8 +10,10 @@ import { searchSlice } from '@/features/search/searchSlice'
 import { termsSlice } from '@/features/terms/slices/termsSlice'
 import { camSlice } from '@/features/gocam/slices/camSlice'
 import { activityFormSlice } from '@/features/gocam/slices/activityFormSlice'
+import { metadataSlice } from '@/features/metadata/slices/metadataSlice'
 
 const rootReducer = combineSlices({
+  metadata: metadataSlice.reducer,
   activityForm: activityFormSlice.reducer,
   cam: camSlice.reducer,
   search: searchSlice.reducer,
