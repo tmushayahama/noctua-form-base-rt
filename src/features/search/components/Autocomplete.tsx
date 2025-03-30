@@ -2,18 +2,18 @@ import type React from 'react';
 import { useState, useEffect } from 'react';
 import { TextField, Autocomplete, Paper, Button, CircularProgress } from '@mui/material';
 import { FiChevronRight, FiFile } from 'react-icons/fi';
+import { FaFileMedical } from 'react-icons/fa';
+import { useSearchTermsQuery } from '../slices/lookupApiSlice';
 import type { GOlrResponse } from '../models/search';
 import { AutocompleteType } from '../models/search';
-import { useSearchTermsQuery } from '../slices/lookupApiSlice';
-import { FaFileMedical } from 'react-icons/fa';
 
 interface TermAutocompleteProps {
   label: string;
   name: string;
   rootTypeIds?: string[];
   autocompleteType?: AutocompleteType;
-  value: any;
-  onChange: (value: any) => void;
+  value: GOlrResponse | null;
+  onChange: (value: GOlrResponse | null) => void;
   onBlur?: () => void;
   disabled?: boolean;
   variant?: 'standard' | 'outlined' | 'filled';
@@ -22,7 +22,7 @@ interface TermAutocompleteProps {
 }
 
 const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
-  label,
+  label = '',
   name,
   rootTypeIds = [],
   autocompleteType = AutocompleteType.TERM,
@@ -34,10 +34,10 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
   onOpenReference,
   onOpenTermDetails
 }) => {
-  const [inputValue, setInputValue] = useState('');
-  const [open, setOpen] = useState(false);
-  const [options, setOptions] = useState<GOlrResponse[] | string[]>([]);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [inputValue, setInputValue] = useState<string>('');
+  const [open, setOpen] = useState<boolean>(false);
+  const [options, setOptions] = useState<GOlrResponse[]>([]);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>('');
 
   // Use RTK Query hook
   const { data, isLoading, isFetching } = useSearchTermsQuery(
@@ -78,20 +78,21 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
   }, [open]);
 
   // Get the display value for different types
-  const getOptionLabel = (option: any): string => {
+  const getOptionLabel = (option: GOlrResponse | string | null): string => {
+    if (!option) return '';
     if (typeof option === 'string') {
       return option;
-    } else if (option && option.label) {
+    } else if (option && 'label' in option) {
       return option.label;
     }
     return '';
   };
 
   // Render option based on autocomplete type
-  const renderOption = (props: React.HTMLAttributes<HTMLLIElement>, option: any) => {
+  const renderOption = (props: React.HTMLAttributes<HTMLLIElement>, option: GOlrResponse) => {
     if (autocompleteType === AutocompleteType.TERM ||
       autocompleteType === AutocompleteType.EVIDENCE_CODE) {
-      const item = option as GOlrResponse;
+      const item = option;
 
       return (
         <li {...props} key={item.id} className={`${!item.notAnnotatable ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -143,7 +144,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
       return (
         <li {...props}>
           <div className="flex w-full items-center py-2">
-            <div className="flex-grow">{option}</div>
+            <div className="flex-grow">{getOptionLabel(option)}</div>
           </div>
         </li>
       );
@@ -151,12 +152,15 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
   };
 
   const handleOnFocus = () => {
-    // If you need to implement preLookup functionality here
-    // This would be similar to the onFocus in your Angular component
     if (!inputValue) {
-      // Load initial suggestions if needed
       setOpen(true);
     }
+  };
+
+  // The key fix for the controlled/uncontrolled issue
+  const handleChange = (_: React.SyntheticEvent, newValue: GOlrResponse | null) => {
+    // Ensure we always pass consistent values to onChange
+    onChange(newValue || null);
   };
 
   return (
@@ -169,15 +173,16 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
         onClose={() => setOpen(false)}
         options={options}
         loading={isLoading || isFetching}
-        value={value}
-        onChange={(_, newValue) => onChange(newValue)}
+        value={value} // This will be null or a valid object
+        onChange={handleChange}
         onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
-        getOptionLabel={getOptionLabel}
-        isOptionEqualToValue={(option, value) =>
-          (option as any)?.id === (value as any)?.id
-        }
+        getOptionLabel={getOptionLabel as (option: any) => string}
+        isOptionEqualToValue={(option, value) => {
+          if (!option || !value) return false;
+          return option.id === value.id;
+        }}
         disabled={disabled}
-        renderOption={renderOption}
+        renderOption={renderOption as any}
         filterOptions={(x) => x} // Disable built-in filtering as we're using server-side filtering
         renderInput={(params) => (
           <TextField

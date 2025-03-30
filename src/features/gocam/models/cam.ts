@@ -1,3 +1,5 @@
+import type { GOlrResponse } from "@/features/search/models/search";
+
 export enum Relations {
   ENABLED_BY = "RO:0002333",
   HAPPENS_DURING = 'RO:0002092',
@@ -147,7 +149,7 @@ export interface EvidenceForm {
 
 export interface TreeNode {
   id: string;
-  term?: Entity
+  term?: GOlrResponse
   relation?: Entity
   parentId: string | null;
   evidence?: EvidenceForm;

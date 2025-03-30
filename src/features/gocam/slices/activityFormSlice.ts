@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 import type { Entity, EvidenceForm, TreeNode } from '../models/cam';
 import { Relations } from '../models/cam';
+import type { GOlrResponse } from '@/features/search/models/search';
 
 
 interface TreeState {
@@ -16,7 +17,6 @@ const initialState: TreeState = {
   tree: [],
   initialRelations: Object.values(Relations),
 };
-
 
 const removeNodeById = (nodes: TreeNode[], id: string): TreeNode[] => {
   return nodes.filter(node => {
@@ -79,7 +79,7 @@ export const activityFormSlice = createSlice({
 
     updateNode: (state, action: PayloadAction<{
       id: string;
-      term: Entity;
+      term?: GOlrResponse;
       evidence?: EvidenceForm;
       relation?: Entity;
       rootTypes?: Entity[];
