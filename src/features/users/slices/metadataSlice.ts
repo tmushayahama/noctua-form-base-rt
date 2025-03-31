@@ -1,7 +1,7 @@
 
-import type { Contributor, Group } from "@/features/gocam/models/cam";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createSlice } from "@reduxjs/toolkit";
+import type { Contributor, Group } from "../models/contributor";
 
 interface metadataState {
   users: Contributor[];

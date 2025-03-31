@@ -9,7 +9,8 @@ import { defineCustomElements } from 'panther-overrep-form/loader'
 import LeftDrawerContent from './app/layout/LeftDrawer'
 import Home from './app/Home'
 import ActivityForm from './features/gocam/components/forms/ActivityForm'
-import SplashScreen from './features/metadata/components/SplashScreen'
+import SplashScreen from './features/users/components/SplashScreen'
+import { AuthProvider } from './features/auth/authProvider'
 defineCustomElements(window)
 
 const routes = [
@@ -41,9 +42,11 @@ const App: React.FC = () => {
     <React.StrictMode>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <SplashScreen>
-          <RouterProvider router={router} />
-        </SplashScreen>
+        <AuthProvider>
+          <SplashScreen>
+            <RouterProvider router={router} />
+          </SplashScreen>
+        </AuthProvider>
       </ThemeProvider>
     </React.StrictMode>
   )

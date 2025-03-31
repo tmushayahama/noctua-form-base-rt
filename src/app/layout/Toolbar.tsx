@@ -4,45 +4,24 @@ import { useNavigate } from 'react-router-dom';
 import { Button, IconButton, Menu, MenuItem } from '@mui/material';
 import { FaGithub, FaTwitter, FaFacebook } from 'react-icons/fa';
 import { IoApps, IoChevronDown } from 'react-icons/io5';
-
-// Import environment configuration
-const environment = {
-  isBeta: true,
-  isDev: false
-};
-
-// Define types
-interface User {
-  name: string;
-  group?: {
-    label: string;
-  };
-}
-
-interface NoctuaConfigService {
-  noctuaUrl: string;
-  homeUrl: string;
-  loginUrl: string;
-  logoutUrl: string;
-}
-
-// Mock services for demonstration
-const noctuaConfigService: NoctuaConfigService = {
-  noctuaUrl: 'http://noctua.geneontology.org/',
-  homeUrl: '/',
-  loginUrl: '/login',
-  logoutUrl: '/logout'
-};
+import { ENVIRONMENT } from '@/@pango.core/data/constants';
+import { useAuth } from '@/features/auth/authProvider';
+import { useAppSelector } from '../hooks';
 
 const Toolbar: React.FC = () => {
   const navigate = useNavigate();
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
   const [aboutMenuAnchor, setAboutMenuAnchor] = useState<null | HTMLElement>(null);
   const [helpMenuAnchor, setHelpMenuAnchor] = useState<null | HTMLElement>(null);
-  const [user, setUser] = useState<User | null>(null);
 
-  const isDev = environment.isDev;
-  const isBeta = environment.isBeta;
+  // Get auth state and URLs from auth context
+  const { isLoggedIn, loginUrl, logoutUrl, noctuaUrl } = useAuth();
+
+  // Get user from Redux store
+  const user = useAppSelector(state => state.auth.user);
+
+  const isDev = ENVIRONMENT.isDev;
+  const isBeta = ENVIRONMENT.isBeta;
 
   let betaText = '';
   if (isDev && isBeta) {
@@ -53,18 +32,12 @@ const Toolbar: React.FC = () => {
     betaText = 'beta';
   }
 
-  useEffect(() => {
-    // Mock fetching user data
-    setUser({ name: 'John Doe', group: { label: 'GO Consortium' } });
-
-  }, [navigate]);
-
   const openApps = () => {
     console.log('Opening apps panel');
   };
 
   const logout = () => {
-    window.location.href = noctuaConfigService.logoutUrl;
+    window.location.href = logoutUrl;
   };
 
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -123,10 +96,16 @@ const Toolbar: React.FC = () => {
             >
               <IoApps className="text-2xl" />
             </IconButton>
-            <a className="mr-1 text-xl font-bold hover:text-blue-900" href={noctuaConfigService.noctuaUrl} target="_blank" rel="noreferrer">
+            <a className="mr-1 text-xl font-bold hover:text-blue-900" href={noctuaUrl} target="_blank" rel="noreferrer">
               Noctua
             </a>
-            <a className="mr-1 text-xl hover:text-blue-900" href={noctuaConfigService.homeUrl} target="_blank" rel="noreferrer">
+            <a className="mr-1 text-xl hover:text-blue-900"
+              href="/"
+              onClick={(e) => {
+                e.preventDefault(); // Prevent default anchor behavior
+                window.location.reload(); // Refresh the page
+              }}
+            >
               Pathway Editor
             </a>
             {(isDev || isBeta) && (
@@ -200,7 +179,7 @@ const Toolbar: React.FC = () => {
             </div>
 
             <div className="flex flex-row items-center pr-12">
-              {user ? (
+              {isLoggedIn && user ? (
                 <>
                   <Button
                     className="text-left h-10 normal-case"
@@ -227,7 +206,7 @@ const Toolbar: React.FC = () => {
               ) : (
                 <div>
                   <Button
-                    href={noctuaConfigService.loginUrl}
+                    href={loginUrl}
                     className="bg-green-600 text-white hover:bg-green-700"
                     data-pw="noc-login-button"
                   >

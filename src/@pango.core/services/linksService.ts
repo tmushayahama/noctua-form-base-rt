@@ -1,17 +1,32 @@
-import type { Annotation } from '@/features/annotations/models/annotation'
 import { ENVIRONMENT } from '../data/constants'
-import type { Gene } from '@/features/genes/models/gene'
 
-export const getHGNC = (longId: string): string | null => {
-  const pattern = /HGNC=(\d+)/
-  const matches = longId.match(pattern)
+export const getLoginUrl = (): string => {
 
-  if (matches && matches.length > 1) {
-    return `HGNC:${matches[1]}`
-  }
+  const url = new URL(window.location.href);
+  url.searchParams.delete('barista_token');
 
-  return null
-}
+  const returnUrl = url.href;
+  const baseUrl = `${ENVIRONMENT.globalBaristaLocation}/login`;
+
+  const params = new URLSearchParams({ return: returnUrl });
+  return `${baseUrl}?${params.toString()}`;
+};
+
+export const getLogoutUrl = (baristaToken: string, returnUrl: string): string => {
+  const baseUrl = `${ENVIRONMENT.globalBaristaLocation}/logout`;
+  const params = new URLSearchParams({ barista_token: baristaToken, return: returnUrl });
+  return `${baseUrl}?${params.toString()}`;
+};
+
+export const getNoctuaUrl = (baristaToken: string): string => {
+  const baseUrl = ENVIRONMENT.noctuaUrl;
+  const params = baristaToken ? new URLSearchParams({ barista_token: baristaToken }) : '';
+  return `${baseUrl}?${params.toString()}`;
+};
+
+export const getHomeUrl = (): string => {
+  return window.location.href;
+};
 
 export const getGeneAccession = (gene: string) => {
   if (!gene) return null
@@ -27,39 +42,4 @@ export const getUniprotLink = (gene: string) => {
   return geneId.length > 1 ? ENVIRONMENT.uniprotUrl + geneId[1] : ENVIRONMENT.uniprotUrl
 }
 
-export const getFamilyLink = (element: Annotation | Gene) => {
-  if (!element.pantherFamily || !element.longId) return ENVIRONMENT.pantherFamilyUrl
 
-  return `${ENVIRONMENT.pantherFamilyUrl}book=${encodeURIComponent(element.pantherFamily)}&seq=${encodeURIComponent(element.longId)}`
-}
-
-export const getUCSCBrowserLink = (annotation: Annotation | Gene) => {
-  if (!annotation.coordinatesChrNum || !annotation.coordinatesStart || !annotation.coordinatesEnd)
-    return ENVIRONMENT.ucscUrl
-
-  return `${ENVIRONMENT.ucscUrl}${annotation.coordinatesChrNum}:${annotation.coordinatesStart}-${annotation.coordinatesEnd}`
-}
-
-export const getAGRLink = (hgncId: string) => {
-  if (!hgncId) return ENVIRONMENT.agrPrefixUrl
-
-  return ENVIRONMENT.agrPrefixUrl + hgncId
-}
-
-export const getHGNCLink = (hgncId: string) => {
-  if (!hgncId) return ENVIRONMENT.hgncPrefixUrl
-
-  return ENVIRONMENT.hgncPrefixUrl + hgncId
-}
-
-export const getNCBIGeneLink = (geneSymbol: string) => {
-  if (!geneSymbol) return ENVIRONMENT.ncbiGeneUrl
-
-  return `${ENVIRONMENT.ncbiGeneUrl}(${geneSymbol}%5BPreferred%20Symbol%5D)%20AND%209606%5BTaxonomy%20ID%5D`
-}
-
-export const getPubmedArticleUrl = (pmid: string): string => {
-  if (!pmid) return ''
-  const id = pmid?.split(':')
-  return id.length > 0 ? ENVIRONMENT.pubmedUrl + id[1] : ''
-}

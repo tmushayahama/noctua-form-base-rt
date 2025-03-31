@@ -1,4 +1,5 @@
-import { type Edge, type GraphModel, type Contributor, type Group, type Node, type Activity, ActivityType, RootTypes, Relations } from "../models/cam";
+import type { Contributor, Group } from "@/features/users/models/contributor";
+import { type Edge, type GraphModel, type Node, type Activity, ActivityType, RootTypes, Relations } from "../models/cam";
 
 export function extractActivities(nodes: Node[], edges: Edge[]): Activity[] {
   const activities: Activity[] = [];

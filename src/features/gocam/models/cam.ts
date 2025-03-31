@@ -1,4 +1,5 @@
 import type { GOlrResponse } from "@/features/search/models/search";
+import type { Group, Contributor } from "@/features/users/models/contributor";
 
 export enum Relations {
   ENABLED_BY = "RO:0002333",
@@ -55,20 +56,6 @@ export interface Entity {
   label: string;
 }
 
-
-export interface Contributor {
-  orcid: string;
-  name?: string;
-  initials?: string;
-  color?: string;
-  token?: string;
-  frequency: number;
-}
-
-export interface Group {
-  url: string;
-  name: string;
-}
 
 
 export interface Node {

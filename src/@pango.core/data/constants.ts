@@ -48,7 +48,8 @@ export const environment = {
 
 
 export const ENVIRONMENT = {
-
+  isDev: true,
+  isBeta: false,
   baristaUrl: 'http://barista-dev.berkeleybop.org/api/minerva_public_dev/m3Batch/',
   baristaLocalUrl: 'http://localhost:3400/api/minerva_local/m3Batch',
 

@@ -6,6 +6,8 @@ interface SplashScreenProps {
   children: React.ReactNode;
 }
 
+// TODO fix error message
+
 const SplashScreen: React.FC<SplashScreenProps> = ({ children }) => {
   const { isLoading, isError, error } = useGetAllDataQuery();
   const [displaySplash, setDisplaySplash] = useState(true);
