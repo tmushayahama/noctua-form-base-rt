@@ -70,8 +70,6 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
       },
       invalidatesTags: ['graph'],
     }),
-
-
   }),
 });
 

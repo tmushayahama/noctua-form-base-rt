@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Node as FlowNode, Edge as FlowEdge, NodeTypes } from 'reactflow';
 import ReactFlow, {
   Controls,
@@ -17,14 +17,43 @@ import dagre from 'dagre';
 import 'reactflow/dist/style.css';
 import type { GraphModel, Activity } from '../models/cam';
 import { ActivityType } from '../models/cam';
+import { setRightDrawerOpen } from '@/@pango.core/components/drawer/drawerSlice';
+import { useAppDispatch } from '@/app/hooks';
+import { setSelectedActivity } from '../slices/camSlice';
 
 // Constants for node dimensions
 const NODE_WIDTH = 220;
 const NODE_HEIGHT = 140;
 const MOLECULAR_NODE_SIZE = 150;
+const MIN_CONTAINER_HEIGHT = 400; // Minimum height
+const HEIGHT_PER_NODE = 200; // Approximate height needed per node
+const PADDING = 100; // Extra padding
 
 // Custom node component for regular activities
 const ActivityNode = ({ data }: { data: any }) => {
+
+  const renderEdges = (edges: any[], level = 0) => {
+    if (!edges || edges.length === 0) return null;
+
+    return (
+      <div className={`${level > 0 ? 'ml-3 border-l-2 border-gray-200 pl-2' : ''}`}>
+        {edges.map((edge: any) => (
+          <div key={edge.id} className="mb-2">
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-indigo-400 rounded-full mr-1"></div>
+              <span className="text-xs text-gray-700">{edge.label}</span>
+              <span className="mx-1 text-xs text-gray-400">→</span>
+              <span className="text-xs font-medium">{edge.target.label}</span>
+            </div>
+
+            {/* Recursively render nested edges if they exist */}
+            {edge.edges && renderEdges(edge.edges, level + 1)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div
       className="p-3 rounded-lg shadow-md border border-gray-200 bg-white"
@@ -43,22 +72,21 @@ const ActivityNode = ({ data }: { data: any }) => {
       <div className="font-semibold text-sm truncate">{data.label}</div>
 
       {data.molecularFunction && (
-        <div className="text-xs bg-indigo-50 p-1 rounded mt-1 border border-indigo-100">
-          <div className="font-medium">Molecular Function:</div>
+        <div className="text-xs bg-indigo-50 p-1 rounded mt-1 border border-indigo-100 line-clamp-2">
           <div>{data.molecularFunction.label}</div>
         </div>
       )}
 
       {data.enabledBy && (
-        <div className="text-xs bg-green-50 p-1 rounded mt-1 border border-green-100">
-          <div className="font-medium">Enabled By:</div>
+        <div className="text-xs bg-green-50 p-1 rounded mt-1 border border-green-100  line-clamp-2">
           <div>{data.enabledBy.label}</div>
         </div>
       )}
 
-      {data.date && (
-        <div className="text-xs text-gray-400 mt-2">
-          {new Date(data.date).toLocaleDateString()}
+      {data.edges && data.edges.length > 0 && (
+        <div className="mt-2 bg-gray-50 p-2 rounded border border-gray-200">
+          <div className="text-xs font-medium mb-1">Edges:</div>
+          {renderEdges(data.edges)}
         </div>
       )}
     </div>
@@ -84,11 +112,6 @@ const MolecularNode = ({ data }: { data: any }) => {
       />
       <div className="text-center p-2">
         <div className="font-semibold text-sm">{data.rootNode.label}</div>
-        {data.date && (
-          <div className="text-xs text-gray-500 mt-1">
-            {new Date(data.date).toLocaleDateString()}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -105,6 +128,7 @@ const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[],
   const { fitView } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [graphHeight, setGraphHeight] = useState(MIN_CONTAINER_HEIGHT);
   const layouting = useRef(false);
 
   const getLayoutedElements = useCallback((nodes: FlowNode[], edges: FlowEdge[], dir: string) => {
@@ -139,25 +163,39 @@ const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[],
 
     dagre.layout(dagreGraph);
 
-    return {
-      nodes: nodes.map((node) => {
-        const nodeWithPosition = dagreGraph.node(node.id);
-        const isMolecular = node.type === 'molecular';
-        const width = isMolecular ? MOLECULAR_NODE_SIZE : NODE_WIDTH;
-        const height = isMolecular ? MOLECULAR_NODE_SIZE : NODE_HEIGHT;
+    // Calculate layout bounds to determine container height
+    let minY = Infinity;
+    let maxY = -Infinity;
 
-        return {
-          ...node,
-          position: {
-            x: nodeWithPosition.x - width / 2,
-            y: nodeWithPosition.y - height / 2,
-          },
-          // Store the width/height for proper connection points
-          width,
-          height,
-          style: { width, height }
-        };
-      }),
+    const layoutedNodes = nodes.map((node) => {
+      const nodeWithPosition = dagreGraph.node(node.id);
+      const isMolecular = node.type === 'molecular';
+      const width = isMolecular ? MOLECULAR_NODE_SIZE : NODE_WIDTH;
+      const height = isMolecular ? MOLECULAR_NODE_SIZE : NODE_HEIGHT;
+
+      const x = nodeWithPosition.x - width / 2;
+      const y = nodeWithPosition.y - height / 2;
+
+      // Track min and max Y positions
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y + height);
+
+      return {
+        ...node,
+        position: { x, y },
+        width,
+        height,
+        style: { width, height }
+      };
+    });
+
+    // Calculate dynamic height based on graph content
+    // Add padding to ensure all nodes are visible
+    const graphContentHeight = maxY - minY + PADDING;
+    const dynamicHeight = Math.max(MIN_CONTAINER_HEIGHT, graphContentHeight);
+
+    return {
+      nodes: layoutedNodes,
       edges: edges.map(edge => ({
         ...edge,
         type: 'straight', // Force straight edges
@@ -168,6 +206,7 @@ const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[],
           height: 15,
         },
       })),
+      dynamicHeight
     };
   }, []);
 
@@ -177,7 +216,7 @@ const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[],
     layouting.current = true;
 
     requestAnimationFrame(() => {
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+      const { nodes: layoutedNodes, edges: layoutedEdges, dynamicHeight } = getLayoutedElements(
         initialNodes,
         initialEdges,
         direction
@@ -185,6 +224,7 @@ const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[],
 
       setNodes(layoutedNodes);
       setEdges(layoutedEdges);
+      setGraphHeight(dynamicHeight);
 
       // Fit view after layout
       setTimeout(() => {
@@ -198,14 +238,39 @@ const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[],
     applyLayout();
   }, [applyLayout]);
 
-  return { nodes, edges, onNodesChange, onEdgesChange, applyLayout };
+  // Calculate a dynamic height based on node count as a fallback
+  useEffect(() => {
+    const nodeBasedHeight = Math.max(
+      MIN_CONTAINER_HEIGHT,
+      initialNodes.length * HEIGHT_PER_NODE
+    );
+    setGraphHeight(nodeBasedHeight);
+  }, [initialNodes.length]);
+
+  return { nodes, edges, onNodesChange, onEdgesChange, applyLayout, graphHeight };
 };
 
 interface ActivityFlowProps {
   graphModel: GraphModel;
+  className?: string;
 }
 
-const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel }) => {
+const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' }) => {
+
+
+  const dispatch = useAppDispatch();
+
+  // Add this handler for node clicks
+  const onNodeClick = useCallback((event: React.MouseEvent, node: any) => {
+    console.log('Node clicked:', node);
+    const activity = node.data;
+
+    if (activity) {
+      dispatch(setSelectedActivity(activity));
+      dispatch(setRightDrawerOpen(true));
+    }
+  }, [dispatch]);
+
   // Transform activities to React Flow nodes
   const initialNodes: FlowNode[] = useMemo(() => {
     if (!graphModel?.activities?.length) return [];
@@ -260,18 +325,22 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel }) => {
     }));
   }, [graphModel?.activityConnections]);
 
-  const { nodes, edges, onNodesChange, onEdgesChange, applyLayout } =
+  const { nodes, edges, onNodesChange, onEdgesChange, applyLayout, graphHeight } =
     useLayoutedElements(initialNodes, initialEdges);
 
   if (!graphModel) return null;
 
   return (
-    <div className="w-full h-full border border-gray-200 rounded-md">
+    <div
+      className={`w-full border border-gray-200 rounded-md ${className}`}
+      style={{ height: `${graphHeight}px` }}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
         connectionLineType={ConnectionLineType.Straight}
         minZoom={0.1}

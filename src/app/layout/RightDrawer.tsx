@@ -1,21 +1,20 @@
 import type React from 'react'
 import { useAppDispatch, useAppSelector } from '../hooks'
 import { setRightDrawerOpen } from '@/@pango.core/components/drawer/drawerSlice'
-import { setSelectedAnnotation } from '@/features/annotations/slices/selectedAnnotationSlice'
-import AnnotationDetails from '@/features/annotations/components/AnnotationDetails'
 import Button from '@mui/material/Button'
 import type { RootState } from '../store/store'
+import { setSelectedActivity } from '@/features/gocam/slices/camSlice'
+import ActivityDetails from '@/features/gocam/components/ActivityDetails'
 
 // TODO style left drawer
 const RightDrawerContent: React.FC = () => {
   const dispatch = useAppDispatch()
-  const selectedAnnotation = useAppSelector((state: RootState) => state.selectedAnnotation.selectedAnnotation)
+  const activity = useAppSelector((state: RootState) => state.cam.selectedActivity)
 
-  //console display anselected annotation
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center border-b border-gray-200 p-4">
-        <span className="text-lg font-medium">Selected Annotation</span>
+        <span className="text-lg font-medium">Selected Activity</span>
         <div className="ml-auto flex gap-2">
           <Button
             variant="outlined"
@@ -24,7 +23,7 @@ const RightDrawerContent: React.FC = () => {
             className="rounded-md"
             onClick={() => {
               dispatch(setRightDrawerOpen(false))
-              dispatch(setSelectedAnnotation(null))
+              dispatch(setSelectedActivity(null))
             }}
             aria-label="Close dialog"
           >
@@ -32,7 +31,7 @@ const RightDrawerContent: React.FC = () => {
           </Button>
         </div>
       </div>
-      {selectedAnnotation && <AnnotationDetails annotation={selectedAnnotation} />}
+      {activity && <ActivityDetails activity={activity} />}
     </div>
   )
 }
