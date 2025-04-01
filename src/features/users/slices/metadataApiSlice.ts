@@ -1,8 +1,7 @@
 import apiService from "@/app/store/apiService";
-import type { Group } from "@/features/genes/models/gene";
-import type { Contributor } from "@/features/gocam/models/cam";
 import { setUsers, setGroups } from "./metadataSlice";
 import { ENVIRONMENT } from "@/@pango.core/data/constants";
+import type { Contributor, Group } from "../models/contributor";
 
 
 export const addTagTypes = ['metadata'] as const;
@@ -34,7 +33,7 @@ export const noctuaDataApi = apiService
 
             const users: Contributor[] = usersResponse.data.map((item: any) => ({
               name: item.nickname,
-              orcid: item.uri,
+              uri: item.uri,
               group: item.group,
               initials: getInitials(item.nickname),
               color: item.color

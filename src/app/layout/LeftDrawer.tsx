@@ -7,11 +7,12 @@ import theme from '@/@pango.core/theme/theme'
 import useMediaQuery from '@mui/system/useMediaQuery'
 import Button from '@mui/material/Button'
 import Tooltip from '@mui/material/Tooltip'
+import type { RootState } from '../store/store'
 
 // TODO clear filter so aspect selection
 const LeftDrawerContent: React.FC = () => {
   const dispatch = useAppDispatch()
-  const search = useAppSelector(state => state.search)
+  const search = useAppSelector((state: RootState) => state.search)
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   return (

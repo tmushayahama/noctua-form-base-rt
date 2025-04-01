@@ -10,7 +10,7 @@ export const removeBaristaTokenFromUrl = () => {
 export const createContributorFromResponse = (response: any): User => {
   return {
     token: response.token,
-    orcid: response.orcid,
+    uri: response.uri,
     name: response.name,
     initials: response.initials,
     color: response.color,

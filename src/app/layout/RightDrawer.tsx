@@ -4,11 +4,12 @@ import { setRightDrawerOpen } from '@/@pango.core/components/drawer/drawerSlice'
 import { setSelectedAnnotation } from '@/features/annotations/slices/selectedAnnotationSlice'
 import AnnotationDetails from '@/features/annotations/components/AnnotationDetails'
 import Button from '@mui/material/Button'
+import type { RootState } from '../store/store'
 
 // TODO style left drawer
 const RightDrawerContent: React.FC = () => {
   const dispatch = useAppDispatch()
-  const selectedAnnotation = useAppSelector(state => state.selectedAnnotation.selectedAnnotation)
+  const selectedAnnotation = useAppSelector((state: RootState) => state.selectedAnnotation.selectedAnnotation)
 
   //console display anselected annotation
   return (

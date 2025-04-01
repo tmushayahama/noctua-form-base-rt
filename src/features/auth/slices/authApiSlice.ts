@@ -1,5 +1,6 @@
 import apiService from "@/app/store/apiService";
 import { ENVIRONMENT } from "@/@pango.core/data/constants";
+import type { User, UserResponse } from "../user";
 
 
 export const addTagTypes = ['user'] as const;
@@ -10,11 +11,22 @@ export const userApi = apiService
   })
   .injectEndpoints({
     endpoints: (builder) => ({
-      getUserInfo: builder.query<any, string>({
+      getUserInfo: builder.query<User | null, string>({
         query: (token) => `${ENVIRONMENT.globalBaristaLocation}/user_info_by_token/${token}`,
+        transformResponse: (response: UserResponse): User | null => {
+          if (!response) return null
+          return {
+            token: response.token,
+            uri: response.uri,
+            color: response.color,
+            email: response.email,
+            groups: response.groups,
+            group: response.groups?.[0],
+            name: response.nickname,
+          };
+        },
         providesTags: ['user'],
       }),
-
     }),
     overrideExisting: false,
   });

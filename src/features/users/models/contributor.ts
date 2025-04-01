@@ -2,16 +2,17 @@
 
 
 export interface Group {
-  url: string;
-  name: string;
+  id: string;
+  label: string;
+  shorthand?: string;
 }
 
 export interface Contributor {
-  orcid: string;
+  uri: string;
   name?: string;
+  email?: string;
   initials?: string;
   color?: string;
-  token?: string;
   frequency?: number;
   groups?: Group[];
 }

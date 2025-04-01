@@ -49,7 +49,7 @@ const renderOption = (props: React.HTMLAttributes<HTMLLIElement>, option: Catego
 const TermForm: React.FC<{ maxTerms?: number }> = ({ maxTerms = 10 }) => {
   const dispatch = useAppDispatch()
   const selectedTerms = useAppSelector((state: RootState) => state.search.slimTerms)
-  const categories = useAppSelector(state => state.terms.functionCategories)
+  const categories = useAppSelector((state: RootState) => state.terms.functionCategories)
   const [inputValue, setInputValue] = useState('')
 
   const filteredTerms = useMemo(() => {

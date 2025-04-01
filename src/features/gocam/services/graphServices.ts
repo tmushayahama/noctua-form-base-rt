@@ -1,6 +1,10 @@
 import type { Contributor, Group } from "@/features/users/models/contributor";
 import { type Edge, type GraphModel, type Node, type Activity, ActivityType, RootTypes, Relations } from "../models/cam";
 
+
+// TODO Contributor and groups
+// TODO is Compliment
+
 export function extractActivities(nodes: Node[], edges: Edge[]): Activity[] {
   const activities: Activity[] = [];
 
@@ -328,24 +332,20 @@ export const transformGraphData = (data: any): GraphModel => {
 };
 
 // Helper function to add contributors
-function addContributor(contributors: Contributor[], orcid: string): void {
-  const existing = contributors.find(c => c.orcid === orcid);
-  if (existing) {
-    existing.frequency += 1;
-  } else {
+function addContributor(contributors: Contributor[], uri: string): void {
+  if (!contributors.some(c => c.uri === uri)) {
     contributors.push({
-      orcid,
-      frequency: 1
+      uri,
     });
   }
 }
 
 // Helper function to add groups
-function addGroup(groups: Group[], url: string): void {
-  if (!groups.some(g => g.url === url)) {
+function addGroup(groups: Group[], id: string): void {
+  if (!groups.some(g => g.id === id)) {
     groups.push({
-      url,
-      name: url.split('/').pop() || url
+      id,
+      name: id.split('/').pop() || id
     });
   }
 }

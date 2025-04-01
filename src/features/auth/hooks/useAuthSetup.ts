@@ -1,13 +1,14 @@
-import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { useEffect, useState } from 'react';
+import type { RootState } from '@/app/store/store';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { removeBaristaTokenFromUrl, createContributorFromResponse } from '../authServices';
 import { useGetUserInfoQuery } from '../slices/authApiSlice';
 import { setBaristaToken, setUser } from '../slices/authSlice';
 
 export const useAuthSetup = () => {
   const dispatch = useAppDispatch();
-  const baristaToken = useAppSelector(state => state.auth.baristaToken);
-  const user = useAppSelector(state => state.auth.user);
+  const baristaToken = useAppSelector((state: RootState) => state.auth.baristaToken);
+  const user = useAppSelector((state: RootState) => state.auth.user);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Parse query parameters - removed useLocation dependency
@@ -41,15 +42,15 @@ export const useAuthSetup = () => {
 
   useEffect(() => {
     if (userInfo && userInfo.token) {
-      const contributor = createContributorFromResponse(userInfo);
-      dispatch(setUser(contributor));
-    } else if (isError) {
+      dispatch(setUser(userInfo));
+    } else if (isError || (userInfo && !userInfo.token)) {
+      // Clear auth state if API returns error OR empty response OR response without token
       dispatch(setUser(null));
       dispatch(setBaristaToken(null));
+      localStorage.removeItem('barista_token');
     }
   }, [userInfo, isError, dispatch]);
 
-  // Calculate the logged in state outside the return
   const isLoggedIn = !!baristaToken && !!user;
 
   return {

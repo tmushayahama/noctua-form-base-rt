@@ -149,7 +149,7 @@ const CamToolbar: React.FC = () => {
         <div className="flex flex-nowrap">
           {(cam.contributors || []).map((contributor) => (
             <Chip
-              key={contributor.orcid}
+              key={contributor.uri}
               icon={<FaUser size={12} className="ml-2" />}
               label={contributor.name}
               className="h-6 text-xs mr-2 bg-purple-100 text-purple-800"

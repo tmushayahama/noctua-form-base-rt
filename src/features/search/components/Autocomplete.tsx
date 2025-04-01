@@ -12,8 +12,8 @@ interface TermAutocompleteProps {
   name: string;
   rootTypeIds?: string[];
   autocompleteType?: AutocompleteType;
-  value: GOlrResponse | null;
-  onChange: (value: GOlrResponse | null) => void;
+  value: GOlrResponse | null | string;
+  onChange: (value: GOlrResponse | null | string) => void;
   onBlur?: () => void;
   disabled?: boolean;
   variant?: 'standard' | 'outlined' | 'filled';
@@ -39,11 +39,15 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
   const [options, setOptions] = useState<GOlrResponse[]>([]);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>('');
 
-  // Use RTK Query hook
+  // Determine if we should use autocomplete or regular textarea
+  const useAutocomplete = autocompleteType === AutocompleteType.TERM ||
+    autocompleteType === AutocompleteType.EVIDENCE_CODE;
+
+  // Use RTK Query hook only when using autocomplete
   const { data, isLoading, isFetching } = useSearchTermsQuery(
     { searchText: debouncedSearchTerm, closureIds: rootTypeIds },
     {
-      skip: !debouncedSearchTerm || debouncedSearchTerm.length < 3,
+      skip: !useAutocomplete || !debouncedSearchTerm || debouncedSearchTerm.length < 3,
       selectFromResult: ({ data, isLoading, isFetching }) => ({
         data: data || [],
         isLoading,
@@ -54,13 +58,15 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
 
   // Update options when data changes
   useEffect(() => {
-    if (data && data.length > 0) {
+    if (useAutocomplete && data && data.length > 0) {
       setOptions(data);
     }
-  }, [data]);
+  }, [data, useAutocomplete]);
 
   // Handle debounced search with native setTimeout
   useEffect(() => {
+    if (!useAutocomplete) return;
+
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(inputValue);
     }, 300);
@@ -68,7 +74,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
     return () => {
       clearTimeout(handler);
     };
-  }, [inputValue]);
+  }, [inputValue, useAutocomplete]);
 
   // When the autocomplete opens, initialize with empty search
   useEffect(() => {
@@ -152,17 +158,61 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
   };
 
   const handleOnFocus = () => {
-    if (!inputValue) {
+    if (useAutocomplete && !inputValue) {
       setOpen(true);
     }
   };
 
-  // The key fix for the controlled/uncontrolled issue
-  const handleChange = (_: React.SyntheticEvent, newValue: GOlrResponse | null) => {
-    // Ensure we always pass consistent values to onChange
+  // Handle change for autocomplete
+  const handleAutocompleteChange = (_: React.SyntheticEvent, newValue: GOlrResponse | null) => {
     onChange(newValue || null);
   };
 
+  // Handle change for regular textarea
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value);
+  };
+
+  // If not using autocomplete, render a regular TextField
+  if (!useAutocomplete) {
+    return (
+      <div data-pw={`form-input-${name}`} className="w-full">
+        <TextField
+          id={`textarea-${name}`}
+          name={name}
+          label={label}
+          variant={variant}
+          disabled={disabled}
+          value={typeof value === 'string' ? value : ''}
+          onChange={handleTextareaChange}
+          onBlur={onBlur}
+          multiline
+          rows={2}
+          fullWidth
+          InputProps={{
+            className: "bg-white rounded",
+            endAdornment: (
+              <>
+                {autocompleteType === AutocompleteType.REFERENCE && onOpenReference && (
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenReference(e);
+                    }}
+                    className="min-w-0 p-2"
+                  >
+                    <FaFileMedical />
+                  </Button>
+                )}
+              </>
+            ),
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Otherwise render the autocomplete component
   return (
     <div data-pw={`form-input-${name}`} className="w-full">
       <Autocomplete
@@ -173,8 +223,8 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
         onClose={() => setOpen(false)}
         options={options}
         loading={isLoading || isFetching}
-        value={value} // This will be null or a valid object
-        onChange={handleChange}
+        value={typeof value === 'object' ? value : null}
+        onChange={handleAutocompleteChange}
         onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
         getOptionLabel={getOptionLabel as (option: any) => string}
         isOptionEqualToValue={(option, value) => {
@@ -202,17 +252,6 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
                   {isLoading || isFetching ? (
                     <CircularProgress color="inherit" size={20} />
                   ) : null}
-                  {autocompleteType === AutocompleteType.REFERENCE && onOpenReference && (
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenReference(e);
-                      }}
-                      className="min-w-0 p-2"
-                    >
-                      <FaFileMedical />
-                    </Button>
-                  )}
                   {params.InputProps.endAdornment}
                 </>
               ),

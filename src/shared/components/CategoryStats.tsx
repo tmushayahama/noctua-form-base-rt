@@ -10,6 +10,7 @@ import { trackEvent } from '@/analytics'
 import Tooltip from '@mui/material/Tooltip'
 import Checkbox from '@mui/material/Checkbox'
 import Button from '@mui/material/Button'
+import type { RootState } from '@/app/store/store'
 
 const CategoryStats: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -17,7 +18,7 @@ const CategoryStats: React.FC = () => {
     Object.values(ASPECT_MAP).map(aspect => aspect.id)
   )
 
-  const categories = useAppSelector(state => state.terms.functionCategories)
+  const categories = useAppSelector((state: RootState) => state.terms.functionCategories)
   const filteredCategories = useMemo(
     () => categories.filter(cat => selectedAspects.includes(cat.aspect)),
     [categories, selectedAspects]

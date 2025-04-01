@@ -3,10 +3,11 @@ import { SearchFilterType } from '../search'
 import { clearSearch, removeItem } from '../searchSlice'
 import Chip from '@mui/material/Chip'
 import Tooltip from '@mui/material/Tooltip'
+import type { RootState } from '@/app/store/store'
 
 const FilterSummary = () => {
   const dispatch = useAppDispatch()
-  const search = useAppSelector(state => state.search)
+  const search = useAppSelector((state: RootState) => state.search)
 
   const clearAllFilters = () => {
     dispatch(clearSearch())

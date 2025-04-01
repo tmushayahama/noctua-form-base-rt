@@ -40,18 +40,13 @@ const globalKnownRelations = typeof global_known_relations !== 'undefined'
   ? global_known_relations
   : relations.globalKnownRelations;
 
-export const environment = {
-
-};
-
-
 
 
 export const ENVIRONMENT = {
   isDev: true,
   isBeta: false,
-  baristaUrl: 'http://barista-dev.berkeleybop.org/api/minerva_public_dev/m3Batch/',
-  baristaLocalUrl: 'http://localhost:3400/api/minerva_local/m3Batch',
+  baristaDevUrl: 'http://barista-dev.berkeleybop.org/api/minerva_public_dev/m3Batch/',
+  baristaUrl: 'http://localhost:3400/api/minerva_local/m3Batch',
 
   globalGolrNeoServer: golrNeoServer,
   globalGolrServer: golrServer,

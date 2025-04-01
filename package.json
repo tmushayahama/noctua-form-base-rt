@@ -46,6 +46,7 @@
     "graphql-request": "^7.0.1",
     "jointjs": "^3.7.7",
     "minerva-requests": "0.0.18",
+    "mui-nested-menu": "^4.0.1",
     "panther-overrep-form": "^0.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -12,28 +12,56 @@ import shapesData from '@/@pango.core/data/shapes.json';
 import termsData from '@/@pango.core/data/shape-terms.json';
 import { globalKnownRelations } from '@/@pango.core/data/relations';
 import { Menu, MenuItem, Button, IconButton, Paper } from '@mui/material';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { convertTreeToJson } from '../../services/addActivityServices';
 
 // Relation menu hook
-const useRelationMenu = () => {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+const useNestedMenu = () => {
+  const [relationMenuAnchor, setRelationAnchorEl] = useState<null | HTMLElement>(null);
+  const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(null);
+  const [evidenceMenuAnchor, setEvidenceMenuAnchor] = useState<null | HTMLElement>(null);
 
-  const handleOpenMenu = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
+  const handleRelationMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setRelationAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseRelationMenu = useCallback(() => {
+    setRelationAnchorEl(null);
   }, []);
 
-  const handleCloseMenu = useCallback(() => {
-    setAnchorEl(null);
-  }, []);
+  const handleMainMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setMainMenuAnchor(event.currentTarget);
+  };
+
+  const handleMainMenuClose = () => {
+    setMainMenuAnchor(null);
+  };
+
+  // Evidence menu handlers
+  const handleEvidenceMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setEvidenceMenuAnchor(event.currentTarget);
+  };
+
+  const handleEvidenceMenuClose = () => {
+    setEvidenceMenuAnchor(null);
+  };
 
   return {
-    anchorEl,
-    isOpen: Boolean(anchorEl),
-    openMenu: handleOpenMenu,
-    closeMenu: handleCloseMenu
+    mainMenuAnchor,
+    relationMenuAnchor,
+    evidenceMenuAnchor,
+    isMainMenuOpen: Boolean(mainMenuAnchor),
+    isRelationMenuOpen: Boolean(relationMenuAnchor),
+    isEvidenceMenuOpen: Boolean(evidenceMenuAnchor),
+    openMainMenu: handleMainMenuOpen,
+    closeMainMenu: handleMainMenuClose,
+    openRelationMenu: handleRelationMenuOpen,
+    closeRelationMenu: handleCloseRelationMenu,
+    openEvidenceMenu: handleEvidenceMenuOpen,
+    closeEvidenceMenu: handleEvidenceMenuClose,
   };
 };
+
 
 // Interface for shape data
 interface ShexShape {
@@ -63,7 +91,20 @@ globalKnownRelations.forEach((relation: any) => {
 // Node component with relation menu
 const NodeComponent: React.FC<{ node: TreeNode }> = ({ node }) => {
   const dispatch = useAppDispatch();
-  const { anchorEl, isOpen, openMenu, closeMenu } = useRelationMenu();
+  const {
+    mainMenuAnchor,
+    relationMenuAnchor,
+    evidenceMenuAnchor,
+    isMainMenuOpen,
+    isRelationMenuOpen,
+    isEvidenceMenuOpen,
+    openMainMenu,
+    closeMainMenu,
+    openRelationMenu,
+    closeRelationMenu,
+    openEvidenceMenu,
+    closeEvidenceMenu,
+  } = useNestedMenu();
 
   // Get predicates based on rootTypeIds (parent objects)
   const availablePredicates = useMemo(() => {
@@ -89,7 +130,6 @@ const NodeComponent: React.FC<{ node: TreeNode }> = ({ node }) => {
     }));
   }, [node.rootTypes]);
 
-  // Handle term selection - Fix for controlled/uncontrolled issue
   const handleTermChange = useCallback((term: GOlrResponse | null) => {
     if (!term) return;
 
@@ -155,8 +195,9 @@ const NodeComponent: React.FC<{ node: TreeNode }> = ({ node }) => {
       rootTypes,
     }));
 
-    closeMenu();
-  }, [dispatch, node.id, closeMenu]);
+    closeRelationMenu();
+    closeMainMenu();
+  }, [dispatch, node.id, closeRelationMenu, closeMainMenu]);
 
   // Create label for autocomplete
   const autocompleteLabel = node.parentId === null
@@ -164,9 +205,8 @@ const NodeComponent: React.FC<{ node: TreeNode }> = ({ node }) => {
     : `${node.relation?.label} (${node.rootTypes.map(rt => rt.label).join(', ')})`;
 
   return (
-    <div className="border-l-2 border-gray-300 pl-4 my-4">
-      <div className="flex items-center gap-3">
-        {/* Term Autocomplete */}
+    <div className="pl-4 my-4">
+      <div className="flex items-center gap-2 w-full">
         <div className="flex-1">
           <TermAutocomplete
             label={autocompleteLabel}
@@ -178,8 +218,7 @@ const NodeComponent: React.FC<{ node: TreeNode }> = ({ node }) => {
             onOpenTermDetails={() => { }}
           />
         </div>
-
-        <div className="flex-1">
+        <div className="w-[250px]">
           <TermAutocomplete
             label="Evidence"
             name={`evidence-${node.id}`}
@@ -191,7 +230,7 @@ const NodeComponent: React.FC<{ node: TreeNode }> = ({ node }) => {
           />
         </div>
 
-        <div className="flex-1">
+        <div className="w-[150px]">
           <TermAutocomplete
             label="Reference"
             name={`reference-${node.id}`}
@@ -202,7 +241,7 @@ const NodeComponent: React.FC<{ node: TreeNode }> = ({ node }) => {
           />
         </div>
 
-        <div className="flex-1">
+        <div className="w-[150px]">
           <TermAutocomplete
             label="With"
             name={`with-${node.id}`}
@@ -213,41 +252,99 @@ const NodeComponent: React.FC<{ node: TreeNode }> = ({ node }) => {
           />
         </div>
 
-        {/* Relation Menu */}
-        <div>
-          <Button
-            variant="outlined"
-            endIcon={<ArrowDropDownIcon />}
-            onClick={openMenu}
-          >
-            Add Relation
-          </Button>
-          <Menu
-            anchorEl={anchorEl}
-            open={isOpen}
-            onClose={closeMenu}
-          >
-            {availablePredicates.map(predicate => (
-              <MenuItem
-                key={predicate.id}
-                onClick={() => handleRelationSelect(predicate.id, predicate.objects)}
-              >
-                {predicate.label}
-              </MenuItem>
-            ))}
-          </Menu>
-        </div>
 
-        {/* Remove button (not for root) */}
-        {node.parentId !== null && (
-          <IconButton
-            color="error"
-            size="small"
-            onClick={() => dispatch(removeNode(node.id))}
+        {/* NEW NESTED MENU SYSTEM */}
+        <IconButton
+          size="small"
+          onClick={openMainMenu}
+        >
+          +
+        </IconButton>
+
+        {/* Main Menu */}
+        <Menu
+          anchorEl={mainMenuAnchor}
+          open={isMainMenuOpen}
+          onClose={closeMainMenu}
+          className=""
+        >
+          <MenuItem onClick={closeMainMenu}>
+            Search Annotations
+          </MenuItem>
+          <MenuItem onClick={closeMainMenu}>
+            NOT Qualifier
+          </MenuItem>
+          <MenuItem
+            onClick={(event) => {
+              openRelationMenu(event);
+            }}
           >
-            <DeleteIcon />
-          </IconButton>
-        )}
+            Add an Extension
+          </MenuItem>
+          <MenuItem
+            onClick={(event) => {
+              openEvidenceMenu(event);
+            }}
+          >
+            Evidence
+          </MenuItem>
+          <MenuItem onClick={closeMainMenu}>
+            Add Root Term
+          </MenuItem>
+          <MenuItem onClick={closeMainMenu}>
+            Clear Values
+          </MenuItem>
+          {node.parentId !== null && (
+            <MenuItem onClick={closeMainMenu}>
+              <IconButton
+                color="error"
+                size="small"
+                onClick={() => dispatch(removeNode(node.id))}
+              >
+                <DeleteIcon />
+              </IconButton> Delete Row
+            </MenuItem>
+          )}
+        </Menu>
+
+        {/* Add Extensions Submenu */}
+        <Menu
+          anchorEl={relationMenuAnchor}
+          open={isRelationMenuOpen}
+          onClose={closeRelationMenu}
+          className=""
+        >
+          {availablePredicates.map(predicate => (
+            <MenuItem
+              key={predicate.id}
+              onClick={() => handleRelationSelect(predicate.id, predicate.objects)}
+            >
+              {predicate.label}
+            </MenuItem>
+          ))}
+        </Menu>
+
+        {/* Evidence Submenu */}
+        <Menu
+          anchorEl={evidenceMenuAnchor}
+          open={isEvidenceMenuOpen}
+          onClose={closeEvidenceMenu}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'left',
+          }}
+          className=""
+        >
+          <MenuItem onClick={closeEvidenceMenu}>
+            Add Evidence
+          </MenuItem>
+          <MenuItem onClick={closeEvidenceMenu}>
+            Remove Evidence
+          </MenuItem>
+          <MenuItem onClick={closeEvidenceMenu}>
+            Clone Evidence
+          </MenuItem>
+        </Menu>
       </div>
 
       {/* Children nodes */}
@@ -262,8 +359,9 @@ const NodeComponent: React.FC<{ node: TreeNode }> = ({ node }) => {
   );
 };
 
-const OntologyTreeForm: React.FC = () => {
+const ActivityForm: React.FC = () => {
   const dispatch = useAppDispatch();
+  const model = useAppSelector((state: RootState) => state.cam.model);
   const { tree } = useAppSelector((state: RootState) => state.activityForm);
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
   const initialized = useRef<boolean>(false);
@@ -293,7 +391,13 @@ const OntologyTreeForm: React.FC = () => {
   // Handle form submission
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!model || !model.id) {
+      console.error('Model ID is not available');
+      return;
+    }
     console.log('Form submitted:', tree);
+    const json = convertTreeToJson(tree, model?.id ?? 'gomodel:0000000000');
+    console.log(JSON.stringify(json, null, 2));
     setFormSubmitted(true);
 
     // Reset form submission status after showing success message
@@ -302,40 +406,35 @@ const OntologyTreeForm: React.FC = () => {
     }, 3000);
   };
 
-  // Initialize root term
-
   return (
-    <Paper elevation={3} className="p-6 m-4">
-      <h2 className="text-xl font-bold mb-4">Ontology Tree Form</h2>
 
-      <form onSubmit={handleFormSubmit}>
-        {tree.length === 0 ? (
-          <p>Loading tree...</p>
-        ) : (
-          <div className="mb-6">
-            {tree.map(node => <NodeComponent key={node.id} node={node} />)}
-          </div>
-        )}
-
-        {formSubmitted && (
-          <div className="mb-4 p-3 bg-green-100 text-green-800 rounded">
-            Form submitted successfully!
-          </div>
-        )}
-
-        <div className="mt-4">
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={tree.length === 0}
-          >
-            Save
-          </Button>
+    <form onSubmit={handleFormSubmit}>
+      {tree.length === 0 ? (
+        <p>Loading tree...</p>
+      ) : (
+        <div className="mb-6">
+          {tree.map(node => <NodeComponent key={node.id} node={node} />)}
         </div>
-      </form>
-    </Paper>
+      )}
+
+      {formSubmitted && (
+        <div className="mb-4 p-3 bg-green-100 text-green-800 rounded">
+          Form submitted successfully!
+        </div>
+      )}
+
+      <div className="mt-4">
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          disabled={tree.length === 0}
+        >
+          Save
+        </Button>
+      </div>
+    </form>
   );
 };
 
-export default OntologyTreeForm;
+export default ActivityForm;

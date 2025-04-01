@@ -1,25 +1,20 @@
 import type React from 'react';
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { Button, IconButton, Menu, MenuItem } from '@mui/material';
 import { FaGithub, FaTwitter, FaFacebook } from 'react-icons/fa';
 import { IoApps, IoChevronDown } from 'react-icons/io5';
 import { ENVIRONMENT } from '@/@pango.core/data/constants';
 import { useAuth } from '@/features/auth/authProvider';
 import { useAppSelector } from '../hooks';
+import type { RootState } from '../store/store';
 
 const Toolbar: React.FC = () => {
-  const navigate = useNavigate();
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
   const [aboutMenuAnchor, setAboutMenuAnchor] = useState<null | HTMLElement>(null);
   const [helpMenuAnchor, setHelpMenuAnchor] = useState<null | HTMLElement>(null);
 
-  // Get auth state and URLs from auth context
   const { isLoggedIn, loginUrl, logoutUrl, noctuaUrl } = useAuth();
-
-  // Get user from Redux store
-  const user = useAppSelector(state => state.auth.user);
-
+  const user = useAppSelector((state: RootState) => state.auth.user);
   const isDev = ENVIRONMENT.isDev;
   const isBeta = ENVIRONMENT.isBeta;
 
