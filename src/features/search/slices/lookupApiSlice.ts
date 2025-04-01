@@ -61,7 +61,7 @@ const lookupApi = apiService
 
             // Build request parameters
             const requestParams = {
-              q: escapedQuery,
+              q: escapedQuery + '*',
               defType: 'edismax',
               qt: 'standard',
               indent: 'on',

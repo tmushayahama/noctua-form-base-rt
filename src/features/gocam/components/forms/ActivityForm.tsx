@@ -5,15 +5,16 @@ import type { GOlrResponse } from '@/features/search/models/search';
 import { AutocompleteType } from '@/features/search/models/search';
 import type React from 'react';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import type { TreeNode } from '../../models/cam';
+import type { ShexShape, TreeNode } from '../../models/cam';
 import { RootTypes } from '../../models/cam';
-import { setRootTerm, addRootNode, addChildNode, updateNode, removeNode } from '../../slices/activityFormSlice';
+import { setRootTerm, addRootNode, addChildNode, updateNode, removeNode, initializeTree } from '../../slices/activityFormSlice';
 import shapesData from '@/@pango.core/data/shapes.json';
 import termsData from '@/@pango.core/data/shape-terms.json';
 import { globalKnownRelations } from '@/@pango.core/data/relations';
-import { Menu, MenuItem, Button, IconButton, Paper } from '@mui/material';
+import { Menu, MenuItem, Button, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { convertTreeToJson } from '../../services/addActivityServices';
+import { useUpdateGraphModelMutation } from '../../slices/camApiSlice';
 
 // Relation menu hook
 const useNestedMenu = () => {
@@ -61,16 +62,6 @@ const useNestedMenu = () => {
     closeEvidenceMenu: handleEvidenceMenuClose,
   };
 };
-
-
-// Interface for shape data
-interface ShexShape {
-  subject: string;
-  predicate: string;
-  object: string[];
-  exclude_from_extensions?: boolean;
-}
-
 
 
 // Generate term lookup map
@@ -361,10 +352,12 @@ const NodeComponent: React.FC<{ node: TreeNode }> = ({ node }) => {
 
 const ActivityForm: React.FC = () => {
   const dispatch = useAppDispatch();
+  const [updateGraphModel] = useUpdateGraphModelMutation();
   const model = useAppSelector((state: RootState) => state.cam.model);
   const { tree } = useAppSelector((state: RootState) => state.activityForm);
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
   const initialized = useRef<boolean>(false);
+
 
   useEffect(() => {
     if (!initialized.current && tree.length === 0) {
@@ -378,14 +371,52 @@ const ActivityForm: React.FC = () => {
         label
       }));
 
-      dispatch(addRootNode(
-        [{
+      dispatch(addRootNode({
+        rootTypes: [{
           id: initialTermId,
           label
         }],
-      ));
+        initialChildren: [
+          {
+            relation: {
+              id: "RO:0002333",
+              label: "enabled by"
+            },
+            rootTypes: [
+              {
+                id: "CHEBI:33695",
+                label: "information biomacromolecule"
+              }
+            ]
+          },
+          {
+            relation: {
+              id: "BFO:0000050",
+              label: "part of"
+            },
+            rootTypes: [
+              {
+                id: "GO:0008150",
+                label: "biological_process"
+              }
+            ]
+          },
+          {
+            relation: {
+              id: "BFO:0000066",
+              label: "occurs in"
+            },
+            rootTypes: [
+              {
+                id: "CARO:0000000",
+                label: "anatomical entity"
+              }
+            ]
+          }]
+      }));
+
     }
-  }, [dispatch, tree.length]);
+  }, [dispatch, tree, tree.length]);
 
 
   // Handle form submission
@@ -398,6 +429,15 @@ const ActivityForm: React.FC = () => {
     console.log('Form submitted:', tree);
     const json = convertTreeToJson(tree, model?.id ?? 'gomodel:0000000000');
     console.log(JSON.stringify(json, null, 2));
+
+    updateGraphModel(json)
+      .unwrap()
+      .then(() => {
+        console.log('Graph model updated successfully');
+      })
+      .catch((error) => {
+        console.error('Error updating graph model:', error);
+      });
     setFormSubmitted(true);
 
     // Reset form submission status after showing success message

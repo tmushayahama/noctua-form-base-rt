@@ -42,6 +42,11 @@ const processNodes = (
   modelId: string
 ): void => {
   nodes.forEach(node => {
+    // Skip nodes with null, empty, or undefined term.id
+    if (!node.term?.id) {
+      return;
+    }
+
     const variableId = uuidv4();
     nodeVariables.set(node.id, variableId);
 
@@ -53,7 +58,7 @@ const processNodes = (
         expressions: [
           {
             type: "class",
-            id: node.term?.id
+            id: node.term.id
           }
         ],
         "model-id": modelId,
@@ -62,7 +67,7 @@ const processNodes = (
     });
 
     // If this node has evidence, add evidence individual and annotation
-    if (node.evidence) {
+    if (node.evidence?.evidenceCode) {
       addEvidenceForNode(node.id, node.evidence, operations, nodeVariables, modelId);
     }
 
@@ -142,8 +147,9 @@ const processRelationships = (
   modelId: string
 ): void => {
   nodes.forEach(node => {
-    // Skip if node has no parent (root node)
-    if (node.parentId && node.relation) {
+    // Skip if node has no parent (root node) or if node.id is not in nodeVariables
+    // (which means the node was skipped due to missing term.id)
+    if (node.parentId && node.relation && nodeVariables.has(node.id)) {
       const parentVarId = nodeVariables.get(node.parentId);
       const nodeVarId = nodeVariables.get(node.id);
 
@@ -189,4 +195,3 @@ const processRelationships = (
     }
   });
 };
-

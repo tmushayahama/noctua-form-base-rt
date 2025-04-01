@@ -46,7 +46,7 @@ export const ENVIRONMENT = {
   isDev: true,
   isBeta: false,
   baristaDevUrl: 'http://barista-dev.berkeleybop.org/api/minerva_public_dev/m3Batch/',
-  baristaUrl: 'http://localhost:3400/api/minerva_local/m3Batch',
+  baristaUrl: 'http://localhost:3400/api/minerva_local/m3BatchPrivileged',
 
   globalGolrNeoServer: golrNeoServer,
   globalGolrServer: golrServer,

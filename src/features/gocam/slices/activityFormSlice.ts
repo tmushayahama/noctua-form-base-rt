@@ -35,15 +35,31 @@ export const activityFormSlice = createSlice({
       state.tree = [];
     },
 
-    addRootNode: (state, action: PayloadAction<Entity[]>) => {
-      const rootTypes = action.payload;
 
-      state.tree.push({
-        id: uuidv4(),
+    addRootNode: (state, action: PayloadAction<{
+      rootTypes: Entity[];
+      initialChildren?: {
+        relation: Entity;
+        rootTypes: Entity[];
+      }[];
+    }>) => {
+      const { rootTypes, initialChildren } = action.payload;
+      const rootNodeId = uuidv4();
+
+      const newRootNode: TreeNode = {
+        id: rootNodeId,
         parentId: null,
         rootTypes,
-        children: [],
-      });
+        children: initialChildren ? initialChildren.map(child => ({
+          id: uuidv4(),
+          relation: child.relation,
+          parentId: rootNodeId,
+          rootTypes: child.rootTypes,
+          children: []
+        })) : [],
+      };
+
+      state.tree.push(newRootNode);
     },
 
     addChildNode: (state, action: PayloadAction<{

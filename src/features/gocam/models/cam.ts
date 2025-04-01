@@ -143,3 +143,10 @@ export interface TreeNode {
   rootTypes: Entity[];
   children: TreeNode[];
 }
+
+export interface ShexShape {
+  subject: string;
+  predicate: string;
+  object: string[];
+  exclude_from_extensions?: boolean;
+}
