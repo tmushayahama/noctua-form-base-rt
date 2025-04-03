@@ -26,17 +26,7 @@ enum ActivityType {
 const CamToolbar: React.FC = () => {
   const cam = useAppSelector(state => state.cam.model);
 
-  console.log('cam', cam);
-  const [createMenuAnchor, setCreateMenuAnchor] = useState<null | HTMLElement>(null);
   const [exportMenuAnchor, setExportMenuAnchor] = useState<null | HTMLElement>(null);
-
-  const handleCreateMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setCreateMenuAnchor(event.currentTarget);
-  };
-
-  const handleCreateMenuClose = () => {
-    setCreateMenuAnchor(null);
-  };
 
   const handleExportMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setExportMenuAnchor(event.currentTarget);
@@ -44,11 +34,6 @@ const CamToolbar: React.FC = () => {
 
   const handleExportMenuClose = () => {
     setExportMenuAnchor(null);
-  };
-
-  const openActivityForm = (type: ActivityType) => {
-    console.log(`Opening activity form for type: ${type}`);
-    handleCreateMenuClose();
   };
 
   const openCamForm = () => {
@@ -106,7 +91,6 @@ const CamToolbar: React.FC = () => {
         </Tooltip>
       </div>
 
-      {/* Clone Button */}
       <div className="px-4 border-r border-gray-300">
         <Tooltip title="Make a copy of this model" placement="top">
           <Button
@@ -119,7 +103,6 @@ const CamToolbar: React.FC = () => {
         </Tooltip>
       </div>
 
-      {/* Model State */}
       {cam.state && (
         <div className="flex items-center px-2 max-w-[150px]">
           <Chip
@@ -144,7 +127,6 @@ const CamToolbar: React.FC = () => {
         </div>
       )}
 
-      {/* Contributors */}
       <div className="flex items-center flex-grow overflow-x-auto">
         <div className="flex flex-nowrap">
           {(cam.contributors || []).map((contributor) => (

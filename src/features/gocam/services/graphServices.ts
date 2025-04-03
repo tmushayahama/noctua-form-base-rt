@@ -24,12 +24,10 @@ export function extractActivities(nodes: Node[], edges: Edge[]): Activity[] {
 
     const activityNodes: Node[] = [];
     const activityEdges: Edge[] = [];
-    const visited = new Set<string>(); // Track visited nodes for this activity
+    const visited = new Set<string>();
 
-    // Start with the initial enabledBy edge
     activityEdges.push(enabledByEdge);
 
-    // Recursively traverse the graph starting from the molecular function
     exploreSubgraph(
       molecularFunction,
       nodes,
@@ -40,7 +38,6 @@ export function extractActivities(nodes: Node[], edges: Edge[]): Activity[] {
       enabledBySourceIds
     );
 
-    // Find latest date across all nodes and edges
     const dates = [
       ...activityNodes.map(node => node.date).filter(Boolean),
       ...activityEdges.map(edge => edge.date).filter(Boolean)
@@ -52,7 +49,7 @@ export function extractActivities(nodes: Node[], edges: Edge[]): Activity[] {
 
     activities.push({
       uid: molecularFunction.uid,
-      type: ActivityType.DEFAULT,
+      type: ActivityType.ACTIVITY,
       rootNode: molecularFunction,
       molecularFunction,
       enabledBy,
@@ -141,7 +138,6 @@ export function extractActivityConnections(activities: Activity[], edges: Edge[]
     });
   });
 
-  // Find edges that connect two different activities
   edges.forEach(edge => {
     const sourceActivity = nodeToActivityMap.get(edge.sourceId);
     const targetActivity = nodeToActivityMap.get(edge.targetId);
@@ -160,10 +156,6 @@ export function extractActivityConnections(activities: Activity[], edges: Edge[]
   return activityConnections;
 }
 
-/**
- * Recursively explore the subgraph starting from a node
- * Stops exploration when encountering nodes already in activities
- */
 function exploreSubgraph(
   currentNode: Node,
   allNodes: Node[],
@@ -173,35 +165,26 @@ function exploreSubgraph(
   visited: Set<string>,
   activityNodeIds: Set<string>
 ): void {
-  // Mark current node as visited
-  visited.add(currentNode.uid);
 
-  // Add current node to molecule nodes
+  visited.add(currentNode.uid);
   moleculeNodes.push(currentNode);
 
-  // Find all edges connected to the current node
   const connectedEdges = allEdges.filter(edge =>
     edge.sourceId === currentNode.uid || edge.targetId === currentNode.uid
   );
 
   for (const edge of connectedEdges) {
-    // Skip if already processed this edge
     if (moleculeEdges.some(e => e.id === edge.id)) continue;
 
-    // Get the node on the other end of this edge
     const connectedNodeId = edge.sourceId === currentNode.uid ? edge.targetId : edge.sourceId;
 
-    // Skip if we've already visited this node or if it's part of an activity
     if (visited.has(connectedNodeId) || activityNodeIds.has(connectedNodeId)) continue;
 
-    // Add this edge to the molecule
     moleculeEdges.push(edge);
 
-    // Get the node object
     const connectedNode = allNodes.find(node => node.uid === connectedNodeId);
     if (!connectedNode) continue;
 
-    // Recursively explore from the connected node
     exploreSubgraph(
       connectedNode,
       allNodes,
@@ -214,9 +197,6 @@ function exploreSubgraph(
   }
 }
 
-
-
-
 export const transformGraphData = (data: any): GraphModel => {
   if (!data) return { id: '', nodes: [], edges: [], activities: [], activityConnections: [] };
 
@@ -225,7 +205,6 @@ export const transformGraphData = (data: any): GraphModel => {
   const contributors: Contributor[] = [];
   const groups: Group[] = [];
 
-  // Process individuals (nodes)
   if (data.individuals && Array.isArray(data.individuals)) {
     data.individuals.forEach((individual: any) => {
       const nodeData: Node = {
@@ -235,7 +214,6 @@ export const transformGraphData = (data: any): GraphModel => {
         rootTypes: individual['root-type']?.map((rt: any) => rt.id) || [],
       };
 
-      // Process annotations
       if (individual.annotations && Array.isArray(individual.annotations)) {
         individual.annotations.forEach((annotation: any) => {
           if (annotation.key === 'contributor') {
@@ -256,7 +234,6 @@ export const transformGraphData = (data: any): GraphModel => {
     });
   }
 
-  // Process facts (edges)
   if (data.facts && Array.isArray(data.facts)) {
     data.facts.forEach((fact: any) => {
       const source = nodes.find(node => node.uid === fact.subject)
@@ -271,7 +248,6 @@ export const transformGraphData = (data: any): GraphModel => {
           target
         };
 
-        // Process annotations
         if (fact.annotations && Array.isArray(fact.annotations)) {
           fact.annotations.forEach((annotation: any) => {
             if (annotation.key === 'contributor') {
@@ -293,14 +269,12 @@ export const transformGraphData = (data: any): GraphModel => {
     });
   }
 
-  // Extract activities from the graph
   const activities = extractActivities(nodes, edges);
   const molecules = extractMolecules(nodes, edges, activities);
   activities.push(...molecules);
 
   const activityConnections = extractActivityConnections(activities, edges);
 
-  // Process model annotations
   const graphModel: GraphModel = {
     id: data.id || '',
     nodes,
@@ -331,7 +305,6 @@ export const transformGraphData = (data: any): GraphModel => {
   return graphModel;
 };
 
-// Helper function to add contributors
 function addContributor(contributors: Contributor[], uri: string): void {
   if (!contributors.some(c => c.uri === uri)) {
     contributors.push({
@@ -340,7 +313,6 @@ function addContributor(contributors: Contributor[], uri: string): void {
   }
 }
 
-// Helper function to add groups
 function addGroup(groups: Group[], id: string): void {
   if (!groups.some(g => g.id === id)) {
     groups.push({

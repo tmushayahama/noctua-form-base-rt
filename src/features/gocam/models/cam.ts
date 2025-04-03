@@ -25,9 +25,7 @@ export enum Relations {
 }
 
 export enum ActivityType {
-  DEFAULT = 'default',
-  BPONLY = 'bpOnly',
-  CCONLY = 'ccOnly',
+  ACTIVITY = 'activity',
   MOLECULE = 'molecule',
   PROTEIN_COMPLEX = 'proteinComplex',
 }

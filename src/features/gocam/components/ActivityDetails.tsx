@@ -82,7 +82,7 @@ const ActivityDetail: React.FC<ActivityDetailProps> = ({ activity }) => {
               Relationships ({activity.edges.length})
             </span>
             <div className="mt-2 border border-gray-200 rounded-md divide-y">
-              {activity.edges.map((edge: Edge) => (
+              {activity.edges?.map((edge: Edge) => (
                 <div key={edge.id} className="p-3">
                   <div className="flex items-center">
                     <div className="font-medium text-sm">{edge.source.label}</div>
