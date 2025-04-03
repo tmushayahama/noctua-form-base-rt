@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Node as FlowNode, Edge as FlowEdge, XYPosition } from 'reactflow';
+import type { Node as FlowNode, Edge as FlowEdge, XYPosition, Connection } from 'reactflow';
 import ReactFlow, {
   Controls,
   Background,
@@ -22,6 +22,7 @@ import ActivityDialog from './dialogs/ActivityFormDialog';
 import ActivityForm from './forms/ActivityForm';
 import { GRAPH_DIMENSIONS } from '../constants';
 import { StencilActivityItem, StencilMoleculeItem, nodeTypes } from './diagram/ActivityNodes';
+import RelationForm from '@/features/relations/components/RelationForm';
 
 
 const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[], direction = 'TB') => {
@@ -198,6 +199,12 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [droppedPosition, setDroppedPosition] = useState<XYPosition | null>(null);
 
+  // Connection state
+  const [sourceNode, setSourceNode] = useState<FlowNode | null>(null);
+  const [targetNode, setTargetNode] = useState<FlowNode | null>(null);
+  const [pendingConnection, setPendingConnection] = useState<Connection | null>(null);
+  const [relationDialogOpen, setRelationDialogOpen] = useState(false);
+
   // Transform activities to React Flow nodes
   const initialNodes: FlowNode[] = useMemo(() => {
     if (!graphModel?.activities?.length) return [];
@@ -252,7 +259,8 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
     onEdgesChange,
     applyLayout,
     graphHeight,
-    setNodes
+    setNodes,
+    setEdges
   } = useLayoutedElements(initialNodes, initialEdges);
 
   // Store current node IDs before opening dialog
@@ -278,6 +286,46 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
   const handleDialogClose = useCallback((): void => {
     setDialogOpen(false);
   }, []);
+
+  // Relation dialog handlers
+  const handleRelationDialogOpen = useCallback((): void => {
+    setRelationDialogOpen(true);
+  }, []);
+
+  const handleRelationDialogClose = useCallback((): void => {
+    setRelationDialogOpen(false);
+    setSourceNode(null);
+    setTargetNode(null);
+    setPendingConnection(null);
+  }, []);
+
+  // Connection handlers
+  const onConnectStart = useCallback((event: React.MouseEvent, params: any) => {
+    const { nodeId } = params;
+    if (nodeId) {
+      const source = nodes.find(n => n.id === nodeId);
+      if (source) {
+        setSourceNode(source);
+      }
+    }
+  }, [nodes]);
+
+  const onConnect = useCallback((connection: Connection) => {
+    if (!connection.source || !connection.target) return;
+
+    const source = nodes.find(n => n.id === connection.source);
+    const target = nodes.find(n => n.id === connection.target);
+
+    if (source && target) {
+      setSourceNode(source);
+      setTargetNode(target);
+      setPendingConnection(connection);
+      handleRelationDialogOpen();
+    }
+
+    // Don't create the connection automatically
+    return;
+  }, [nodes, handleRelationDialogOpen]);
 
   // Handle drag over
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
@@ -346,6 +394,55 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
     [droppedPosition, nodes, setNodes, handleDialogClose]
   );
 
+  // Relation form submission handler
+  const handleRelationSubmit = useCallback((relationData) => {
+    if (!sourceNode || !targetNode || !pendingConnection) {
+      console.error("Cannot create connection: missing source, target, or connection data");
+      handleRelationDialogClose();
+      return;
+    }
+
+    const newEdge = {
+      id: `e${sourceNode.id}-${targetNode.id}`,
+      source: pendingConnection.source,
+      target: pendingConnection.target,
+      sourceHandle: pendingConnection.sourceHandle,
+      targetHandle: pendingConnection.targetHandle,
+      type: 'default',
+      style: {
+        stroke: '#6366F1',
+        strokeWidth: 1,
+      },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: '#6366F1',
+        width: 15,
+        height: 15,
+      },
+      label: relationData.label,
+      labelStyle: {
+        fill: '#374151',
+        fontWeight: 500,
+        fontSize: 11,
+        backgroundColor: '#F3F4F6',
+        padding: '2px 4px',
+        borderRadius: '2px'
+      },
+      labelBgStyle: { fill: 'transparent' },
+      data: {
+        relationData,
+        sourceData: sourceNode.data,
+        targetData: targetNode.data
+      },
+    };
+
+    // Add the new edge
+    setEdges(eds => [...eds, newEdge]);
+
+    // Close the dialog
+    handleRelationDialogClose();
+  }, [pendingConnection, sourceNode, targetNode, setEdges, handleRelationDialogClose]);
+
   if (!graphModel) return null;
 
   return (
@@ -369,6 +466,8 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
+          onConnect={onConnect}
+          onConnectStart={onConnectStart}
           nodeTypes={nodeTypes}
           connectionLineType={ConnectionLineType.Straight}
           minZoom={0.1}
@@ -403,6 +502,32 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
             onSubmit={handleActivitySubmit}
             onCancel={handleDialogClose}
           />
+        </ActivityDialog>
+
+        {/* Relation Dialog with null checks */}
+        <ActivityDialog
+          open={relationDialogOpen}
+          onClose={handleRelationDialogClose}
+          title="Add New Relation"
+        >
+          {sourceNode && targetNode ? (
+            <RelationForm
+              onSubmit={handleRelationSubmit}
+              onCancel={handleRelationDialogClose}
+              sourceActivity={sourceNode.data}
+              targetActivity={targetNode.data}
+            />
+          ) : (
+            <div className="p-4">
+              <p className="text-red-500">Error: Source or target node is missing.</p>
+              <button
+                onClick={handleRelationDialogClose}
+                className="mt-4 px-3 py-1.5 bg-gray-600 text-white rounded-md text-sm"
+              >
+                Close
+              </button>
+            </div>
+          )}
         </ActivityDialog>
       </div>
     </div>

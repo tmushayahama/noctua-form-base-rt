@@ -12,12 +12,14 @@ import { camSlice } from '@/features/gocam/slices/camSlice'
 import { activityFormSlice } from '@/features/gocam/slices/activityFormSlice'
 import { metadataSlice } from '@/features/users/slices/metadataSlice'
 import { authSlice } from '@/features/auth/slices/authSlice'
+import { relationSlice } from '@/features/relations/slices/relationSlice'
 
 const rootReducer = combineSlices({
   auth: authSlice.reducer,
   metadata: metadataSlice.reducer,
   activityForm: activityFormSlice.reducer,
   cam: camSlice.reducer,
+  relation: relationSlice.reducer,
   search: searchSlice.reducer,
   genes: geneSlice.reducer,
   terms: termsSlice.reducer,

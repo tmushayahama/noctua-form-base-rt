@@ -1,5 +1,6 @@
 import type { Contributor, Group } from "@/features/users/models/contributor";
-import { type Edge, type GraphModel, type Node, type Activity, ActivityType, RootTypes, Relations } from "../models/cam";
+import { type Edge, type GraphModel, type Node, type Activity, ActivityType, RootTypes } from "../models/cam";
+import { Relations } from "@/@pango.core/models/relations";
 
 
 // TODO Contributor and groups

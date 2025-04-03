@@ -2,8 +2,8 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 import type { Entity, EvidenceForm, TreeNode } from '../models/cam';
-import { Relations } from '../models/cam';
 import type { GOlrResponse } from '@/features/search/models/search';
+import { Relations } from '@/@pango.core/models/relations';
 
 
 interface TreeState {
