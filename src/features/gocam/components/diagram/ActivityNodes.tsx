@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
-import type { NodeTypes } from "reactflow";
-import { Handle, Position } from "reactflow";
+import type { NodeTypes } from 'reactflow';
+import { Handle, Position } from 'reactflow';
 import { GRAPH_DIMENSIONS } from "../../constants";
 
 // Stencil item components

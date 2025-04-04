@@ -5,13 +5,11 @@ import { ThemeProvider } from '@emotion/react'
 import CssBaseline from '@mui/material/CssBaseline'
 import theme from './@pango.core/theme/theme'
 
-import { defineCustomElements } from 'panther-overrep-form/loader'
 import Home from './app/Home'
 import ActivityForm from './features/gocam/components/forms/ActivityForm'
 import SplashScreen from './features/users/components/SplashScreen'
 import { AuthProvider } from './features/auth/authProvider'
 import RightDrawerContent from './app/layout/RightDrawer'
-defineCustomElements(window)
 
 const routes = [
   {

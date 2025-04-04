@@ -23,7 +23,11 @@ import ActivityForm from './forms/ActivityForm';
 import { GRAPH_DIMENSIONS } from '../constants';
 import { StencilActivityItem, StencilMoleculeItem, nodeTypes } from './diagram/ActivityNodes';
 import RelationForm from '@/features/relations/components/RelationForm';
+import { FloatingEdge } from './diagram/FloatingEdge';
 
+const edgeTypes = {
+  floating: FloatingEdge,
+};
 
 const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[], direction = 'TB') => {
   const { fitView } = useReactFlow();
@@ -40,6 +44,7 @@ const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[],
       return newHeights;
     });
   }, []);
+
 
   const getLayoutedElements = useCallback((nodes: FlowNode[], edges: FlowEdge[], dir: string, heights: Record<string, number>) => {
     const dagreGraph = new dagre.graphlib.Graph();
@@ -114,7 +119,7 @@ const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[],
       nodes: layoutedNodes,
       edges: edges.map(edge => ({
         ...edge,
-        type: 'default',
+        type: 'floating',
         markerEnd: {
           type: MarkerType.ArrowClosed,
           color: '#6366F1',
@@ -192,7 +197,7 @@ interface ActivityFlowProps {
 const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' }) => {
   const dispatch = useAppDispatch();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { project } = useReactFlow();
+  const { screenToFlowPosition } = useReactFlow();
   const initialNodeIdsRef = useRef<Set<string>>(new Set());
 
   // Dialog state
@@ -345,7 +350,7 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
         if (!dataTransfer) return;
 
         // Get position of the drop
-        const position = project({
+        const position = screenToFlowPosition({
           x: event.clientX - reactFlowBounds.left,
           y: event.clientY - reactFlowBounds.top,
         });
@@ -357,7 +362,7 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
         handleDialogOpen();
       }
     },
-    [project, handleDialogOpen]
+    [screenToFlowPosition, handleDialogOpen]
   );
 
   // Move the new node to the dropped position after dialog closes
@@ -457,12 +462,13 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
       {/* Flow Canvas */}
       <div
         ref={reactFlowWrapper}
-        className={`flex-1 ${className}`}
+        className={`flex-1 bg-gray-50 ${className}`}
         style={{ height: `${graphHeight}px` }}
       >
         <ReactFlow
           nodes={nodes}
           edges={edges}
+          edgeTypes={edgeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
