@@ -18,7 +18,8 @@ const golrNeoServer = typeof global_golr_neo_server !== 'undefined'
   : 'http://noctua-golr.berkeleybop.org/';
 const golrServer = typeof global_golr_server !== 'undefined'
   ? global_golr_server
-  : 'http://golr-aux.geneontology.io/solr/';//'http://golr-aux.geneontology.io/solr/'
+  : 'https://golr-aux.geneontology.io/solr/';//'http://golr-aux.geneontology.io/solr/'
+
 
 const globalWorkbenchesModel = typeof global_workbenches_model !== 'undefined'
   ? global_workbenches_model

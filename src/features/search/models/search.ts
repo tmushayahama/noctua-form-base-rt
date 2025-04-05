@@ -1,4 +1,4 @@
-import type { Entity } from "@/features/gocam/models/cam";
+import type { Entity, Evidence } from "@/features/gocam/models/cam";
 
 export enum AutocompleteType {
   TERM = 'term',
@@ -19,4 +19,10 @@ export interface GOlrResponse {
   xref: string;
   notAnnotatable: boolean;
   neighborhoodGraphJson: string;
+}
+
+export interface AnnotationsResponse {
+  uid: string;
+  term: Entity;
+  evidences: Evidence[];
 }
