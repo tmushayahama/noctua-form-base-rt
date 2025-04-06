@@ -1,10 +1,26 @@
 import { v4 as uuidv4 } from 'uuid';
-import type { TreeNode, EvidenceForm } from '../models/cam';
+import type { TreeNode, EvidenceForm, NodeType } from '../models/cam';
 
 type Operation = {
   entity: string;
   operation: string;
   arguments: Record<string, any>;
+};
+
+// Selector to find nodes by nodeType
+export const findNodeByNodeType = (nodes: TreeNode[], nodeType: NodeType): TreeNode | null => {
+  for (const node of nodes) {
+    if (node.nodeType === nodeType) {
+      return node;
+    }
+
+    const foundInChildren = findNodeByNodeType(node.children, nodeType);
+    if (foundInChildren) {
+      return foundInChildren;
+    }
+  }
+
+  return null;
 };
 
 /**
@@ -48,7 +64,7 @@ const processNodes = (
     }
 
     const variableId = uuidv4();
-    nodeVariables.set(node.id, variableId);
+    nodeVariables.set(node.uid, variableId);
 
     // Add the individual (node)
     operations.push({
@@ -68,7 +84,7 @@ const processNodes = (
 
     // If this node has evidence, add evidence individual and annotation
     if (node.evidence?.evidenceCode) {
-      addEvidenceForNode(node.id, node.evidence, operations, nodeVariables, modelId);
+      addEvidenceForNode(node.uid, node.evidence, operations, nodeVariables, modelId);
     }
 
     // Process children recursively
@@ -149,9 +165,9 @@ const processRelationships = (
   nodes.forEach(node => {
     // Skip if node has no parent (root node) or if node.id is not in nodeVariables
     // (which means the node was skipped due to missing term.id)
-    if (node.parentId && node.relation && nodeVariables.has(node.id)) {
+    if (node.parentId && node.relation && nodeVariables.has(node.uid)) {
       const parentVarId = nodeVariables.get(node.parentId);
-      const nodeVarId = nodeVariables.get(node.id);
+      const nodeVarId = nodeVariables.get(node.uid);
 
       if (parentVarId && nodeVarId) {
         // Add the edge between parent and node
@@ -167,7 +183,7 @@ const processRelationships = (
         });
 
         // If node has evidence, add edge annotation
-        const evidenceVarId = nodeVariables.get(`${node.id}_evidence`);
+        const evidenceVarId = nodeVariables.get(`${node.uid}_evidence`);
         if (evidenceVarId) {
           operations.push({
             entity: "edge",
@@ -195,3 +211,4 @@ const processRelationships = (
     }
   });
 };
+

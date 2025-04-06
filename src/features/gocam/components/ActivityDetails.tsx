@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { Activity, Edge, Evidence, Node } from '../models/cam';
+import type { Activity, Edge, Evidence, GraphNode } from '../models/cam';
 import { setRightDrawerOpen } from '@/@pango.core/components/drawer/drawerSlice';
 import { useAppDispatch } from '@/app/hooks';
 
@@ -155,7 +155,7 @@ const ActivityDetail: React.FC<ActivityDetailProps> = ({ activity }) => {
               Nodes ({activity.nodes.length})
             </span>
             <div className="mt-2 grid grid-cols-1 gap-2">
-              {activity.nodes.map((node: Node) => (
+              {activity.nodes.map((node: GraphNode) => (
                 <div key={node.uid} className="p-2 bg-gray-50 rounded border border-gray-200">
                   <div className="font-medium">{node.label}</div>
                   <div className="text-xs text-gray-500">{node.id}</div>

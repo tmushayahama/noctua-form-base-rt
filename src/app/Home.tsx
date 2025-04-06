@@ -5,7 +5,6 @@ import { ReactFlowProvider } from 'reactflow';
 import { useEffect } from 'react';
 import { useAppDispatch } from './hooks';
 import { setModel } from '@/features/gocam/slices/camSlice';
-import SearchAnnotations from '@/features/gocam/components/forms/SearchAnnotations';
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -35,14 +34,8 @@ const Home: React.FC = () => {
     return <div className="p-4">No graph data available</div>;
   }
 
-  const gpNode = { id: "WB:WBGene00000099" }
-
   return (
     <div className="flex flex-col h-full">
-      <SearchAnnotations
-        gpNode={gpNode}
-        aspect="F" />
-
       <div className="flex-1 p-0 overflow-hidden">
         {graphModel && (
           <ReactFlowProvider>

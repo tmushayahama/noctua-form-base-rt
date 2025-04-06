@@ -2,20 +2,26 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import type { RootState } from '@/app/store/store';
 import type React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { RootTypes } from '../../models/cam';
+import type { Aspect, GraphNode, TreeNode } from '../../models/cam';
+import { NodeType, RootTypes } from '../../models/cam';
 import { setRootTerm, addRootNode } from '../../slices/activityFormSlice';
 import { Button } from '@mui/material';
-import { convertTreeToJson } from '../../services/addActivityServices';
+import { convertTreeToJson, findNodeByNodeType } from '../../services/addActivityServices';
 import { useUpdateGraphModelMutation } from '../../slices/camApiSlice';
 import NodeForm from './NodeForm';
-import { getTermLabel } from '@/@pango.core/utils/dataUtil';
+import { getRelationLabel, getTermLabel } from '@/@pango.core/utils/dataUtil';
+import { closeDialog, openDialog } from '@/@pango.core/components/dialog/dialogSlice';
+import { getAspect } from '../../services/graphServices';
+import { Relations } from '@/@pango.core/models/relations';
+import SimpleDialog from '@/@pango.core/components/dialog/SimpleDialog';
+import SearchAnnotations from './SearchAnnotations';
 
 
 const ActivityForm: React.FC = () => {
   const dispatch = useAppDispatch();
   const [updateGraphModel] = useUpdateGraphModelMutation();
   const model = useAppSelector((state: RootState) => state.cam.model);
-  const { tree } = useAppSelector((state: RootState) => state.activityForm);
+  const tree = useAppSelector((state: RootState) => state.activityForm.tree);
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
   const initialized = useRef<boolean>(false);
 
@@ -40,37 +46,38 @@ const ActivityForm: React.FC = () => {
         initialChildren: [
           {
             relation: {
-              id: "RO:0002333",
-              label: "enabled by"
+              id: Relations.ENABLED_BY,
+              label: getRelationLabel(Relations.ENABLED_BY)
             },
             rootTypes: [
               {
-                id: "CHEBI:33695",
-                label: "information biomacromolecule"
+                id: RootTypes.MOLECULAR_ENTITY,
+                label: getTermLabel(RootTypes.MOLECULAR_ENTITY)
+              }
+            ],
+            nodeType: NodeType.MOLECULAR_ENTITY
+          },
+          {
+            relation: {
+              id: Relations.PART_OF,
+              label: getRelationLabel(Relations.PART_OF)
+            },
+            rootTypes: [
+              {
+                id: RootTypes.BIOLOGICAL_PROCESS,
+                label: getTermLabel(RootTypes.BIOLOGICAL_PROCESS)
               }
             ]
           },
           {
             relation: {
-              id: "BFO:0000050",
-              label: "part of"
+              id: Relations.OCCURS_IN,
+              label: getRelationLabel(Relations.OCCURS_IN)
             },
             rootTypes: [
               {
-                id: "GO:0008150",
-                label: "biological_process"
-              }
-            ]
-          },
-          {
-            relation: {
-              id: "BFO:0000066",
-              label: "occurs in"
-            },
-            rootTypes: [
-              {
-                id: "CARO:0000000",
-                label: "anatomical entity"
+                id: RootTypes.CELLULAR_COMPONENT,
+                label: getTermLabel(RootTypes.CELLULAR_COMPONENT)
               }
             ]
           }]
@@ -105,6 +112,22 @@ const ActivityForm: React.FC = () => {
     }, 3000);
   };
 
+  const handleOpenDialog = (node: TreeNode) => {
+    const gpNode = findNodeByNodeType(tree, NodeType.MOLECULAR_ENTITY);
+    const gpId = gpNode?.term?.id || '';
+    if (gpId) {
+      dispatch(openDialog({
+        component: 'SearchAnnotations',
+        title: 'Search',
+        customProps: {
+          gpId,
+          aspect: getAspect(node.rootTypes),
+          term: node.term,
+        }
+      }));
+    }
+  };
+
   return (
 
     <form onSubmit={handleFormSubmit}>
@@ -112,7 +135,11 @@ const ActivityForm: React.FC = () => {
         <p>Loading tree...</p>
       ) : (
         <div className="mb-6">
-          {tree.map(node => <NodeForm key={node.id} node={node} />)}
+          {tree.map(node => <NodeForm
+            key={node.uid}
+            node={node}
+            onOpenDialog={handleOpenDialog}
+          />)}
         </div>
       )}
 
@@ -132,6 +159,7 @@ const ActivityForm: React.FC = () => {
           Save
         </Button>
       </div>
+
     </form>
   );
 };

@@ -1,7 +1,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
-import type { Entity, EvidenceForm, TreeNode } from '../models/cam';
+import type { Entity, EvidenceForm, NodeType, TreeNode } from '../models/cam';
 import type { GOlrResponse } from '@/features/search/models/search';
 import { Relations } from '@/@pango.core/models/relations';
 
@@ -18,10 +18,10 @@ const initialState: TreeState = {
   initialRelations: Object.values(Relations),
 };
 
-const removeNodeById = (nodes: TreeNode[], id: string): TreeNode[] => {
+const removeNodeById = (nodes: TreeNode[], uid: string): TreeNode[] => {
   return nodes.filter(node => {
-    if (node.id === id) return false;
-    node.children = removeNodeById(node.children, id);
+    if (node.uid === uid) return false;
+    node.children = removeNodeById(node.children, uid);
     return true;
   });
 };
@@ -41,20 +41,22 @@ export const activityFormSlice = createSlice({
       initialChildren?: {
         relation: Entity;
         rootTypes: Entity[];
+        nodeType?: NodeType;
       }[];
     }>) => {
       const { rootTypes, initialChildren } = action.payload;
       const rootNodeId = uuidv4();
 
       const newRootNode: TreeNode = {
-        id: rootNodeId,
+        uid: rootNodeId,
         parentId: null,
         rootTypes,
         children: initialChildren ? initialChildren.map(child => ({
-          id: uuidv4(),
+          uid: uuidv4(),
           relation: child.relation,
           parentId: rootNodeId,
           rootTypes: child.rootTypes,
+          nodeType: child.nodeType,
           children: []
         })) : [],
       };
@@ -66,18 +68,20 @@ export const activityFormSlice = createSlice({
       parentId: string;
       relation: Entity;
       rootTypes: Entity[];
+      nodeType?: NodeType;
     }>) => {
-      const { parentId, relation, rootTypes } = action.payload;
+      const { parentId, relation, rootTypes, nodeType } = action.payload;
 
       // Find parent node
       const findAndAddChild = (nodes: TreeNode[]): boolean => {
         for (let i = 0; i < nodes.length; i++) {
-          if (nodes[i].id === parentId) {
+          if (nodes[i].uid === parentId) {
             nodes[i].children.push({
-              id: uuidv4(),
+              uid: uuidv4(),
               relation,
               parentId,
               rootTypes,
+              nodeType,
               children: []
             });
             return true;
@@ -94,18 +98,18 @@ export const activityFormSlice = createSlice({
     },
 
     updateNode: (state, action: PayloadAction<{
-      id: string;
+      uid: string;
       term?: GOlrResponse;
       evidence?: EvidenceForm;
       relation?: Entity;
       rootTypes?: Entity[];
     }>) => {
-      const { id, relation, rootTypes, term, evidence, } = action.payload;
+      const { uid, relation, rootTypes, term, evidence, } = action.payload;
 
       // Find and update node
       const updateNodeInTree = (nodes: TreeNode[]): boolean => {
         for (let i = 0; i < nodes.length; i++) {
-          if (nodes[i].id === id) {
+          if (nodes[i].uid === uid) {
             if (term !== undefined) nodes[i].term = term;
             if (relation !== undefined) nodes[i].relation = relation;
             if (rootTypes !== undefined) nodes[i].rootTypes = rootTypes;
@@ -124,8 +128,8 @@ export const activityFormSlice = createSlice({
     },
 
     removeNode: (state, action: PayloadAction<string>) => {
-      const id = action.payload;
-      state.tree = removeNodeById(state.tree, id);
+      const uid = action.payload;
+      state.tree = removeNodeById(state.tree, uid);
     }
   }
 });

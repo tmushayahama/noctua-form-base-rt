@@ -10,6 +10,7 @@ import ActivityForm from './features/gocam/components/forms/ActivityForm'
 import SplashScreen from './features/users/components/SplashScreen'
 import { AuthProvider } from './features/auth/authProvider'
 import RightDrawerContent from './app/layout/RightDrawer'
+import GlobalDialog from './@pango.core/components/dialog/GlobalDIalog'
 
 const routes = [
   {
@@ -43,6 +44,7 @@ const App: React.FC = () => {
         <AuthProvider>
           <SplashScreen>
             <RouterProvider router={router} />
+            <GlobalDialog />
           </SplashScreen>
         </AuthProvider>
       </ThemeProvider>

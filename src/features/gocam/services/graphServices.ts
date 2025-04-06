@@ -1,12 +1,13 @@
 import type { Contributor, Group } from "@/features/users/models/contributor";
-import { type Edge, type GraphModel, type Node, type Activity, ActivityType, RootTypes } from "../models/cam";
+import type { Entity } from "../models/cam";
+import { type Edge, type GraphModel, type GraphNode, type Activity, ActivityType, RootTypes, Aspect } from "../models/cam";
 import { Relations } from "@/@pango.core/models/relations";
 
 
 // TODO Contributor and groups
 // TODO is Compliment
 
-export function extractActivities(nodes: Node[], edges: Edge[]): Activity[] {
+export function extractActivities(nodes: GraphNode[], edges: Edge[]): Activity[] {
   const activities: Activity[] = [];
 
   // Pre-compute all enabledBy nodes for faster lookup
@@ -23,7 +24,7 @@ export function extractActivities(nodes: Node[], edges: Edge[]): Activity[] {
 
     if (!molecularFunction || !enabledBy) return;
 
-    const activityNodes: Node[] = [];
+    const activityNodes: GraphNode[] = [];
     const activityEdges: Edge[] = [];
     const visited = new Set<string>();
 
@@ -63,7 +64,7 @@ export function extractActivities(nodes: Node[], edges: Edge[]): Activity[] {
   return activities;
 }
 
-export function extractMolecules(nodes: Node[], edges: Edge[], activities: Activity[]): Activity[] {
+export function extractMolecules(nodes: GraphNode[], edges: Edge[], activities: Activity[]): Activity[] {
   const molecules: Activity[] = [];
 
   // Find all chemical nodes that are not molecular entities
@@ -87,7 +88,7 @@ export function extractMolecules(nodes: Node[], edges: Edge[], activities: Activ
     // Reset visited set for each molecule
     visited.clear();
 
-    const moleculeNodes: Node[] = [];
+    const moleculeNodes: GraphNode[] = [];
     const moleculeEdges: Edge[] = [];
 
     // Recursively explore the subgraph
@@ -158,10 +159,10 @@ export function extractActivityConnections(activities: Activity[], edges: Edge[]
 }
 
 function exploreSubgraph(
-  currentNode: Node,
-  allNodes: Node[],
+  currentNode: GraphNode,
+  allNodes: GraphNode[],
   allEdges: Edge[],
-  moleculeNodes: Node[],
+  moleculeNodes: GraphNode[],
   moleculeEdges: Edge[],
   visited: Set<string>,
   activityNodeIds: Set<string>
@@ -201,14 +202,14 @@ function exploreSubgraph(
 export const transformGraphData = (data: any): GraphModel => {
   if (!data) return { id: '', nodes: [], edges: [], activities: [], activityConnections: [] };
 
-  const nodes: Node[] = [];
+  const nodes: GraphNode[] = [];
   const edges: Edge[] = [];
   const contributors: Contributor[] = [];
   const groups: Group[] = [];
 
   if (data.individuals && Array.isArray(data.individuals)) {
     data.individuals.forEach((individual: any) => {
-      const nodeData: Node = {
+      const nodeData: GraphNode = {
         uid: individual.id,
         id: individual.type?.[0]?.id,
         label: individual.type?.[0]?.label,
@@ -321,4 +322,18 @@ function addGroup(groups: Group[], id: string): void {
       name: id.split('/').pop() || id
     });
   }
+}
+
+const rootTypeToAspectMap: Partial<Record<RootTypes, Aspect>> = {
+  [RootTypes.MOLECULAR_FUNCTION]: Aspect.MOLECULAR_FUNCTION,
+  [RootTypes.BIOLOGICAL_PROCESS]: Aspect.BIOLOGICAL_PROCESS,
+  [RootTypes.CELLULAR_COMPONENT]: Aspect.CELLULAR_COMPONENT,
+};
+
+export function getAspect(rootTypes: Entity[]): Aspect | null {
+  for (const rootType of rootTypes) {
+    const aspect = rootTypeToAspectMap[rootType.id as RootTypes];
+    if (aspect) return aspect;
+  }
+  return null;
 }

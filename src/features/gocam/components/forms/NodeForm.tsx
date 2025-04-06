@@ -1,4 +1,4 @@
-import { useAppDispatch } from "@/app/hooks";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import TermAutocomplete from "@/features/search/components/Autocomplete";
 import type { GOlrResponse } from "@/features/search/models/search";
 import { AutocompleteType } from "@/features/search/models/search";
@@ -11,8 +11,17 @@ import useNestedMenu from "../../hooks/useNestedMenu";
 import shapesData from '@/@pango.core/data/shapes.json';
 import { getRelationLabel, getTermLabel } from "@/@pango.core/utils/dataUtil";
 import { FiDelete } from "react-icons/fi";
+import { openDialog, closeDialog } from "@/@pango.core/components/dialog/dialogSlice";
+import SimpleDialog from "@/@pango.core/components/dialog/SimpleDialog";
+import SearchAnnotations from "./SearchAnnotations";
+import { getAspect } from "../../services/graphServices";
 
-const NodeForm: React.FC<{ node: TreeNode }> = ({ node }) => {
+interface NodeFormProps {
+  node: TreeNode;
+  onOpenDialog: (node: TreeNode) => void;
+}
+
+const NodeForm: React.FC<NodeFormProps> = ({ node, onOpenDialog }) => {
   const dispatch = useAppDispatch();
   const {
     mainMenuAnchor,
@@ -28,6 +37,21 @@ const NodeForm: React.FC<{ node: TreeNode }> = ({ node }) => {
     openEvidenceMenu,
     closeEvidenceMenu,
   } = useNestedMenu();
+
+
+  const dialogState = useAppSelector(state => state.dialog);
+
+  const handleOpenDialog = () => {
+    console.log('Open dialog');
+    onOpenDialog(node)
+    closeMainMenu();
+  };
+
+  const handleConfirm = () => {
+    // Process form data
+    console.log('Confirmed');
+  };
+
 
   // Get predicates based on rootTypeIds (parent objects)
   const availablePredicates = useMemo(() => {
@@ -57,49 +81,49 @@ const NodeForm: React.FC<{ node: TreeNode }> = ({ node }) => {
     if (!term) return;
 
     dispatch(updateNode({
-      id: node.id,
+      uid: node.uid,
       term: term,
     }));
-  }, [dispatch, node.id]);
+  }, [dispatch, node.uid]);
 
   // Handle evidence code selection
   const handleEvidenceCodeChange = useCallback((evidenceCode: GOlrResponse | null) => {
     if (!evidenceCode) return;
 
     dispatch(updateNode({
-      id: node.id,
+      uid: node.uid,
       evidence: {
         ...(node.evidence || {}),
         evidenceCode
       }
     }));
-  }, [dispatch, node.id, node.evidence]);
+  }, [dispatch, node.uid, node.evidence]);
 
   // Handle reference selection
   const handleReferenceChange = useCallback((reference: GOlrResponse | null) => {
     if (!reference) return;
 
     dispatch(updateNode({
-      id: node.id,
+      uid: node.uid,
       evidence: {
         ...(node.evidence || {}),
         reference
       }
     }));
-  }, [dispatch, node.id, node.evidence]);
+  }, [dispatch, node.uid, node.evidence]);
 
   // Handle withFrom selection
   const handleWithFromChange = useCallback((withFrom: GOlrResponse | null) => {
     if (!withFrom) return;
 
     dispatch(updateNode({
-      id: node.id,
+      uid: node.uid,
       evidence: {
         ...(node.evidence || {}),
         withFrom
       }
     }));
-  }, [dispatch, node.id, node.evidence]);
+  }, [dispatch, node.uid, node.evidence]);
 
   // Add child node when relation selected
   const handleRelationSelect = useCallback((predicateId: string, objects: string[]) => {
@@ -113,14 +137,14 @@ const NodeForm: React.FC<{ node: TreeNode }> = ({ node }) => {
     });
 
     dispatch(addChildNode({
-      parentId: node.id,
+      parentId: node.uid,
       relation: { id: predicateId, label: relationLabel },
       rootTypes,
     }));
 
     closeRelationMenu();
     closeMainMenu();
-  }, [dispatch, node.id, closeRelationMenu, closeMainMenu]);
+  }, [dispatch, node.uid, closeRelationMenu, closeMainMenu]);
 
   // Create label for autocomplete
   const autocompleteLabel = node.parentId === null
@@ -133,7 +157,7 @@ const NodeForm: React.FC<{ node: TreeNode }> = ({ node }) => {
         <div className="flex-1">
           <TermAutocomplete
             label={autocompleteLabel}
-            name={`term-${node.id}`}
+            name={`term-${node.uid}`}
             rootTypeIds={node.rootTypes.map(rt => rt.id)}
             autocompleteType={AutocompleteType.TERM}
             value={node.term || null}
@@ -144,7 +168,7 @@ const NodeForm: React.FC<{ node: TreeNode }> = ({ node }) => {
         <div className="w-[250px]">
           <TermAutocomplete
             label="Evidence"
-            name={`evidence-${node.id}`}
+            name={`evidence-${node.uid}`}
             rootTypeIds={[RootTypes.EVIDENCE]}
             autocompleteType={AutocompleteType.EVIDENCE_CODE}
             value={node.evidence?.evidenceCode || null}
@@ -156,7 +180,7 @@ const NodeForm: React.FC<{ node: TreeNode }> = ({ node }) => {
         <div className="w-[150px]">
           <TermAutocomplete
             label="Reference"
-            name={`reference-${node.id}`}
+            name={`reference-${node.uid}`}
             autocompleteType={AutocompleteType.REFERENCE}
             value={node.evidence?.reference || null}
             onChange={handleReferenceChange}
@@ -167,7 +191,7 @@ const NodeForm: React.FC<{ node: TreeNode }> = ({ node }) => {
         <div className="w-[150px]">
           <TermAutocomplete
             label="With"
-            name={`with-${node.id}`}
+            name={`with-${node.uid}`}
             autocompleteType={AutocompleteType.WITH}
             value={node.evidence?.withFrom || null}
             onChange={handleWithFromChange}
@@ -191,7 +215,7 @@ const NodeForm: React.FC<{ node: TreeNode }> = ({ node }) => {
           onClose={closeMainMenu}
           className=""
         >
-          <MenuItem onClick={closeMainMenu}>
+          <MenuItem onClick={handleOpenDialog}>
             Search Annotations
           </MenuItem>
           <MenuItem onClick={closeMainMenu}>
@@ -222,7 +246,7 @@ const NodeForm: React.FC<{ node: TreeNode }> = ({ node }) => {
               <IconButton
                 color="error"
                 size="small"
-                onClick={() => dispatch(removeNode(node.id))}
+                onClick={() => dispatch(removeNode(node.uid))}
               >
                 <FiDelete />
               </IconButton> Delete Row
@@ -274,10 +298,13 @@ const NodeForm: React.FC<{ node: TreeNode }> = ({ node }) => {
       {node.children.length > 0 && (
         <div className="ml-2 mt-3">
           {node.children.map(child => (
-            <NodeForm key={child.id} node={child} />
+            <NodeForm key={child.uid} node={child} />
           ))}
         </div>
       )}
+
+
+
     </div>
   );
 };

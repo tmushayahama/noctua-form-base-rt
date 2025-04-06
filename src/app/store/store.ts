@@ -13,6 +13,7 @@ import { activityFormSlice } from '@/features/gocam/slices/activityFormSlice'
 import { metadataSlice } from '@/features/users/slices/metadataSlice'
 import { authSlice } from '@/features/auth/slices/authSlice'
 import { relationSlice } from '@/features/relations/slices/relationSlice'
+import { dialogSlice } from '@/@pango.core/components/dialog/dialogSlice'
 
 const rootReducer = combineSlices({
   auth: authSlice.reducer,
@@ -26,6 +27,7 @@ const rootReducer = combineSlices({
   annotations: annotationSlice.reducer,
   selectedAnnotation: selectedAnnotationSlice.reducer,
   drawer: drawerSlice.reducer,
+  dialog: dialogSlice.reducer,
   [apiService.reducerPath]: apiService.reducer,
 })
 

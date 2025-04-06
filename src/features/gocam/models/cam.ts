@@ -9,11 +9,11 @@ export enum ActivityType {
   PROTEIN_COMPLEX = 'proteinComplex',
 }
 
+
+
 export enum RootTypes {
   PROTEIN_CONTAINING_COMPLEX = 'GO:0032991',
   CELLULAR_COMPONENT = 'GO:0005575',
-  ROOT_CELLULAR_COMPONENT = 'GO:0005575',
-  ALL_CELLULAR_COMPONENT = 'GO:0005575',
   CELLULAR_ANATOMICAL = 'GO:0110165',
   BIOLOGICAL_PROCESS = 'GO:0008150',
   MOLECULAR_FUNCTION = 'GO:0003674',
@@ -28,18 +28,32 @@ export enum RootTypes {
   UBERON_STAGE = 'UBERON:0000105',
 }
 
+export enum NodeType {
+  MOLECULAR_FUNCTION = RootTypes.MOLECULAR_FUNCTION,
+  MOLECULAR_ENTITY = RootTypes.MOLECULAR_ENTITY,
+  BIOLOGICAL_PROCESS = RootTypes.BIOLOGICAL_PROCESS,
+  CELLULAR_COMPONENT = RootTypes.CELLULAR_COMPONENT,
+  CHEMICAL_ENTITY = RootTypes.CHEMICAL_ENTITY,
+  PROTEIN_CONTAINING_COMPLEX = RootTypes.PROTEIN_CONTAINING_COMPLEX,
+}
+
+export enum Aspect {
+  MOLECULAR_FUNCTION = 'F',
+  BIOLOGICAL_PROCESS = 'P',
+  CELLULAR_COMPONENT = 'C',
+}
+
 export interface Entity {
   id: string;
   label: string;
 }
 
-
-
-export interface Node {
+export interface GraphNode {
   uid: string;
   id: string;
   label: string;
   rootTypes: string[];
+  nodeType?: NodeType
   contributor?: string;
   date?: string;
   group?: string;
@@ -62,8 +76,8 @@ export interface Edge {
   label: string;
   sourceId: string;
   targetId: string;
-  source: Node;
-  target: Node;
+  source: GraphNode;
+  target: GraphNode;
   evidence?: Evidence[];
   contributor?: string;
   date?: string;
@@ -75,17 +89,17 @@ export interface Edge {
 export interface Activity {
   uid: string;
   type: ActivityType;
-  rootNode: Node;
-  molecularFunction: Node | null
-  enabledBy: Node | null
+  rootNode: GraphNode;
+  molecularFunction: GraphNode | null
+  enabledBy: GraphNode | null
   date: string | null;
-  nodes: Node[];
+  nodes: GraphNode[];
   edges: Edge[];
 }
 
 export interface GraphModel {
   id: string;
-  nodes: Node[];
+  nodes: GraphNode[];
   edges: Edge[];
   activities: Activity[];
   activityConnections: Edge[];
@@ -112,8 +126,10 @@ export interface EvidenceForm {
 }
 
 export interface TreeNode {
-  id: string;
+  uid: string;
+  nodeType?: NodeType;
   term?: GOlrResponse
+  aspect?: string;
   relation?: Entity
   parentId: string | null;
   evidence?: EvidenceForm;

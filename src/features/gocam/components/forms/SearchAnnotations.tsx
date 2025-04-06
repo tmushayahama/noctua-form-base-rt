@@ -1,33 +1,31 @@
 import type { AnnotationsResponse } from "@/features/search/models/search";
-import { useCompanionLookupQuery } from "@/features/search/slices/lookupApiSlice";
 import { Checkbox, Button } from "@mui/material";
 import { useState } from "react";
 import { FaCheckCircle } from "react-icons/fa";
-import type { Evidence } from "../../models/cam";
+import type { Aspect, Evidence } from "../../models/cam";
+import { useSearchAnnotationsQuery } from "@/features/search/slices/lookupApiSlice";
 
 interface SearchAnnotationsProps {
-  gpNode: { id: string };
-  aspect: string;
+  gpId: string;
+  aspect?: Aspect;
   term?: string;
-  evidence?: string;
   onSelectTerm: (result: AnnotationsResponse) => void;
 }
 
-export const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
-  gpNode,
+const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
+  gpId,
   aspect,
   term,
-  evidence,
   onSelectTerm
 }) => {
+
+  console.log('SearchAnnotations', { gpId, aspect, term });
   const [selectedTerm, setSelectedTerm] = useState<AnnotationsResponse | null>(null);
   const [selectedEvidences, setSelectedEvidences] = useState<Evidence[]>([]);
-
-  const { data: annotations = [] } = useCompanionLookupQuery({
-    gp: gpNode.id,
+  const { data: annotations = [] } = useSearchAnnotationsQuery({
+    gpId,
     aspect,
     term,
-    evidence
   });
 
   const handleSelectTerm = (annotation: AnnotationsResponse) => {
