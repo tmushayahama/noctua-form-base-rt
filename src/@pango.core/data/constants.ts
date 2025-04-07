@@ -44,8 +44,7 @@ const globalKnownRelations = typeof global_known_relations !== 'undefined'
 
 
 export const ENVIRONMENT = {
-  isDev: true,
-  isBeta: false,
+  isDev: import.meta.env.VITE_DEV_MODE === 'true',
   baristaDevUrl: 'http://barista-dev.berkeleybop.org/api/minerva_public_dev/m3Batch/',
   baristaUrl: 'http://localhost:3400/api/minerva_local/m3BatchPrivileged',
 

@@ -3,10 +3,59 @@ import type { Entity, Evidence } from "../models/cam";
 import { type Edge, type GraphModel, type GraphNode, type Activity, ActivityType, RootTypes, Aspect } from "../models/cam";
 import { Relations } from "@/@pango.core/models/relations";
 import { v4 as uuidv4 } from 'uuid';
+import { store } from "@/app/store/store";
+
+/* const annotationsMap = {
+  "contributor": "contributor",
+  "date": "date",
+  "providedBy": "groups",
+  "with": "with",
+  "source": "reference",
+  "evidence": "evidence",
+  "conforms-to-gpad": "conformsToGpad",
+  "state": "state",
+  "title": "title"
+};
+
 
 
 // TODO Contributor and groups
 // TODO is Compliment
+
+function processAnnotations(nodes: GraphNode[], annotations: Record<string, string>, target: any): void {
+  if (!annotations || !Array.isArray(annotations)) return;
+
+  const contributors: Contributor[] = [];
+  const groups: Group[] = [];
+  const evidence: Evidence[] = [];
+
+  annotations.forEach((annotation: string, value: string) => {
+    switch (annotation) {
+      case 'contributor':
+        contributors.push({ uri: value });
+        break
+      case 'providedBy':
+        groups.push({ id: value });
+        break;
+
+      case 'conforms-to-gpad':
+        if (target.conformsToGPAD !== undefined) {
+          target.conformsToGPAD = value === 'true';
+        }
+        break;
+
+      case 'evidence':
+        evidence.push(extractEvidence(value, nodes));
+        break;
+      default:
+        target[annotationsMap[annotation]] = value;
+    }
+  })
+}
+
+ */
+
+
 
 
 export function extractActivities(nodes: GraphNode[], edges: Edge[]): Activity[] {
@@ -160,14 +209,11 @@ export function extractActivityConnections(activities: Activity[], edges: Edge[]
   return activityConnections;
 }
 
-export function extractEvidence(evidenceId: string, nodes: GraphNode[]): Evidence[] {
-  const evidenceNode = nodes.find(node =>
-    node.uid === evidenceId &&
-    node.rootTypes.includes(RootTypes.EVIDENCE_NODE)
-  );
+export function extractEvidence(evidenceId: string, nodes: GraphNode[]): Evidence | undefined {
+  const evidenceNode = nodes.find(node => node.uid === evidenceId);
 
   if (!evidenceNode) {
-    return [];
+    return undefined;
   }
 
   // Create evidence object from the node
@@ -178,13 +224,14 @@ export function extractEvidence(evidenceId: string, nodes: GraphNode[]): Evidenc
       label: evidenceNode.label
     },
     reference: evidenceNode.source || '',
+    referenceUrl: evidenceNode.source || '',
     with: evidenceNode.with || '',
-    groups: evidenceNode.group ? [{ id: evidenceNode.group, name: evidenceNode.group.split('/').pop() || evidenceNode.group }] : [],
-    contributors: evidenceNode.contributor ? [{ uri: evidenceNode.contributor }] : [],
-    date: evidenceNode.date || ''
+    groups: evidenceNode.groups,
+    contributors: evidenceNode.contributors,
+    date: evidenceNode.date
   };
 
-  return [evidence];
+  return evidence;
 }
 
 function exploreSubgraph(
@@ -233,8 +280,6 @@ export const transformGraphData = (data: any): GraphModel => {
 
   const nodes: GraphNode[] = [];
   const edges: Edge[] = [];
-  const contributors: Contributor[] = [];
-  const groups: Group[] = [];
 
   if (data.individuals && Array.isArray(data.individuals)) {
     data.individuals.forEach((individual: any) => {
@@ -243,18 +288,20 @@ export const transformGraphData = (data: any): GraphModel => {
         id: individual.type?.[0]?.id,
         label: individual.type?.[0]?.label,
         rootTypes: individual['root-type']?.map((rt: any) => rt.id) || [],
+        contributors: [],
+        groups: [],
       };
 
       if (individual.annotations && Array.isArray(individual.annotations)) {
         individual.annotations.forEach((annotation: any) => {
+
+
           if (annotation.key === 'contributor') {
-            nodeData.contributor = annotation.value;
-            addContributor(contributors, annotation.value);
+            nodeData.contributors.push(getContributor(annotation.value));
           } else if (annotation.key === 'date') {
             nodeData.date = annotation.value;
           } else if (annotation.key === 'providedBy') {
-            nodeData.group = annotation.value;
-            addGroup(groups, annotation.value);
+            nodeData.groups.push(getGroup(annotation.value));
           } else if (annotation.key === 'source') {
             nodeData.source = annotation.value;
           } else if (annotation.key === 'with') {
@@ -279,21 +326,25 @@ export const transformGraphData = (data: any): GraphModel => {
           sourceId: fact.subject,
           targetId: fact.object,
           source,
-          target
+          target,
+          contributors: [],
+          groups: [],
+          evidence: [],
         };
 
         if (fact.annotations && Array.isArray(fact.annotations)) {
           fact.annotations.forEach((annotation: any) => {
             if (annotation.key === 'contributor') {
-              edgeData.contributor = annotation.value;
-              addContributor(contributors, annotation.value);
+              edgeData.contributors.push(getContributor(annotation.value));
             } else if (annotation.key === 'date') {
               edgeData.date = annotation.value;
             } else if (annotation.key === 'providedBy') {
-              edgeData.group = annotation.value;
-              addGroup(groups, annotation.value);
+              edgeData.groups.push(getGroup(annotation.value));
             } else if (annotation.key === 'evidence') {
-              edgeData.evidence = extractEvidence(annotation.value, nodes);
+              const evidence = extractEvidence(annotation.value, nodes);
+              if (evidence) {
+                edgeData.evidence?.push(evidence);
+              }
             }
           });
         }
@@ -313,9 +364,10 @@ export const transformGraphData = (data: any): GraphModel => {
     id: data.id || '',
     nodes,
     edges,
-    groups,
     activities,
-    activityConnections
+    activityConnections,
+    contributors: [],
+    groups: [],
   };
 
   if (data.annotations && Array.isArray(data.annotations)) {
@@ -328,33 +380,34 @@ export const transformGraphData = (data: any): GraphModel => {
         graphModel.date = annotation.value;
       } else if (annotation.key === 'title') {
         graphModel.title = annotation.value;
+      } else if (annotation.key === 'contributor') {
+        graphModel.contributors.push(getContributor(annotation.value));
+      } else if (annotation.key === 'providedBy') {
+        graphModel.groups.push(getGroup(annotation.value));
       }
     });
-  }
-
-  if (contributors.length > 0) {
-    graphModel.contributors = contributors;
   }
 
   return graphModel;
 };
 
-function addContributor(contributors: Contributor[], uri: string): void {
-  if (!contributors.some(c => c.uri === uri)) {
-    contributors.push({
-      uri,
-    });
-  }
-}
+function getContributor(uri: string): Contributor {
+  const state = store.getState();
+  const contributors = state.metadata.contributors;
+  const contributor = contributors.find(c => c.uri === uri);
 
-function addGroup(groups: Group[], id: string): void {
-  if (!groups.some(g => g.id === id)) {
-    groups.push({
-      id,
-      name: id.split('/').pop() || id
-    });
-  }
-}
+  return contributor ? contributor : { uri } as Contributor;
+};
+
+
+function getGroup(id: string): Group {
+  const state = store.getState();
+  const groups = state.metadata.groups;
+  const group = groups.find(g => g.id === id);
+
+  return group ? group : { id } as Group;
+};
+
 
 const rootTypeToAspectMap: Partial<Record<RootTypes, Aspect>> = {
   [RootTypes.MOLECULAR_FUNCTION]: Aspect.MOLECULAR_FUNCTION,

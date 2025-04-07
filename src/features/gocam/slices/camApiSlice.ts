@@ -13,7 +13,6 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
       async queryFn(modelId, _queryApi, _extraOptions, baseQuery) {
         const state = _queryApi.getState() as RootState;
         const baristaToken = state.auth.baristaToken || '';
-        const user = state.auth.user;
 
         const requests = encodeURIComponent(JSON.stringify([
           {

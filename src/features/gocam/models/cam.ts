@@ -54,9 +54,9 @@ export interface GraphNode {
   label: string;
   rootTypes: string[];
   nodeType?: NodeType
-  contributor?: string;
+  contributors: Contributor[];
   date?: string;
-  group?: string;
+  groups: Group[];
   source?: string;
   with?: string;
 }
@@ -69,7 +69,7 @@ export interface Evidence {
   with: string;
   groups: Group[];
   contributors: Contributor[];
-  date: string;
+  date?: string;
 }
 
 export interface Edge {
@@ -81,9 +81,9 @@ export interface Edge {
   source: GraphNode;
   target: GraphNode;
   evidence?: Evidence[];
-  contributor?: string;
+  contributors: Contributor[];
+  groups: Group[];
   date?: string;
-  group?: string;
   isReverseLink?: boolean;
   reverseLinkLabel?: string;
 }
@@ -108,10 +108,10 @@ export interface GraphModel {
   conformsToGPAD?: boolean;
   state?: string;
   comments?: string[];
-  contributors?: Contributor[];
+  contributors: Contributor[];
   date?: string;
   title?: string;
-  groups?: Group[];
+  groups: Group[];
 }
 
 export interface GraphModelApiResponse {

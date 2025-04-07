@@ -3,7 +3,6 @@ import { setUsers, setGroups } from "./metadataSlice";
 import { ENVIRONMENT } from "@/@pango.core/data/constants";
 import type { Contributor, Group } from "../models/contributor";
 
-
 export const addTagTypes = ['metadata'] as const;
 
 export const noctuaDataApi = apiService

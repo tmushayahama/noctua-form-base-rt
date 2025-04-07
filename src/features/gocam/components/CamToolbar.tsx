@@ -9,22 +9,16 @@ import {
   FaDownload,
   FaPen,
   FaTasks,
-  FaPlus,
-  FaChevronDown
 } from 'react-icons/fa';
-import { useAppSelector } from '../hooks';
+import { useAppSelector } from '@/app/hooks';
 
-
-enum ActivityType {
-  default = 'default',
-  bpOnly = 'bpOnly',
-  ccOnly = 'ccOnly'
-}
 
 // TODO gpad urls
 
 const CamToolbar: React.FC = () => {
   const cam = useAppSelector(state => state.cam.model);
+
+  console.log('CAM Toolbar', cam);
 
   const [exportMenuAnchor, setExportMenuAnchor] = useState<null | HTMLElement>(null);
 

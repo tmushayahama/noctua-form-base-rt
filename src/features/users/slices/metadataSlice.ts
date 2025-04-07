@@ -4,13 +4,13 @@ import { createSlice } from "@reduxjs/toolkit";
 import type { Contributor, Group } from "../models/contributor";
 
 interface metadataState {
-  users: Contributor[];
+  contributors: Contributor[];
   groups: Group[];
   loading: boolean;
 }
 
 const initialState: metadataState = {
-  users: [],
+  contributors: [],
   groups: [],
   loading: false
 };
@@ -20,7 +20,7 @@ export const metadataSlice = createSlice({
   initialState,
   reducers: {
     setUsers: (state, action: PayloadAction<any[]>) => {
-      state.users = action.payload;
+      state.contributors = action.payload;
     },
     setGroups: (state, action: PayloadAction<any[]>) => {
       state.groups = action.payload;
