@@ -1,0 +1,176 @@
+{
+  "modified-p": false,
+  "id": "gomodel:67ed25db00000004",
+  "individuals": [
+    {
+      "id": "gomodel:67ed25db00000004/67ed25db00000005",
+      "type": [
+        {
+          "type": "class",
+          "id": "UniProtKB:P28288",
+          "label": "ABCD3 Hsap"
+        }
+      ],
+      "root-type": [
+        {
+          "type": "class",
+          "id": "CHEBI:33695",
+          "label": "information biomacromolecule"
+        },
+        {
+          "type": "class",
+          "id": "CHEBI:24431",
+          "label": "chemical entity"
+        },
+        {
+          "type": "class",
+          "id": "CHEBI:36080",
+          "label": "protein"
+        }
+      ],
+      "annotations": [
+        {
+          "key": "contributor",
+          "value": "https://orcid.org/0000-0002-2874-6934"
+        },
+        {
+          "key": "date",
+          "value": "2025-04-06"
+        },
+        {
+          "key": "providedBy",
+          "value": "http://geneontology.org"
+        }
+      ]
+    },
+    {
+      "id": "gomodel:67ed25db00000004/67ed25db00000006",
+      "type": [
+        {
+          "type": "class",
+          "id": "GO:0008289",
+          "label": "lipid binding"
+        }
+      ],
+      "root-type": [
+        {
+          "type": "class",
+          "id": "GO:0003674",
+          "label": "molecular_function"
+        },
+        {
+          "type": "class",
+          "id": "obo:go/extensions/reacto.owl#molecular_event",
+          "label": "Molecular Event"
+        }
+      ],
+      "annotations": [
+        {
+          "key": "contributor",
+          "value": "https://orcid.org/0000-0002-2874-6934"
+        },
+        {
+          "key": "providedBy",
+          "value": "http://geneontology.org"
+        },
+        {
+          "key": "date",
+          "value": "2025-04-06"
+        }
+      ]
+    },
+    {
+      "id": "gomodel:67ed25db00000004/67ed25db00000007",
+      "type": [
+        {
+          "type": "class",
+          "id": "ECO:0006303",
+          "label": "microscale thermophoresis evidence used in manual assertion"
+        }
+      ],
+      "root-type": [
+        {
+          "type": "class",
+          "id": "ECO:0000000",
+          "label": "evidence"
+        }
+      ],
+      "annotations": [
+        {
+          "key": "date",
+          "value": "2025-04-06"
+        },
+        {
+          "key": "with",
+          "value": "WB:14785"
+        },
+        {
+          "key": "contributor",
+          "value": "https://orcid.org/0000-0002-2874-6934"
+        },
+        {
+          "key": "source",
+          "value": "PMID:1457"
+        },
+        {
+          "key": "providedBy",
+          "value": "http://geneontology.org"
+        }
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "subject": "gomodel:67ed25db00000004/67ed25db00000006",
+      "property": "RO:0002333",
+      "property-label": "enabled by",
+      "object": "gomodel:67ed25db00000004/67ed25db00000005",
+      "annotations": [
+        {
+          "key": "evidence",
+          "value": "gomodel:67ed25db00000004/67ed25db00000007",
+          "value-type": "IRI"
+        },
+        {
+          "key": "contributor",
+          "value": "https://orcid.org/0000-0002-2874-6934"
+        },
+        {
+          "key": "date",
+          "value": "2025-04-06"
+        },
+        {
+          "key": "providedBy",
+          "value": "http://geneontology.org"
+        }
+      ]
+    }
+  ],
+  "annotations": [
+    {
+      "key": "conforms-to-gpad",
+      "value": "true",
+      "value-type": "xsd:boolean"
+    },
+    {
+      "key": "state",
+      "value": "development"
+    },
+    {
+      "key": "contributor",
+      "value": "https://orcid.org/0000-0002-2874-6934"
+    },
+    {
+      "key": "date",
+      "value": "2025-04-06"
+    },
+    {
+      "key": "title",
+      "value": "enabled by ABCD3 Hsap"
+    },
+    {
+      "key": "providedBy",
+      "value": "http://geneontology.org"
+    }
+  ]
+}

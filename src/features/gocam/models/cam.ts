@@ -58,10 +58,11 @@ export interface GraphNode {
   date?: string;
   group?: string;
   source?: string;
+  with?: string;
 }
 
 export interface Evidence {
-  uuid: string;
+  uid: string;
   evidenceCode: Entity;
   reference: string;
   referenceUrl: string;
@@ -72,6 +73,7 @@ export interface Evidence {
 }
 
 export interface Edge {
+  uid: string;
   id: string;
   label: string;
   sourceId: string;

@@ -11,19 +11,18 @@ import ReactFlow, {
   Panel,
   useReactFlow
 } from 'reactflow';
-import dagre from 'dagre';
 import 'reactflow/dist/style.css';
-import type { GraphModel, Activity } from '../models/cam';
-import { ActivityType } from '../models/cam';
 import { setRightDrawerOpen } from '@/@pango.core/components/drawer/drawerSlice';
 import { useAppDispatch } from '@/app/hooks';
-import { setSelectedActivity } from '../slices/camSlice';
-import ActivityDialog from './dialogs/ActivityFormDialog';
-import ActivityForm from './forms/ActivityForm';
-import { GRAPH_DIMENSIONS } from '../constants';
-import { StencilActivityItem, StencilMoleculeItem, nodeTypes } from './diagram/ActivityNodes';
+import ActivityDialog from '@/features/gocam/components/dialogs/ActivityFormDialog';
+import ActivityForm from '@/features/gocam/components/forms/ActivityForm';
+import type { GraphModel, Activity } from '@/features/gocam/models/cam';
+import { setSelectedActivity } from '@/features/gocam/slices/camSlice';
 import RelationForm from '@/features/relations/components/RelationForm';
-import { FloatingEdge } from './diagram/FloatingEdge';
+import { StencilActivityItem, StencilMoleculeItem, nodeTypes } from './ActivityNodes';
+import { FloatingEdge } from './FloatingEdge';
+import { GRAPH_DIMENSIONS } from '../constants';
+import { getLayoutedElements } from '../services/diagramServices';
 
 const edgeTypes = {
   floating: FloatingEdge,
@@ -34,102 +33,8 @@ const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[],
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [graphHeight, setGraphHeight] = useState(GRAPH_DIMENSIONS.MIN_CONTAINER_HEIGHT);
-  const [nodeHeights, setNodeHeights] = useState<Record<string, number>>({});
+  const [nodeHeights] = useState<Record<string, number>>({});
   const layouting = useRef(false);
-
-  // Callback to update node heights
-  const onNodeHeightChange = useCallback((nodeId: string, height: number) => {
-    setNodeHeights(prev => {
-      const newHeights = { ...prev, [nodeId]: height };
-      return newHeights;
-    });
-  }, []);
-
-
-  const getLayoutedElements = useCallback((nodes: FlowNode[], edges: FlowEdge[], dir: string, heights: Record<string, number>) => {
-    const dagreGraph = new dagre.graphlib.Graph();
-    dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-    dagreGraph.setGraph({
-      rankdir: dir,
-      ranker: 'network-simplex',
-      ranksep: 150,
-      nodesep: 80,
-      marginx: 50,
-      marginy: 50,
-      acyclicer: 'greedy',
-      align: 'UL'
-    });
-
-    nodes.forEach((node) => {
-      const isMolecular = node.type === ActivityType.MOLECULE;
-      const nodeHeight = isMolecular ? GRAPH_DIMENSIONS.MOLECULAR_NODE_SIZE : (heights[node.id] || 140);
-
-      dagreGraph.setNode(node.id, {
-        width: isMolecular ? GRAPH_DIMENSIONS.MOLECULAR_NODE_SIZE : GRAPH_DIMENSIONS.NODE_WIDTH,
-        height: nodeHeight
-      });
-    });
-
-    edges.forEach((edge) => {
-      dagreGraph.setEdge(edge.source, edge.target);
-    });
-
-    dagre.layout(dagreGraph);
-
-    // Calculate layout bounds to determine container height
-    let minY = Infinity;
-    let maxY = -Infinity;
-
-    const layoutedNodes = nodes.map((node) => {
-      const nodeWithPosition = dagreGraph.node(node.id);
-      const isMolecular = node.type === ActivityType.MOLECULE;
-      const width = isMolecular ? GRAPH_DIMENSIONS.MOLECULAR_NODE_SIZE : GRAPH_DIMENSIONS.NODE_WIDTH;
-      const height = isMolecular ? GRAPH_DIMENSIONS.MOLECULAR_NODE_SIZE : (heights[node.id] || 140);
-
-      const x = nodeWithPosition.x - width / 2;
-      const y = nodeWithPosition.y - height / 2;
-
-      minY = Math.min(minY, y);
-      maxY = Math.max(maxY, y + height);
-
-      // Add the onHeightChange callback to the node data
-      const updatedData = {
-        ...node.data,
-        onHeightChange: onNodeHeightChange,
-        uid: node.id
-      };
-
-      return {
-        ...node,
-        position: { x, y },
-        width,
-        height,
-        style: { width, height },
-        data: updatedData
-      };
-    });
-
-    // Calculate dynamic height based on graph content
-    // Add padding to ensure all nodes are visible
-    const graphContentHeight = maxY - minY + GRAPH_DIMENSIONS.PADDING;
-    const dynamicHeight = Math.max(GRAPH_DIMENSIONS.MIN_CONTAINER_HEIGHT, graphContentHeight);
-
-    return {
-      nodes: layoutedNodes,
-      edges: edges.map(edge => ({
-        ...edge,
-        type: 'floating',
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: '#6366F1',
-          width: 15,
-          height: 15,
-        },
-      })),
-      dynamicHeight
-    };
-  }, [onNodeHeightChange]);
 
   const applyLayout = useCallback(() => {
     if (layouting.current || initialNodes.length === 0) return;
@@ -154,14 +59,7 @@ const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[],
         layouting.current = false;
       }, 100);
     });
-  }, [initialNodes, initialEdges, direction, getLayoutedElements, setNodes, setEdges, fitView, nodeHeights]);
-
-  // Re-apply layout when node heights change
-  useEffect(() => {
-    if (Object.keys(nodeHeights).length > 0 && nodes.length > 0) {
-      applyLayout();
-    }
-  }, [nodeHeights, nodes.length, applyLayout]);
+  }, [initialNodes, initialEdges, direction, setNodes, setEdges, fitView, nodeHeights]);
 
   // Initial layout
   useEffect(() => {
@@ -516,23 +414,13 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
           onClose={handleRelationDialogClose}
           title="Add New Relation"
         >
-          {sourceNode && targetNode ? (
+          {sourceNode && targetNode && (
             <RelationForm
               onSubmit={handleRelationSubmit}
               onCancel={handleRelationDialogClose}
               sourceActivity={sourceNode.data}
               targetActivity={targetNode.data}
             />
-          ) : (
-            <div className="p-4">
-              <p className="text-red-500">Error: Source or target node is missing.</p>
-              <button
-                onClick={handleRelationDialogClose}
-                className="mt-4 px-3 py-1.5 bg-gray-600 text-white rounded-md text-sm"
-              >
-                Close
-              </button>
-            </div>
           )}
         </ActivityDialog>
       </div>

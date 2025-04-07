@@ -35,10 +35,10 @@ const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
 
   const handleEvidenceToggle = (evidence: Evidence) => {
     // Check if evidence is already selected by comparing UUID
-    const isSelected = selectedEvidences.some(e => e.uuid === evidence.uuid);
+    const isSelected = selectedEvidences.some(e => e.uid === evidence.uid);
 
     if (isSelected) {
-      setSelectedEvidences(selectedEvidences.filter(e => e.uuid !== evidence.uuid));
+      setSelectedEvidences(selectedEvidences.filter(e => e.uid !== evidence.uid));
     } else {
       setSelectedEvidences([...selectedEvidences, evidence]);
     }
@@ -124,7 +124,7 @@ const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
         <div className="space-y-1 max-h-[70vh] overflow-y-auto">
           {selectedTerm?.evidences?.map((evidence: Evidence) => (
             <div
-              key={evidence.uuid}
+              key={evidence.uid}
               className="flex items-center border-b border-gray-200 hover:bg-gray-50 py-2 cursor-pointer"
               onClick={(e) => {
                 // Only toggle if click wasn't on the checkbox itself
@@ -135,7 +135,7 @@ const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
             >
               <div className="w-10">
                 <Checkbox
-                  checked={selectedEvidences.some(e => e.uuid === evidence.uuid)}
+                  checked={selectedEvidences.some(e => e.uid === evidence.uid)}
                   onChange={(e) => {
                     e.stopPropagation();
                     handleEvidenceToggle(evidence);

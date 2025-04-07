@@ -56,7 +56,7 @@ export const processAnnotationsResponse = (response: any): AnnotationsResponse[]
 
     // Create evidence
     const evidence: Evidence = {
-      uuid: crypto.randomUUID(),
+      uid: crypto.randomUUID(),
       evidenceCode: {
         id: doc.evidence,
         label: doc.evidence_label

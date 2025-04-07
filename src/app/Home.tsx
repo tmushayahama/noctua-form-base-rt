@@ -1,10 +1,10 @@
 import type React from 'react';
 import { useGetGraphModelQuery } from '@/features/gocam/slices/camApiSlice';
-import ActivityFlow from '@/features/gocam/components/ActivityFlow';
 import { ReactFlowProvider } from 'reactflow';
 import { useEffect } from 'react';
 import { useAppDispatch } from './hooks';
 import { setModel } from '@/features/gocam/slices/camSlice';
+import ActivityFlow from '@/features/diagram/components/ActivityFlow';
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();

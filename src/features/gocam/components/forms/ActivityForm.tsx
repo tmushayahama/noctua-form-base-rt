@@ -2,7 +2,7 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import type { RootState } from '@/app/store/store';
 import type React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import type { Aspect, GraphNode, TreeNode } from '../../models/cam';
+import type { TreeNode } from '../../models/cam';
 import { NodeType, RootTypes } from '../../models/cam';
 import { setRootTerm, addRootNode } from '../../slices/activityFormSlice';
 import { Button } from '@mui/material';
@@ -10,11 +10,9 @@ import { convertTreeToJson, findNodeByNodeType } from '../../services/addActivit
 import { useUpdateGraphModelMutation } from '../../slices/camApiSlice';
 import NodeForm from './NodeForm';
 import { getRelationLabel, getTermLabel } from '@/@pango.core/utils/dataUtil';
-import { closeDialog, openDialog } from '@/@pango.core/components/dialog/dialogSlice';
+import { openDialog } from '@/@pango.core/components/dialog/dialogSlice';
 import { getAspect } from '../../services/graphServices';
 import { Relations } from '@/@pango.core/models/relations';
-import SimpleDialog from '@/@pango.core/components/dialog/SimpleDialog';
-import SearchAnnotations from './SearchAnnotations';
 
 
 const ActivityForm: React.FC = () => {
@@ -159,7 +157,6 @@ const ActivityForm: React.FC = () => {
           Save
         </Button>
       </div>
-
     </form>
   );
 };

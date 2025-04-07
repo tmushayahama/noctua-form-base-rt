@@ -1,11 +1,13 @@
 import type { Contributor, Group } from "@/features/users/models/contributor";
-import type { Entity } from "../models/cam";
+import type { Entity, Evidence } from "../models/cam";
 import { type Edge, type GraphModel, type GraphNode, type Activity, ActivityType, RootTypes, Aspect } from "../models/cam";
 import { Relations } from "@/@pango.core/models/relations";
+import { v4 as uuidv4 } from 'uuid';
 
 
 // TODO Contributor and groups
 // TODO is Compliment
+
 
 export function extractActivities(nodes: GraphNode[], edges: Edge[]): Activity[] {
   const activities: Activity[] = [];
@@ -158,6 +160,33 @@ export function extractActivityConnections(activities: Activity[], edges: Edge[]
   return activityConnections;
 }
 
+export function extractEvidence(evidenceId: string, nodes: GraphNode[]): Evidence[] {
+  const evidenceNode = nodes.find(node =>
+    node.uid === evidenceId &&
+    node.rootTypes.includes(RootTypes.EVIDENCE_NODE)
+  );
+
+  if (!evidenceNode) {
+    return [];
+  }
+
+  // Create evidence object from the node
+  const evidence: Evidence = {
+    uid: evidenceNode.uid,
+    evidenceCode: {
+      id: evidenceNode.id,
+      label: evidenceNode.label
+    },
+    reference: evidenceNode.source || '',
+    with: evidenceNode.with || '',
+    groups: evidenceNode.group ? [{ id: evidenceNode.group, name: evidenceNode.group.split('/').pop() || evidenceNode.group }] : [],
+    contributors: evidenceNode.contributor ? [{ uri: evidenceNode.contributor }] : [],
+    date: evidenceNode.date || ''
+  };
+
+  return [evidence];
+}
+
 function exploreSubgraph(
   currentNode: GraphNode,
   allNodes: GraphNode[],
@@ -228,6 +257,8 @@ export const transformGraphData = (data: any): GraphModel => {
             addGroup(groups, annotation.value);
           } else if (annotation.key === 'source') {
             nodeData.source = annotation.value;
+          } else if (annotation.key === 'with') {
+            nodeData.with = annotation.value;
           }
         });
       }
@@ -242,6 +273,7 @@ export const transformGraphData = (data: any): GraphModel => {
       const target = nodes.find(node => node.uid === fact.object)
       if (source && target) {
         const edgeData: Edge = {
+          uid: uuidv4(),
           id: fact['property'],
           label: fact['property-label'] || fact.property,
           sourceId: fact.subject,
@@ -261,7 +293,7 @@ export const transformGraphData = (data: any): GraphModel => {
               edgeData.group = annotation.value;
               addGroup(groups, annotation.value);
             } else if (annotation.key === 'evidence') {
-              edgeData.evidence = annotation.value;
+              edgeData.evidence = extractEvidence(annotation.value, nodes);
             }
           });
         }

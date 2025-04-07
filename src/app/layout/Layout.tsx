@@ -91,16 +91,17 @@ const Layout: React.FC<LayoutProps> = ({ leftDrawerContent, rightDrawerContent }
 
         {rightDrawerContent && (
           <Drawer
-            variant="temporary"
+            variant="persistent"
             anchor="right"
             open={rightDrawerOpen}
             onClose={handleRightDrawerClose}
             ModalProps={{
-              keepMounted: true,
+              keepMounted: false,
             }}
             sx={{
               '& .MuiDrawer-paper': {
-                width: isMobile ? '100%' : 500,
+                width: isMobile ? '100%' : 800,
+                top: 120,
                 height: '100%',
                 overflow: 'auto',
                 transition: theme =>
