@@ -19,7 +19,7 @@ import ActivityForm from '@/features/gocam/components/forms/ActivityForm';
 import type { GraphModel, Activity } from '@/features/gocam/models/cam';
 import { setSelectedActivity } from '@/features/gocam/slices/camSlice';
 import RelationForm from '@/features/relations/components/RelationForm';
-import { StencilActivityItem, StencilMoleculeItem, nodeTypes } from './ActivityNodes';
+import { StencilActivityItem, StencilItem, StencilMoleculeItem, nodeTypes } from './ActivityNodes';
 import { FloatingEdge } from './FloatingEdge';
 import { GRAPH_DIMENSIONS } from '../constants';
 import { getLayoutedElements } from '../services/diagramServices';
@@ -351,10 +351,23 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
   return (
     <div className="flex">
       {/* Stencil Panel */}
-      <div className="w-32 p-2 border-r border-gray-200 bg-gray-50">
-        <h3 className="font-medium text-sm mb-2">Nodes</h3>
-        <StencilActivityItem />
-        <StencilMoleculeItem />
+      <div className="w-24 border-r p-1 border-gray-200 bg-gray-50">
+        <div className="text-sm font-semibold text-gray-700 mb-4">TOOLBOX</div>
+        <StencilItem
+          type="activity"
+          label="Activity Unit"
+          imageSrc="assets/images/activity/default.png"
+        />
+        <StencilItem
+          type="molecule"
+          label="Molecule"
+          imageSrc="assets/images/activity/molecule.png"
+        />
+        <StencilItem
+          type="proteinComplex"
+          label="Protein Complex"
+          imageSrc="assets/images/activity/proteinComplex.png"
+        />
       </div>
 
       {/* Flow Canvas */}
@@ -373,7 +386,6 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
           onConnect={onConnect}
           onConnectStart={onConnectStart}
           nodeTypes={nodeTypes}
-          connectionLineType={ConnectionLineType.Straight}
           minZoom={0.1}
           maxZoom={2}
           fitView
@@ -384,7 +396,12 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
           onDragOver={onDragOver}
           onDrop={onDrop}
         >
-          <Background gap={20} size={1} />
+          <Background
+            gap={20}
+            size={1}
+            color="#EEE"
+            variant="lines"
+          />
           <Controls />
           <Panel position="top-right" className="bg-white p-2 rounded shadow-md">
             <button

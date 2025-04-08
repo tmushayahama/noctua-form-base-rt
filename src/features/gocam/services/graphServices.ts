@@ -382,6 +382,9 @@ export const transformGraphData = (data: any): GraphModel => {
         graphModel.title = annotation.value;
       } else if (annotation.key === 'contributor') {
         graphModel.contributors.push(getContributor(annotation.value));
+        graphModel.contributors.push(getContributor("https://orcid.org/0000-0001-9969-8610"));
+        graphModel.contributors.push(getContributor("https://orcid.org/0000-0001-8682-8754"));
+        graphModel.contributors.push(getContributor("https://orcid.org/0000-0003-3212-6364"));
       } else if (annotation.key === 'providedBy') {
         graphModel.groups.push(getGroup(annotation.value));
       }

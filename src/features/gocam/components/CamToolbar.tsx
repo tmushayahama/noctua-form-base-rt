@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useState } from 'react';
-import { Button, Chip, Menu, MenuItem, Tooltip } from '@mui/material';
+import { Button, IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
 import {
   FaUser,
   FaCalendarDay,
@@ -12,15 +12,11 @@ import {
 } from 'react-icons/fa';
 import { useAppSelector } from '@/app/hooks';
 
-
-// TODO gpad urls
-
 const CamToolbar: React.FC = () => {
   const cam = useAppSelector(state => state.cam.model);
 
-  console.log('CAM Toolbar', cam);
-
   const [exportMenuAnchor, setExportMenuAnchor] = useState<null | HTMLElement>(null);
+  const [contributorsMenuAnchor, setContributorsMenuAnchor] = useState<null | HTMLElement>(null);
 
   const handleExportMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setExportMenuAnchor(event.currentTarget);
@@ -28,6 +24,14 @@ const CamToolbar: React.FC = () => {
 
   const handleExportMenuClose = () => {
     setExportMenuAnchor(null);
+  };
+
+  const handleContributorsMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setContributorsMenuAnchor(event.currentTarget);
+  };
+
+  const handleContributorsMenuClose = () => {
+    setContributorsMenuAnchor(null);
   };
 
   const openCamForm = () => {
@@ -41,27 +45,33 @@ const CamToolbar: React.FC = () => {
   const getStateColor = (stateName?: string) => {
     switch (stateName) {
       case 'development':
-        return 'bg-amber-200 text-amber-800';
+        return 'bg-amber-100 text-amber-800';
       case 'production':
-        return 'bg-green-200 text-green-800';
+        return 'bg-green-100 text-green-800';
       case 'review':
-        return 'bg-yellow-200 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800';
+      case 'delete':
+        return 'bg-red-100 text-yellow-800';
       default:
-        return 'bg-gray-200 text-gray-800';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   if (!cam) return null;
 
   const commentCount = cam.comments?.length || 0;
+  const contributors = cam.contributors || [];
+  const visibleContributors = contributors.slice(0, 2);
+  const hiddenContributors = contributors.slice(2);
 
   return (
-    <div className="flex items-center px-2 py-1 h-10 w-full bg-gradient-to-r from-blue-100 via-purple-100 to-blue-200 text-xs">
+    <div className="flex items-center px-2 py-1 h-10 w-full bg-gradient-to-r from-blue-100 via-primary-100 to-blue-200 text-xs">
       {/* Title */}
       {cam.title && (
-        <div className="flex items-center px-2 max-w-[250px] truncate">
-          <span className="font-bold mr-2 truncate">Title:</span>
-          <span className="truncate pr-2">{cam.title}</span>
+        <div className="flex items-center px-2 max-w-[250px]">
+          <span className="truncate pr-2 flex-grow">
+            <span className="font-bold mr-2">Title:</span>{cam.title}
+          </span>
           <button
             className="text-gray-500 hover:text-gray-700 focus:outline-none"
             onClick={openCamForm}
@@ -74,64 +84,93 @@ const CamToolbar: React.FC = () => {
       {/* Comments */}
       <div className="px-4 border-l border-r border-gray-300">
         <Tooltip title={cam.comments || 'No comments'} placement="top">
-          <Button
-            variant="text"
-            className="min-w-0 p-0 text-gray-600 hover:text-gray-800"
+          <IconButton
+            className="text-gray-600 hover:text-gray-800"
             onClick={openCamForm}
           >
             <FaComment size={16} />
             <span className="ml-1 text-xs">{commentCount}</span>
-          </Button>
+          </IconButton>
         </Tooltip>
       </div>
 
       <div className="px-4 border-r border-gray-300">
         <Tooltip title="Make a copy of this model" placement="top">
-          <Button
-            variant="text"
-            className="min-w-0 p-0 text-gray-600 hover:text-gray-800"
+          <IconButton
+            className=" text-gray-600 hover:text-gray-800"
             onClick={openCopyModel}
           >
             <FaClone size={16} />
-          </Button>
+          </IconButton>
         </Tooltip>
       </div>
 
+      {/* State */}
       {cam.state && (
         <div className="flex items-center px-2 max-w-[150px]">
-          <Chip
-            icon={<FaTasks size={12} className="ml-2" />}
-            label={cam.state}
-            className={`h-6 text-xs ${getStateColor(cam.state)}`}
-            deleteIcon={<FaPen size={10} />}
-            onDelete={openCamForm}
-          />
+          <div className={`flex items-center h-6 px-2 rounded-full border border-gray-400 ${getStateColor(cam.state)}`}>
+            <FaTasks size={12} className="mr-1" />
+            <span>{cam.state}</span>
+            <button
+              className="ml-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+              onClick={openCamForm}
+            >
+              <FaPen size={10} />
+            </button>
+          </div>
         </div>
       )}
 
       {/* Date */}
       {cam.date && (
-        <div className="flex items-center px-2 max-w-[120px] border-r border-gray-300">
-          <Chip
-            icon={<FaCalendarDay size={12} className="ml-2" />}
-            label={cam.date}
-            className="h-6 text-xs bg-purple-100 text-purple-800"
-            onClick={openCamForm}
-          />
+        <div className="flex items-center px-2 border-r border-gray-300">
+          <div className="flex items-center text-xs h-6 pr-2 rounded-full bg-primary-50 text-primary-600 cursor-pointer border border-primary-300" onClick={openCamForm}>
+            <div className="flex items-center justify-center h-full w-6 mr-1 rounded-full bg-primary-100 text-primary-600">
+              <FaCalendarDay size={12} className="" />
+            </div>
+            <span>{cam.date}</span>
+          </div>
         </div>
       )}
 
+      {/* Contributors */}
       <div className="flex items-center flex-grow overflow-x-auto">
         <div className="flex flex-nowrap">
-          {(cam.contributors || []).map((contributor) => (
-            <Chip
-              key={contributor.uri}
-              icon={<FaUser size={12} className="ml-2" />}
-              label={contributor.name}
-              className="h-6 text-xs mr-2 bg-purple-100 text-purple-800"
-              onClick={openCamForm}
-            />
+          {visibleContributors.map((contributor) => (
+            <div key={contributor.uri} className="flex items-center  max-w-[180px] mr-2 truncate text-xs h-6 pr-2 rounded-full bg-primary-50 text-primary-600 border border-primary-300">
+              <div className="flex items-center justify-center text-center text-2xs font-bold h-full min-w-6 mr-1 rounded-full bg-primary-100 text-primary-600">
+                {contributor.initials}
+              </div>
+              <span className="flex-grow truncate">{contributor.name}</span>
+            </div>
           ))}
+
+          {hiddenContributors.length > 0 && (
+            <>
+              <button
+                className="flex items-center h-6 px-2 rounded-full bg-primary-50 text-primary-600  border border-primary-300 cursor-pointer"
+                onClick={handleContributorsMenuOpen}
+              >
+                <span>...</span>
+              </button>
+              <Menu
+                anchorEl={contributorsMenuAnchor}
+                open={Boolean(contributorsMenuAnchor)}
+                onClose={handleContributorsMenuClose}
+              >
+                {hiddenContributors.map((contributor) => (
+                  <MenuItem key={contributor.uri} onClick={handleContributorsMenuClose}>
+                    <div className="flex items-center">
+                      <div className="flex items-center justify-center text-center text-2xs font-bold h-6 w-6 mr-1 rounded-full bg-primary-100 text-primary-600">
+                        {contributor.initials}
+                      </div>
+                      <span>{contributor.name}</span>
+                    </div>
+                  </MenuItem>
+                ))}
+              </Menu>
+            </>
+          )}
         </div>
       </div>
 

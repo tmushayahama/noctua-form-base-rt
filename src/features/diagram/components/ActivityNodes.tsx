@@ -4,41 +4,32 @@ import { Handle, Position } from 'reactflow';
 import { GRAPH_DIMENSIONS } from "../constants";
 
 // Stencil item components
-export const StencilActivityItem = (): JSX.Element => {
+
+interface StencilItemProps {
+  type: 'activity' | 'molecule' | 'proteinComplex';
+  label: string;
+  imageSrc: string;
+}
+
+export const StencilItem = ({ type, label, imageSrc }: StencilItemProps): JSX.Element => {
   const onDragStart = (event: React.DragEvent<HTMLDivElement>): void => {
-    event.dataTransfer.setData('application/reactflow', JSON.stringify({ type: 'activity' }));
+    event.dataTransfer.setData('application/reactflow', JSON.stringify({ type }));
     event.dataTransfer.effectAllowed = 'move';
   };
 
   return (
     <div
-      className="bg-green-100 border border-gray-200 rounded-lg p-2 mb-2 cursor-grab"
+      className="flex flex-col items-center align-middle border-2 border-primary-200 rounded-lg p-1 py-3 mb-2 cursor-grab"
       onDragStart={onDragStart}
       draggable
     >
-      <div className="text-sm font-medium">Activity Node</div>
+      <div className="flex items-center justify-center h-12 w-12 mb-2">
+        <img src={imageSrc} alt={label} className="w-full" />
+      </div>
+      <div className="w-full text-3xs text-center font-medium uppercase">{label}</div>
     </div>
   );
 };
-
-export const StencilMoleculeItem = (): JSX.Element => {
-  const onDragStart = (event: React.DragEvent<HTMLDivElement>): void => {
-    event.dataTransfer.setData('application/reactflow', JSON.stringify({ type: 'molecule' }));
-    event.dataTransfer.effectAllowed = 'move';
-  };
-
-  return (
-    <div
-      className="bg-blue-100 border border-blue-300 rounded-full flex items-center justify-center p-2 mb-2 cursor-grab"
-      style={{ width: '80px', height: '80px' }}
-      onDragStart={onDragStart}
-      draggable
-    >
-      <div className="text-sm font-medium text-center">Molecule</div>
-    </div>
-  );
-};
-
 export const ActivityNode = ({ data }: { data: any }) => {
   const nodeRef = useRef<HTMLDivElement>(null);
   const [nodeHeight, setNodeHeight] = useState(140);
@@ -141,5 +132,6 @@ export const MolecularNode = ({ data }: { data: any }) => {
 export const nodeTypes: NodeTypes = {
   activity: ActivityNode,
   molecule: MolecularNode,
+  proteinComplex: ActivityNode,
 };
 

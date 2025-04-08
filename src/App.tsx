@@ -39,8 +39,9 @@ const router = createBrowserRouter(routes, {
 const App: React.FC = () => {
   return (
     <React.StrictMode>
+      <CssBaseline />
       <ThemeProvider theme={theme}>
-        <CssBaseline />
+
         <AuthProvider>
           <SplashScreen>
             <RouterProvider router={router} />
