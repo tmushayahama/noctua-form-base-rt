@@ -10,7 +10,7 @@ import Terms from '@/features/terms/components/Terms'
 import { VersionedLink } from '@/shared/components/VersionedLink'
 import { ANNOTATION_COLS } from '@/@pango.core/data/config'
 import GeneCard from './GeneCard'
-import { getUniprotLink, getUCSCBrowserLink } from '@/@pango.core/services/linksService'
+import { getUniprotLink } from '@/@pango.core/services/linksService'
 import {
   selectLeftDrawerOpen,
   setLeftDrawerOpen,
@@ -63,6 +63,8 @@ const Genes: React.FC = () => {
     dispatch(setPageSize(parseInt(event.target.value, 10)))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
+
 
   if (isLoading) {
     return (
