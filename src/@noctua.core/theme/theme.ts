@@ -1,8 +1,8 @@
 import createTheme from '@mui/material/styles/createTheme'
 import { componentThemes } from '.'
 
-export const pangoColors = {
-  pangodark: {
+export const noctuaColors = {
+  noctuadark: {
     50: '#e4e7ec',
     100: '#bbc3d0',
     200: '#8e9bb0',
@@ -14,7 +14,7 @@ export const pangoColors = {
     800: '#0c1d42',
     900: '#08142f',
   },
-  pangoAccent: {
+  noctuaAccent: {
     50: '#fdf8e7',
     100: '#f9edc3',
     200: '#f5e19b',
@@ -31,14 +31,14 @@ export const pangoColors = {
 const baseTheme = createTheme({
   palette: {
     primary: {
-      main: pangoColors.pangodark[500],
-      light: pangoColors.pangodark[300],
-      dark: pangoColors.pangodark[700],
+      main: noctuaColors.noctuadark[500],
+      light: noctuaColors.noctuadark[300],
+      dark: noctuaColors.noctuadark[700],
     },
     secondary: {
-      main: pangoColors.pangoAccent[600],
-      light: pangoColors.pangoAccent[400],
-      dark: pangoColors.pangoAccent[800],
+      main: noctuaColors.noctuaAccent[600],
+      light: noctuaColors.noctuaAccent[400],
+      dark: noctuaColors.noctuaAccent[800],
     },
   },
   typography: {

@@ -68,7 +68,7 @@ const CamToolbar: React.FC = () => {
     <div className="flex items-center px-2 py-1 h-10 w-full bg-gradient-to-r from-blue-100 via-primary-100 to-blue-200 text-xs">
       {/* Title */}
       {cam.title && (
-        <div className="flex items-center px-2 max-w-[250px]">
+        <div className="flex items-center h-full px-2 max-w-[250px] border-r border-gray-500">
           <span className="truncate pr-2 flex-grow">
             <span className="font-bold mr-2">Title:</span>{cam.title}
           </span>
@@ -82,19 +82,19 @@ const CamToolbar: React.FC = () => {
       )}
 
       {/* Comments */}
-      <div className="px-4 border-l border-r border-gray-300">
+      <div className="px-1 h-full">
         <Tooltip title={cam.comments || 'No comments'} placement="top">
           <IconButton
             className="text-gray-600 hover:text-gray-800"
             onClick={openCamForm}
           >
             <FaComment size={16} />
-            <span className="ml-1 text-xs">{commentCount}</span>
+            <span className="absolute top-0 right-0 bg-green-800 text-white text-2xs px-1 py-[1px] rounded-md">{commentCount}</span>
           </IconButton>
         </Tooltip>
       </div>
 
-      <div className="px-4 border-r border-gray-300">
+      <div className="px-1 border-r border-gray-500">
         <Tooltip title="Make a copy of this model" placement="top">
           <IconButton
             className=" text-gray-600 hover:text-gray-800"
@@ -107,7 +107,7 @@ const CamToolbar: React.FC = () => {
 
       {/* State */}
       {cam.state && (
-        <div className="flex items-center px-2 max-w-[150px]">
+        <div className="flex items-center h-full px-2 max-w-[150px] border-r border-gray-500">
           <div className={`flex items-center h-6 px-2 rounded-full border border-gray-400 ${getStateColor(cam.state)}`}>
             <FaTasks size={12} className="mr-1" />
             <span>{cam.state}</span>

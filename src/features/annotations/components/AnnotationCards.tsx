@@ -1,12 +1,12 @@
 import type React from 'react'
 import { FiChevronRight, FiUsers, FiBookOpen, FiTag } from 'react-icons/fi'
 import TermLink from '@/features/terms/components/TermLink'
-import { ASPECT_MAP } from '@/@pango.core/data/config'
+import { ASPECT_MAP } from '@/@noctua.core/data/config'
 import type { Annotation } from '../models/annotation'
-import { setRightDrawerOpen } from '@/@pango.core/components/drawer/drawerSlice'
+import { setRightDrawerOpen } from '@/@noctua.core/components/drawer/drawerSlice'
 import { useAppDispatch } from '@/app/hooks'
 import { setSelectedAnnotation } from '../slices/selectedAnnotationSlice'
-import { ENVIRONMENT } from '@/@pango.core/data/constants'
+import { ENVIRONMENT } from '@/@noctua.core/data/constants'
 
 interface AnnotationCardsProps {
   annotations: Annotation[]

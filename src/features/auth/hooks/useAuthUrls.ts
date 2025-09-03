@@ -1,4 +1,4 @@
-import { ENVIRONMENT } from '@/@pango.core/data/constants';
+import { ENVIRONMENT } from '@/@noctua.core/data/constants';
 import { useAppSelector } from '@/app/hooks';
 import { useMemo } from 'react';
 import { parameterize } from '../authServices';

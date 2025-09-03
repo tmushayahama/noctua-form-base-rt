@@ -28,6 +28,13 @@ export const getHomeUrl = (): string => {
   return window.location.href;
 };
 
+export const getBaristaApiUrl = (baristaToken: string): string => {
+  const { globalBaristaLocation: baseUrl, globalMinervaDefinitionName: location } = ENVIRONMENT;
+
+  const apiUrl = `${baseUrl}/api/${location}/m3Batch`;
+  return baristaToken ? `${apiUrl}Privileged` : apiUrl;
+};
+
 export const getGeneAccession = (gene: string) => {
   if (!gene) return null
 

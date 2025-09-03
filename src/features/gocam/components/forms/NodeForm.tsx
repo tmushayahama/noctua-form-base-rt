@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import TermAutocomplete from "@/features/search/components/Autocomplete";
+import TermAutocomplete from "@/features/search/components/Autocomplete2";
 import type { GOlrResponse } from "@/features/search/models/search";
 import { AutocompleteType } from "@/features/search/models/search";
 import { IconButton, Menu, MenuItem } from "@mui/material";
@@ -8,13 +8,9 @@ import type { TreeNode, ShexShape } from "../../models/cam";
 import { RootTypes } from "../../models/cam";
 import { updateNode, addChildNode, removeNode } from "../../slices/activityFormSlice";
 import useNestedMenu from "../../hooks/useNestedMenu";
-import shapesData from '@/@pango.core/data/shapes.json';
-import { getRelationLabel, getTermLabel } from "@/@pango.core/utils/dataUtil";
+import shapesData from '@/@noctua.core/data/shapes.json';
+import { getRelationLabel, getTermLabel } from "@/@noctua.core/utils/dataUtil";
 import { FiDelete } from "react-icons/fi";
-import { openDialog, closeDialog } from "@/@pango.core/components/dialog/dialogSlice";
-import SimpleDialog from "@/@pango.core/components/dialog/SimpleDialog";
-import SearchAnnotations from "./SearchAnnotations";
-import { getAspect } from "../../services/graphServices";
 
 interface NodeFormProps {
   node: TreeNode;
@@ -298,7 +294,7 @@ const NodeForm: React.FC<NodeFormProps> = ({ node, onOpenDialog }) => {
       {node.children.length > 0 && (
         <div className="ml-2 mt-3">
           {node.children.map(child => (
-            <NodeForm key={child.uid} node={child} />
+            <NodeForm key={child.uid} node={child} onOpenDialog={onOpenDialog} />
           ))}
         </div>
       )}

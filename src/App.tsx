@@ -3,14 +3,12 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Layout from './app/layout/Layout'
 import { ThemeProvider } from '@emotion/react'
 import CssBaseline from '@mui/material/CssBaseline'
-import theme from './@pango.core/theme/theme'
-
+import theme from './@noctua.core/theme/theme'
 import Home from './app/Home'
-import ActivityForm from './features/gocam/components/forms/ActivityForm'
 import SplashScreen from './features/users/components/SplashScreen'
 import { AuthProvider } from './features/auth/authProvider'
 import RightDrawerContent from './app/layout/RightDrawer'
-import GlobalDialog from './@pango.core/components/dialog/GlobalDIalog'
+import GlobalDialog from './@noctua.core/components/dialog/GlobalDIalog'
 
 const routes = [
   {
@@ -18,22 +16,10 @@ const routes = [
     element: <Layout rightDrawerContent={<RightDrawerContent />} />,
     children: [{ path: '', element: <Home /> }],
   },
-  {
-    path: 'form',
-    element: <Layout />,
-    children: [{ path: '', element: <ActivityForm /> }],
-  },
 ]
 
 const router = createBrowserRouter(routes, {
-  future: {
-    // v7_startTransition: true,
-    // v7_relativeSplatPath: true,
-    // v7_fetcherPersist: true,
-    // v7_normalizeFormMethod: true,
-    // v7_partialHydration: true,
-    // v7_skipActionErrorRevalidation: true,
-  },
+  basename: import.meta.env.VITE_BASE_URL,
 })
 
 const App: React.FC = () => {
@@ -41,7 +27,6 @@ const App: React.FC = () => {
     <React.StrictMode>
       <CssBaseline />
       <ThemeProvider theme={theme}>
-
         <AuthProvider>
           <SplashScreen>
             <RouterProvider router={router} />

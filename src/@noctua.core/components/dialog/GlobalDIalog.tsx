@@ -1,6 +1,6 @@
 // components/dialog/GlobalDialog.tsx
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
-import { closeDialog } from '@/@pango.core/components/dialog/dialogSlice';
+import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice';
 import type { RootState } from '@/app/store/store';
 import SimpleDialog from './SimpleDialog';
 import SearchAnnotations from '@/features/gocam/components/forms/SearchAnnotations';

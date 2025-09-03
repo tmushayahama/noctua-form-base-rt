@@ -1,4 +1,4 @@
-const pangoDark = {
+const noctuaDark = {
   50: '#e5e6e8',
   100: '#bec1c5',
   200: '#92979f',
@@ -16,4 +16,4 @@ const pangoDark = {
   contrastDefaultColor: 'light',
 }
 
-export default pangoDark
+export default noctuaDark

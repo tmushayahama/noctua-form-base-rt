@@ -1,5 +1,5 @@
 
-import { globalKnownRelations } from '@/@pango.core/data/relations';
+import { globalKnownRelations } from '@/@noctua.core/data/relations';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import type { Activity } from '@/features/gocam/models/cam';
 import { Typography, FormControl, RadioGroup, FormControlLabel, Radio, Divider, TextField } from '@mui/material';

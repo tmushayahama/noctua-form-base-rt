@@ -1,18 +1,20 @@
 import type React from 'react';
+import type { KeyboardEvent } from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { TextField, Paper, CircularProgress } from '@mui/material';
 import { FiChevronRight, FiFile } from 'react-icons/fi';
+import { FaFileMedical } from 'react-icons/fa';
 import { useSearchTermsQuery } from '../slices/lookupApiSlice';
 import type { GOlrResponse } from '../models/search';
 import { AutocompleteType } from '../models/search';
+import { TextField, Popper, Paper, CircularProgress } from '@mui/material';
 
-interface TextareaAutocompleteProps {
+interface TermAutocompleteProps {
   label: string;
   name: string;
   rootTypeIds?: string[];
   autocompleteType?: AutocompleteType;
-  value: GOlrResponse | null;
-  onChange: (value: GOlrResponse | null) => void;
+  value: GOlrResponse | null | string;
+  onChange: (value: GOlrResponse | null | string) => void;
   onBlur?: () => void;
   disabled?: boolean;
   variant?: 'standard' | 'outlined' | 'filled';
@@ -20,7 +22,7 @@ interface TextareaAutocompleteProps {
   onOpenTermDetails?: (event: React.MouseEvent, item: GOlrResponse) => void;
 }
 
-const TextareaAutocomplete: React.FC<TextareaAutocompleteProps> = ({
+const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
   label = '',
   name,
   rootTypeIds = [],
@@ -29,25 +31,25 @@ const TextareaAutocomplete: React.FC<TextareaAutocompleteProps> = ({
   onChange,
   onBlur,
   disabled = false,
-  variant = 'filled',
+  variant = 'outlined',
   onOpenReference,
   onOpenTermDetails
 }) => {
-  const [inputValue, setInputValue] = useState<string>(value?.label || '');
+  const [inputValue, setInputValue] = useState<string>('');
+  const [open, setOpen] = useState<boolean>(false);
   const [options, setOptions] = useState<GOlrResponse[]>([]);
-  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>('');
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLDivElement>(null);
-  const listboxRef = useRef<HTMLUListElement>(null);
+  const useAutocomplete = autocompleteType === AutocompleteType.TERM ||
+    autocompleteType === AutocompleteType.EVIDENCE_CODE;
 
-  // Use RTK Query hook
   const { data, isLoading, isFetching } = useSearchTermsQuery(
     { searchText: debouncedSearchTerm, closureIds: rootTypeIds },
     {
-      skip: !debouncedSearchTerm || debouncedSearchTerm.length < 3,
+      skip: !useAutocomplete || !debouncedSearchTerm || debouncedSearchTerm.length < 3,
       selectFromResult: ({ data, isLoading, isFetching }) => ({
         data: data || [],
         isLoading,
@@ -56,233 +58,194 @@ const TextareaAutocomplete: React.FC<TextareaAutocompleteProps> = ({
     }
   );
 
-  // Update options when data changes
   useEffect(() => {
-    if (data && data.length > 0) {
+    if (useAutocomplete && data && data.length > 0) {
       setOptions(data);
-      if (data.length > 0) {
-        setIsOpen(true);
-      }
+      setHighlightedIndex(-1);
     }
-  }, [data]);
+  }, [data, useAutocomplete]);
 
-  // Handle debounced search with native setTimeout
   useEffect(() => {
+    if (!useAutocomplete) return;
+
     const handler = setTimeout(() => {
-      if (inputValue.trim().length >= 3) {
-        setDebouncedSearchTerm(inputValue);
-      } else {
-        setOptions([]);
-      }
+      setDebouncedSearchTerm(inputValue);
     }, 300);
 
     return () => {
       clearTimeout(handler);
     };
-  }, [inputValue]);
+  }, [inputValue, useAutocomplete]);
 
-  // Handle click outside to close dropdown
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Scroll to highlighted option
-  useEffect(() => {
-    if (isOpen && highlightedIndex >= 0 && listboxRef.current) {
-      const highlightedOption = listboxRef.current.children[highlightedIndex] as HTMLLIElement;
-      if (highlightedOption) {
-        highlightedOption.scrollIntoView({ block: 'nearest' });
-      }
+    if (!open) {
+      setOptions([]);
+      setHighlightedIndex(-1);
     }
-  }, [highlightedIndex, isOpen]);
+  }, [open]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-    if (e.target.value === '') {
-      onChange(null);
-    }
-  };
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!open) return;
 
-  const handleOptionClick = (option: GOlrResponse) => {
-    setInputValue(option.label);
-    onChange(option);
-    setIsOpen(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!isOpen) {
-      if ((e.key === 'ArrowDown' || e.key === 'Enter') && inputValue.length >= 3) {
-        setIsOpen(true);
-        e.preventDefault();
-      }
-      return;
-    }
-
-    switch (e.key) {
+    switch (event.key) {
       case 'ArrowDown':
-        e.preventDefault();
+        event.preventDefault();
         setHighlightedIndex(prev =>
           prev < options.length - 1 ? prev + 1 : 0
         );
         break;
       case 'ArrowUp':
-        e.preventDefault();
+        event.preventDefault();
         setHighlightedIndex(prev =>
           prev > 0 ? prev - 1 : options.length - 1
         );
         break;
       case 'Enter':
-        e.preventDefault();
+        event.preventDefault();
         if (highlightedIndex >= 0 && highlightedIndex < options.length) {
-          handleOptionClick(options[highlightedIndex]);
+          handleOptionSelect(options[highlightedIndex]);
         }
         break;
       case 'Escape':
-        e.preventDefault();
-        setIsOpen(false);
-        break;
-      default:
+        setOpen(false);
         break;
     }
   };
 
+  useEffect(() => {
+    if (highlightedIndex >= 0 && listRef.current) {
+      const element = listRef.current.children[highlightedIndex] as HTMLElement;
+      element.scrollIntoView({ block: 'nearest' });
+    }
+  }, [highlightedIndex]);
+
+  if (!useAutocomplete) {
+    return (
+      <TextField
+        id={`textarea-${name}`}
+        name={name}
+        label={label}
+        variant={variant}
+        disabled={disabled}
+        value={typeof value === 'string' ? value : ''}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        multiline
+        rows={2}
+        fullWidth
+        InputProps={{
+          className: "bg-white rounded",
+          endAdornment: autocompleteType === AutocompleteType.REFERENCE && onOpenReference && (
+            <button
+              onClick={(e) => onOpenReference(e)}
+              className="p-2 hover:bg-gray-100 rounded-full"
+            >
+              <FaFileMedical />
+            </button>
+          ),
+        }}
+      />
+    );
+  }
+
+  const handleOptionSelect = (option: GOlrResponse) => {
+    onChange(option);
+    setInputValue(option.label);
+    setOpen(false);
+    setHighlightedIndex(-1);
+  };
+
   return (
-    <div ref={containerRef} className="relative w-full" data-pw={`form-input-${name}`}>
-      <div className="relative">
+    <div className="w-full">
+      <div ref={anchorRef} onKeyDown={handleKeyDown}>
         <TextField
-          ref={inputRef}
-          id={`textarea-${name}`}
+          id={`autocomplete-${name}`}
           name={name}
           label={label}
           value={inputValue}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          onFocus={() => {
-            if (inputValue.length >= 3) {
-              setIsOpen(true);
-            }
+          onChange={(e) => {
+            setInputValue(e.target.value);
+            if (!open) setOpen(true);
           }}
-          onBlur={onBlur}
+          onFocus={() => useAutocomplete && !inputValue && setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
           disabled={disabled}
           variant={variant}
           multiline
-          rows={3}
+          rows={2}
           fullWidth
           InputProps={{
             className: "bg-white rounded",
-            endAdornment: (
-              isLoading || isFetching ? (
-                <CircularProgress color="inherit" size={20} />
-              ) : null
+            endAdornment: (isLoading || isFetching) && (
+              <CircularProgress size={20} />
             ),
           }}
-          InputLabelProps={{
-            shrink: true,
-          }}
-          className="w-full"
-          aria-autocomplete="list"
-          aria-controls={isOpen ? `listbox-${name}` : undefined}
-          aria-expanded={isOpen}
-          aria-activedescendant={
-            highlightedIndex >= 0 ? `option-${name}-${options[highlightedIndex]?.id}` : undefined
-          }
         />
       </div>
 
-      {isOpen && options.length > 0 && (
-        <Paper
-          elevation={8}
-          className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md shadow-lg"
-        >
-          <ul
-            id={`listbox-${name}`}
-            ref={listboxRef}
-            role="listbox"
-            className="py-1 divide-y divide-gray-100"
-          >
-            {options.map((option, index) => (
-              <li
-                key={option.id}
-                id={`option-${name}-${option.id}`}
-                role="option"
-                aria-selected={highlightedIndex === index}
-                className={`cursor-pointer select-none relative py-2 px-3 ${highlightedIndex === index ? 'bg-blue-50' : ''
-                  } ${!option.notAnnotatable ? 'opacity-50 pointer-events-none' : ''}`}
-                onClick={() => option.notAnnotatable && handleOptionClick(option)}
-              >
-                <div className="flex w-full items-center">
-                  <div className="flex-grow font-normal truncate max-w-[200px]">
-                    {option.label}
-                  </div>
+      <Popper
+        open={open}
+        anchorEl={anchorRef.current}
+        placement="bottom-start"
+        style={{ width: Math.max(anchorRef.current?.clientWidth || 0, 400), zIndex: 1300 }}
+      >
+        <Paper className="mt-1 max-h-60 overflow-y-auto !bg-amber-100" ref={listRef}>
+          {options.length === 0 && (
+            <div className="p-4 text-gray-500 text-center">
+              {inputValue.length < 3 ? "Type at least 3 characters to search" : "No results found"}
+            </div>
+          )}
 
-                  {autocompleteType === AutocompleteType.EVIDENCE_CODE && option.xref && (
-                    <div className="font-bold mr-2">
-                      {option.xref}
-                    </div>
-                  )}
-
-                  <div className="text-sm text-gray-600 flex items-center">
-                    {option.link ? (
-                      <a
-                        href={option.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex items-center"
-                      >
-                        <span>{option.id}</span>
-                        <FiFile className="ml-1" fontSize="small" />
-                      </a>
-                    ) : (
-                      <span>{option.id}</span>
-                    )}
-                  </div>
-
-                  {onOpenTermDetails && (
-                    <button
-                      type="button"
-                      className="ml-2 p-1 rounded-full border border-gray-300 hover:bg-gray-100"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenTermDetails(e, option);
-                      }}
-                    >
-                      <FiChevronRight fontSize="small" />
-                    </button>
-                  )}
+          {options.map((option, index) => (
+            <div
+              key={option.id}
+              className={`flex items-center justify-between text-xs p-3 cursor-pointer gap-4
+                ${!option.notAnnotatable ? 'opacity-50 pointer-events-none' : ''}
+                ${index === highlightedIndex ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
+              onClick={() => handleOptionSelect(option)}
+              onMouseEnter={() => setHighlightedIndex(index)}
+            >
+              <div className="flex-grow font-normal line-clamp-2">
+                {option.label}
+              </div>
+              {autocompleteType === AutocompleteType.EVIDENCE_CODE && option.xref && (
+                <div className="font-bold mr-2">
+                  {option.xref}
                 </div>
-              </li>
-            ))}
-          </ul>
-        </Paper>
-      )}
+              )}
+              <div className="text-gray-500 shrink-0">
+                {option.link ? (
+                  <a
+                    href={option.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center hover:text-blue-500"
+                  >
+                    {option.id}
+                  </a>
+                ) : (
+                  <span>{option.id}</span>
+                )}
 
-      {isOpen && options.length === 0 && debouncedSearchTerm.length >= 3 && !isLoading && !isFetching && (
-        <Paper
-          elevation={8}
-          className="absolute z-10 mt-1 w-full py-2 px-3 rounded-md shadow-lg"
-        >
-          No results found
-        </Paper>
-      )}
+              </div>
 
-      {isOpen && inputValue.length < 3 && (
-        <Paper
-          elevation={8}
-          className="absolute z-10 mt-1 w-full py-2 px-3 rounded-md shadow-lg"
-        >
-          Type at least 3 characters to search
+              {onOpenTermDetails && (
+                <button
+                  className="p-1 rounded-full border hover:bg-gray-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenTermDetails(e, option);
+                  }}
+                > <FiFile className="ml-1" />
+                </button>
+              )}
+            </div>
+          ))}
         </Paper>
-      )}
-    </div>
+      </Popper>
+    </div >
   );
 };
 
-export default TextareaAutocomplete;
+export default TermAutocomplete;

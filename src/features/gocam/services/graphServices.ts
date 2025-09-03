@@ -1,7 +1,7 @@
 import type { Contributor, Group } from "@/features/users/models/contributor";
 import type { Entity, Evidence } from "../models/cam";
 import { type Edge, type GraphModel, type GraphNode, type Activity, ActivityType, RootTypes, Aspect } from "../models/cam";
-import { Relations } from "@/@pango.core/models/relations";
+import { Relations } from "@/@noctua.core/models/relations";
 import { v4 as uuidv4 } from 'uuid';
 import { store } from "@/app/store/store";
 

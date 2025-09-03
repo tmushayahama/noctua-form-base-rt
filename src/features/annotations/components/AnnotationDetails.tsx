@@ -2,11 +2,11 @@ import type React from 'react'
 import { BsBookmark, BsInfoCircle } from 'react-icons/bs'
 import { MdCategory, MdGroups } from 'react-icons/md'
 import type { Annotation } from '../models/annotation'
-import { ASPECT_MAP } from '@/@pango.core/data/config'
+import { ASPECT_MAP } from '@/@noctua.core/data/config'
 import { FaDna } from 'react-icons/fa'
 import TermLink from '@/features/terms/components/TermLink'
-import { ENVIRONMENT } from '@/@pango.core/data/constants'
-import { getPubmedArticleUrl } from '@/@pango.core/services/linksService'
+import { ENVIRONMENT } from '@/@noctua.core/data/constants'
+import { getPubmedArticleUrl } from '@/@noctua.core/services/linksService'
 
 const Section = ({
   title,

@@ -30,6 +30,7 @@ export const StencilItem = ({ type, label, imageSrc }: StencilItemProps): JSX.El
     </div>
   );
 };
+
 export const ActivityNode = ({ data }: { data: any }) => {
   const nodeRef = useRef<HTMLDivElement>(null);
   const [nodeHeight, setNodeHeight] = useState(140);
@@ -38,8 +39,6 @@ export const ActivityNode = ({ data }: { data: any }) => {
     if (nodeRef.current) {
       const contentHeight = nodeRef.current.scrollHeight;
       setNodeHeight(contentHeight);
-
-      // If this node is part of a layout operation, we need to notify the parent
       if (data.onHeightChange) {
         data.onHeightChange(data.uid, contentHeight);
       }
@@ -48,7 +47,6 @@ export const ActivityNode = ({ data }: { data: any }) => {
 
   const renderEdges = (edges: any[], level = 0) => {
     if (!edges || edges.length === 0) return null;
-
     return (
       <div className={`${level > 0 ? 'ml-3 border-l-2 border-gray-200 pl-2' : ''}`}>
         {edges.map((edge: any) => (
@@ -58,7 +56,6 @@ export const ActivityNode = ({ data }: { data: any }) => {
               <span className="text-2xs text-gray-700 font-thin w-[60px] line-clamp-2">{edge.label}</span>
               <span className="text-xs flex-1 line-clamp-2">{edge.target.label}</span>
             </div>
-
             {edge.edges && renderEdges(edge.edges, level + 1)}
           </div>
         ))}
@@ -66,23 +63,31 @@ export const ActivityNode = ({ data }: { data: any }) => {
     );
   };
 
+  const handleStyle = {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    borderRadius: '8px',
+    border: '5px solid blue',
+    background: 'none',
+    pointerEvents: 'all',
+    cursor: 'crosshair'
+  };
+
   return (
     <div
       ref={nodeRef}
-      className="rounded-lg shadow-md border border-gray-200 bg-green-100 overflow-visible"
+      className="rounded-lg shadow-md border border-gray-200 bg-green-100 overflow-visible relative"
       style={{ width: GRAPH_DIMENSIONS.NODE_WIDTH, minHeight: nodeHeight }}
     >
       <Handle
-        type="target"
-        position={Position.Top}
-        id="top-target"
-        style={{ top: 0 }}
-      />
-      <Handle
         type="source"
-        position={Position.Bottom}
-        id="bottom-source"
-        style={{ bottom: 0 }}
+        position={Position.Top}
+        id="perimeter-handle"
+        style={handleStyle}
+        isConnectable={true}
       />
 
       {data.enabledBy && (

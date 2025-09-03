@@ -9,10 +9,10 @@ import { Button } from '@mui/material';
 import { convertTreeToJson, findNodeByNodeType } from '../../services/addActivityServices';
 import { useUpdateGraphModelMutation } from '../../slices/camApiSlice';
 import NodeForm from './NodeForm';
-import { getRelationLabel, getTermLabel } from '@/@pango.core/utils/dataUtil';
-import { openDialog } from '@/@pango.core/components/dialog/dialogSlice';
+import { getRelationLabel, getTermLabel } from '@/@noctua.core/utils/dataUtil';
+import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice';
 import { getAspect } from '../../services/graphServices';
-import { Relations } from '@/@pango.core/models/relations';
+import { Relations } from '@/@noctua.core/models/relations';
 
 
 const ActivityForm: React.FC = () => {

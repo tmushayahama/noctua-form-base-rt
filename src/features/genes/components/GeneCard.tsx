@@ -2,7 +2,7 @@ import type React from 'react'
 import { useState } from 'react'
 import type { Gene } from '../models/gene'
 import { VersionedLink } from '@/shared/components/VersionedLink'
-import { getUniprotLink, getUCSCBrowserLink } from '@/@pango.core/services/linksService'
+import { getUniprotLink, getUCSCBrowserLink } from '@/@noctua.core/services/linksService'
 import Terms from '@/features/terms/components/Terms'
 import { motion, AnimatePresence } from 'framer-motion'
 

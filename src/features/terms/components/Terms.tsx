@@ -1,6 +1,6 @@
 import type React from 'react'
 import { FaFlask } from 'react-icons/fa'
-import { ASPECT_MAP, EVIDENCE_TYPE_MAP, EvidenceType } from '@/@pango.core/data/config'
+import { ASPECT_MAP, EVIDENCE_TYPE_MAP, EvidenceType } from '@/@noctua.core/data/config'
 import type { Term } from '../models/term'
 import TermLink from './TermLink'
 import { PiEmptyLight } from 'react-icons/pi'

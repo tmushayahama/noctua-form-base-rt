@@ -6,15 +6,15 @@ import {
   selectLeftDrawerOpen,
   selectRightDrawerOpen,
   setRightDrawerOpen,
-} from '@/@pango.core/components/drawer/drawerSlice'
+} from '@/@noctua.core/components/drawer/drawerSlice'
 import { useAppDispatch, useAppSelector } from '../hooks'
-import { trackPageView } from '@/analytics'
+import { initGA, trackPageView } from '@/analytics'
 import { useEffect } from 'react'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import useTheme from '@mui/material/styles/useTheme'
 import Box from '@mui/material/Box'
 import Drawer from '@mui/material/Drawer'
-import { ENVIRONMENT } from '@/@pango.core/data/constants'
+import { ENVIRONMENT } from '@/@noctua.core/data/constants'
 import CamToolbar from '@/features/gocam/components/CamToolbar'
 
 interface LayoutProps {
@@ -39,7 +39,7 @@ const Layout: React.FC<LayoutProps> = ({ leftDrawerContent, rightDrawerContent }
   }
 
   useEffect(() => {
-    //initGA('G-245RCHN2PQ')
+    initGA('G-LHBLYRN338')
   }, [])
 
   useEffect(() => {

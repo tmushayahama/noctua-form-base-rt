@@ -1,5 +1,5 @@
-import { setLeftDrawerOpen } from '@/@pango.core/components/drawer/drawerSlice'
-import { ENVIRONMENT } from '@/@pango.core/data/constants'
+import { setLeftDrawerOpen } from '@/@noctua.core/components/drawer/drawerSlice'
+import { ENVIRONMENT } from '@/@noctua.core/data/constants'
 import AnnotationTable from '@/features/annotations/components/AnnotationTable'
 import { useGetAnnotationsQuery } from '@/features/annotations/slices/annotationsApiSlice'
 import GeneSummary from '@/features/genes/components/GeneSummary'
@@ -9,7 +9,7 @@ import { FiExternalLink } from 'react-icons/fi'
 import { useParams } from 'react-router-dom'
 import { useAppDispatch } from './hooks'
 import { TermType } from '@/features/terms/models/term'
-import { ASPECT_ORDER } from '@/@pango.core/data/config'
+import { ASPECT_ORDER } from '@/@noctua.core/data/config'
 import {
   getAGRLink,
   getFamilyLink,
@@ -18,8 +18,8 @@ import {
   getNCBIGeneLink,
   getUCSCBrowserLink,
   getUniprotLink,
-} from '@/@pango.core/services/linksService'
-import theme from '@/@pango.core/theme/theme'
+} from '@/@noctua.core/services/linksService'
+import theme from '@/@noctua.core/theme/theme'
 import { useMediaQuery } from '@mui/system'
 import AnnotationCards from '@/features/annotations/components/AnnotationCards'
 import { handleExternalLinkClick } from '@/analytics'
@@ -104,7 +104,7 @@ const Gene: React.FC = () => {
     <div className="w-full bg-slate-100">
       <div className="mx-auto max-w-6xl p-3">
         {/* Gene Header Section */}
-        <div className="pango-gene-summary w-full px-3 py-4 pb-6 md:pb-10">
+        <div className="noctua-gene-summary w-full px-3 py-4 pb-6 md:pb-10">
           <h1 className="mb-6 text-xl font-normal md:mb-10 md:text-4xl">
             <span className="font-bold">{annotation.geneSymbol}</span>: PAN-GO functions and
             evidence

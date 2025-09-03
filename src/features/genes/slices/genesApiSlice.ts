@@ -1,5 +1,5 @@
-import type { ApiResponseError } from '@/@pango.core/utils/api'
-import { transformResponse } from '@/@pango.core/utils/api'
+import type { ApiResponseError } from '@/@noctua.core/utils/api'
+import { transformResponse } from '@/@noctua.core/utils/api'
 import apiService, { createGraphQLRequest } from '@/app/store/apiService'
 import type { AutocompleteType, GenesApiResponse, GeneStats } from '../models/gene'
 import {

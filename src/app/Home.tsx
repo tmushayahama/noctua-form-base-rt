@@ -4,25 +4,31 @@ import { ReactFlowProvider } from 'reactflow';
 import { useEffect } from 'react';
 import { useAppDispatch } from './hooks';
 import { setModel } from '@/features/gocam/slices/camSlice';
+import { useSearchParams } from 'react-router-dom';
 import ActivityFlow from '@/features/diagram/components/ActivityFlow';
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();
 
-  const modelId = 'gomodel:66df835200000000';
+  const [searchParams] = useSearchParams();
+  const modelId = searchParams.get('model_id')
 
   const {
     data: graphModel,
     error,
     isLoading,
     isSuccess
-  } = useGetGraphModelQuery(modelId);
+  } = useGetGraphModelQuery(modelId || '', { skip: !modelId });
 
   useEffect(() => {
     if (isSuccess && graphModel && graphModel.data) {
       dispatch(setModel(graphModel.data));
     }
   }, [graphModel, isSuccess, dispatch]);
+
+  if (!modelId) {
+    return <div className="p-4">No model ID provided</div>;
+  }
 
   if (isLoading) return <div>Loading...</div>;
 
@@ -39,7 +45,7 @@ const Home: React.FC = () => {
       <div className="flex-1 p-0 overflow-hidden">
         {graphModel && (
           <ReactFlowProvider>
-            <ActivityFlow graphModel={graphModel.data} />
+            <ActivityFlow />
           </ReactFlowProvider>
         )}
       </div>

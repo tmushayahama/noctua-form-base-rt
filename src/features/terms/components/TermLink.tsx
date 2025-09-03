@@ -1,4 +1,4 @@
-import { ENVIRONMENT } from '@/@pango.core/data/constants'
+import { ENVIRONMENT } from '@/@noctua.core/data/constants'
 import type React from 'react'
 import type { Term } from '../models/term'
 import { handleGOTermLinkClick } from '@/analytics'

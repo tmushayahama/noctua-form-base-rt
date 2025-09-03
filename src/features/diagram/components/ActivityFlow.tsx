@@ -12,14 +12,14 @@ import ReactFlow, {
   useReactFlow
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { setRightDrawerOpen } from '@/@pango.core/components/drawer/drawerSlice';
-import { useAppDispatch } from '@/app/hooks';
+import { setRightDrawerOpen } from '@/@noctua.core/components/drawer/drawerSlice';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import ActivityDialog from '@/features/gocam/components/dialogs/ActivityFormDialog';
 import ActivityForm from '@/features/gocam/components/forms/ActivityForm';
 import type { GraphModel, Activity } from '@/features/gocam/models/cam';
 import { setSelectedActivity } from '@/features/gocam/slices/camSlice';
 import RelationForm from '@/features/relations/components/RelationForm';
-import { StencilActivityItem, StencilItem, StencilMoleculeItem, nodeTypes } from './ActivityNodes';
+import { StencilItem, nodeTypes } from './ActivityNodes';
 import { FloatingEdge } from './FloatingEdge';
 import { GRAPH_DIMENSIONS } from '../constants';
 import { getLayoutedElements } from '../services/diagramServices';
@@ -88,12 +88,12 @@ const useLayoutedElements = (initialNodes: FlowNode[], initialEdges: FlowEdge[],
 };
 
 interface ActivityFlowProps {
-  graphModel: GraphModel;
   className?: string;
 }
 
-const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' }) => {
+const ActivityFlow: React.FC<ActivityFlowProps> = ({ className = '' }) => {
   const dispatch = useAppDispatch();
+  const graphModel = useAppSelector(state => state.cam.model);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   const initialNodeIdsRef = useRef<Set<string>>(new Set());
@@ -349,7 +349,7 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
   if (!graphModel) return null;
 
   return (
-    <div className="flex">
+    <div className="flex h-full">
       {/* Stencil Panel */}
       <div className="w-24 border-r p-1 border-gray-200 bg-gray-50">
         <div className="text-sm font-semibold text-gray-700 mb-4">TOOLBOX</div>
@@ -373,8 +373,8 @@ const ActivityFlow: React.FC<ActivityFlowProps> = ({ graphModel, className = '' 
       {/* Flow Canvas */}
       <div
         ref={reactFlowWrapper}
-        className={`flex-1 bg-gray-50 ${className}`}
-        style={{ height: `${graphHeight}px` }}
+        className={`flex-1 h-full bg-gray-50 ${className}`}
+      // style={{ height: `${graphHeight}px` }}
       >
         <ReactFlow
           nodes={nodes}

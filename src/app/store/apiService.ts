@@ -4,8 +4,8 @@ import { useSearchParams } from 'react-router-dom'
 import { useCallback } from 'react'
 
 export enum ApiVersion {
-  V1 = 'pango-1',
-  V2 = 'pango-2',
+  V1 = 'noctua-1',
+  V2 = 'noctua-2',
 }
 
 const LATEST_VERSION = ApiVersion.V1
@@ -41,7 +41,7 @@ const baseQueryWithVersion: BaseQueryFn = async (args, api, extraOptions) => {
   const version = (searchParams.get(VERSION_PARAM) as ApiVersion) || LATEST_VERSION
 
   const baseQuery = fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_PANGO_API_URL,
+    baseUrl: import.meta.env.VITE_NOCTUA_API_URL,
     prepareHeaders: headers => {
       headers.set('Content-Type', 'application/json')
       headers.set('X-API-Version', version)

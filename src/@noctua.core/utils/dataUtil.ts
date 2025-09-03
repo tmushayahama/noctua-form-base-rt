@@ -1,6 +1,6 @@
 
-import termsData from '@/@pango.core/data/shape-terms.json';
-import { globalKnownRelations } from '@/@pango.core/data/relations';
+import termsData from '@/@noctua.core/data/shape-terms.json';
+import { globalKnownRelations } from '@/@noctua.core/data/relations';
 
 // Build static maps only once
 const termLookupMap = new Map<string, string>(

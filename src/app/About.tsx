@@ -1,8 +1,8 @@
-import { setLeftDrawerOpen } from '@/@pango.core/components/drawer/drawerSlice'
+import { setLeftDrawerOpen } from '@/@noctua.core/components/drawer/drawerSlice'
 import type React from 'react'
 import { useEffect } from 'react'
 import { useAppDispatch } from './hooks'
-import { ENVIRONMENT } from '@/@pango.core/data/constants'
+import { ENVIRONMENT } from '@/@noctua.core/data/constants'
 import { FaFlask } from 'react-icons/fa'
 import { TbBinaryTreeFilled } from 'react-icons/tb'
 

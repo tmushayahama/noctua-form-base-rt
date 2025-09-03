@@ -1,8 +1,9 @@
 import apiService from '@/app/store/apiService';
 import { transformGraphData } from '../services/graphServices';
 import type { GraphModelApiResponse } from '../models/cam';
-import { ENVIRONMENT } from '@/@pango.core/data/constants';
+import { ENVIRONMENT } from '@/@noctua.core/data/constants';
 import type { RootState } from '@/app/store/store';
+import { getBaristaApiUrl } from '@/@noctua.core/services/linksService';
 
 // TODO Cchec if user is there first
 export const addTagTypes = ['graph'] as const;
@@ -13,6 +14,7 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
       async queryFn(modelId, _queryApi, _extraOptions, baseQuery) {
         const state = _queryApi.getState() as RootState;
         const baristaToken = state.auth.baristaToken || '';
+        const baseUrl = getBaristaApiUrl(baristaToken);
 
         const requests = encodeURIComponent(JSON.stringify([
           {
@@ -23,7 +25,7 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
         ]));
 
         const result = await baseQuery({
-          url: `${ENVIRONMENT.baristaUrl}?token=${baristaToken}&intention=query&requests=${requests}`,
+          url: `${baseUrl}?token=${baristaToken}&intention=query&requests=${requests}`,
         });
 
         if (result.error) return { error: result.error };
@@ -44,6 +46,8 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
         const user = state.auth.user;
         const groupId = user?.group?.id || '';
 
+        const baseUrl = getBaristaApiUrl(baristaToken);
+
         const bodyParams = new URLSearchParams();
         bodyParams.append('token', baristaToken);
         bodyParams.append('provided-by', groupId);
@@ -51,7 +55,7 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
         bodyParams.append('requests', JSON.stringify(requests));
 
         const result = await baseQuery({
-          url: `${ENVIRONMENT.baristaUrl}`,
+          url: baseUrl,
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',

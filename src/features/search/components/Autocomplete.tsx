@@ -102,7 +102,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
 
       return (
         <li {...props} key={item.id} className={`${!item.notAnnotatable ? 'opacity-50 pointer-events-none' : ''}`}>
-          <div className="flex w-full items-center py-2">
+          <div className="flex w-full items-center p-2">
             <div className="flex-grow font-normal truncate max-w-[200px]">
               {item.label}
             </div>
@@ -176,7 +176,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
   // If not using autocomplete, render a regular TextField
   if (!useAutocomplete) {
     return (
-      <div data-pw={`form-input-${name}`} className="w-full">
+      <div className="w-full">
         <TextField
           id={`textarea-${name}`}
           name={name}
@@ -214,7 +214,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
 
   // Otherwise render the autocomplete component
   return (
-    <div data-pw={`form-input-${name}`} className="w-full">
+    <div className="w-full">
       <Autocomplete
         id={`autocomplete-${name}`}
         freeSolo

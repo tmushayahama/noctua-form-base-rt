@@ -1,5 +1,5 @@
 import apiService from "@/app/store/apiService";
-import { ENVIRONMENT } from "@/@pango.core/data/constants";
+import { ENVIRONMENT } from "@/@noctua.core/data/constants";
 import type { User, UserResponse } from "../user";
 
 

@@ -26,9 +26,9 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ children }) => {
     return (
       <div className="flex flex-col items-center justify-center h-screen w-screen bg-white">
         <img
-          src="/your-logo.png"
+          src="assets/images/logos/go-logo.large.png"
           alt="App Logo"
-          className="w-32 h-32 mb-6"
+          className="h-32 mb-6"
         />
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mb-4"></div>
         <p className="text-lg text-gray-600">

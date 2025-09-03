@@ -31,3 +31,5 @@ dist-ssr
 .env.staging
 .env.production
 .env.development
+
+workbenches/*

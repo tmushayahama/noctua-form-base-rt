@@ -2,7 +2,7 @@ import type { Action, Middleware, ThunkAction } from '@reduxjs/toolkit'
 import { combineSlices, configureStore } from '@reduxjs/toolkit'
 import { setupListeners } from '@reduxjs/toolkit/query'
 import apiService from './apiService'
-import { drawerSlice } from '@/@pango.core/components/drawer/drawerSlice'
+import { drawerSlice } from '@/@noctua.core/components/drawer/drawerSlice'
 import { annotationSlice } from '@/features/annotations/slices/annotationsSlice'
 import { selectedAnnotationSlice } from '@/features/annotations/slices/selectedAnnotationSlice'
 import { geneSlice } from '@/features/genes/slices/genesSlice'
@@ -13,7 +13,7 @@ import { activityFormSlice } from '@/features/gocam/slices/activityFormSlice'
 import { metadataSlice } from '@/features/users/slices/metadataSlice'
 import { authSlice } from '@/features/auth/slices/authSlice'
 import { relationSlice } from '@/features/relations/slices/relationSlice'
-import { dialogSlice } from '@/@pango.core/components/dialog/dialogSlice'
+import { dialogSlice } from '@/@noctua.core/components/dialog/dialogSlice'
 
 const rootReducer = combineSlices({
   auth: authSlice.reducer,

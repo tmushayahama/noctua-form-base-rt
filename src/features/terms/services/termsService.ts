@@ -1,4 +1,4 @@
-import { ASPECT_MAP } from '@/@pango.core/data/config'
+import { ASPECT_MAP } from '@/@noctua.core/data/config'
 import type { Bucket } from '@/features/genes/models/gene'
 import type { CategoryTerm } from '../models/term'
 

@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useAppDispatch } from '@/app/hooks';
-import { setRightDrawerOpen } from '@/@pango.core/components/drawer/drawerSlice';
+import { setRightDrawerOpen } from '@/@noctua.core/components/drawer/drawerSlice';
 import type { Activity, Edge, GraphNode } from '../models/cam';
 
 import { FaTrash, FaEdit } from 'react-icons/fa';

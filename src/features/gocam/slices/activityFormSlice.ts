@@ -3,7 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 import type { Entity, EvidenceForm, NodeType, TreeNode } from '../models/cam';
 import type { GOlrResponse } from '@/features/search/models/search';
-import { Relations } from '@/@pango.core/models/relations';
+import { Relations } from '@/@noctua.core/models/relations';
 
 
 interface TreeState {

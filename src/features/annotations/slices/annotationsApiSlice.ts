@@ -1,6 +1,6 @@
-import type { ApiResponseError } from '@/@pango.core/utils/api'
-import { transformResponse } from '@/@pango.core/utils/api'
-import groupsData from '@/@pango.core/data//groups.json'
+import type { ApiResponseError } from '@/@noctua.core/utils/api'
+import { transformResponse } from '@/@noctua.core/utils/api'
+import groupsData from '@/@noctua.core/data//groups.json'
 import apiService, { createGraphQLRequest } from '@/app/store/apiService'
 import type {
   AnnotationsApiResponse,

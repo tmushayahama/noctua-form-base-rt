@@ -1,4 +1,4 @@
-# Pango Site 🚀
+# Noctua Workbench Site 🚀
 
 A modern web application built with React, TypeScript, and Vite.
 
@@ -26,8 +26,8 @@ A modern web application built with React, TypeScript, and Vite.
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/pantherdb/pango.git
-cd pango/site-react
+git clone https://github.com/pantherdb/noctua.git
+cd noctua/site-react
 ```
 
 2. Install dependencies:
@@ -119,4 +119,4 @@ npm run build:production
 
 ## 📄 License
 
-This project is part of the Pango repository. See the repository's LICENSE file for details.
+This project is part of the Noctua repository. See the repository's LICENSE file for details.

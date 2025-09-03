@@ -8,13 +8,13 @@ import { useGetGenesQuery, useGetGenesCountQuery } from '../slices/genesApiSlice
 import type { RootState } from '@/app/store/store'
 import Terms from '@/features/terms/components/Terms'
 import { VersionedLink } from '@/shared/components/VersionedLink'
-import { ANNOTATION_COLS } from '@/@pango.core/data/config'
+import { ANNOTATION_COLS } from '@/@noctua.core/data/config'
 import GeneCard from './GeneCard'
-import { getUniprotLink } from '@/@pango.core/services/linksService'
+import { getUniprotLink } from '@/@noctua.core/services/linksService'
 import {
   selectLeftDrawerOpen,
   setLeftDrawerOpen,
-} from '@/@pango.core/components/drawer/drawerSlice'
+} from '@/@noctua.core/components/drawer/drawerSlice'
 import { handleExternalLinkClick } from '@/analytics'
 import useTheme from '@mui/material/styles/useTheme'
 import useMediaQuery from '@mui/material/useMediaQuery'

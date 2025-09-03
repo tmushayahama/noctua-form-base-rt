@@ -1,6 +1,6 @@
 import type React from 'react'
 import { useAppDispatch, useAppSelector } from '../hooks'
-import { setRightDrawerOpen } from '@/@pango.core/components/drawer/drawerSlice'
+import { setRightDrawerOpen } from '@/@noctua.core/components/drawer/drawerSlice'
 import Button from '@mui/material/Button'
 import type { RootState } from '../store/store'
 import { setSelectedActivity } from '@/features/gocam/slices/camSlice'

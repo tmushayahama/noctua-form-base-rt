@@ -1,4 +1,4 @@
-import { ENVIRONMENT } from '@/@pango.core/data/constants'
+import { ENVIRONMENT } from '@/@noctua.core/data/constants'
 import type { AnnotationsResponse, GOlrResponse } from '../models/search'
 import apiService from '@/app/store/apiService'
 import { escapeGOlrValue, mapGOlrResponse, processAnnotationsResponse } from '../services/lookupServices';

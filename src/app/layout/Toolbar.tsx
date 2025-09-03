@@ -6,7 +6,7 @@ import { IoApps, IoChevronDown } from 'react-icons/io5';
 import { useAuth } from '@/features/auth/authProvider';
 import { useAppSelector } from '../hooks';
 import type { RootState } from '../store/store';
-import { ENVIRONMENT } from '@/@pango.core/data/constants';
+import { ENVIRONMENT } from '@/@noctua.core/data/constants';
 
 const Toolbar: React.FC = () => {
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
@@ -167,7 +167,7 @@ const Toolbar: React.FC = () => {
                   open={Boolean(userMenuAnchor)}
                   onClose={handleUserMenuClose}
                 >
-                  <MenuItem onClick={logout} className="text-red-500 w-full" data-pw="noc-logout-button">
+                  <MenuItem onClick={logout} className="text-red-500 w-full">
                     Logout
                   </MenuItem>
                 </Menu>

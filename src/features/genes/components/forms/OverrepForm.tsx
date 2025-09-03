@@ -1,6 +1,6 @@
-import { ENVIRONMENT } from '@/@pango.core/data/constants'
+import { ENVIRONMENT } from '@/@noctua.core/data/constants'
 import type React from 'react'
-import ontology from '@/@pango.core/data/ontologyOptions.json'
+import ontology from '@/@noctua.core/data/ontologyOptions.json'
 import { useEffect, useRef } from 'react'
 
 declare global {
