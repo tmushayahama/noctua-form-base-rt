@@ -1,13 +1,11 @@
 import type React from 'react';
 import { useGetGraphModelQuery } from '@/features/gocam/slices/camApiSlice';
-import { ReactFlowProvider } from 'reactflow';
 import { useEffect } from 'react';
 import { useAppDispatch } from './hooks';
 import { setModel } from '@/features/gocam/slices/camSlice';
 import { useSearchParams } from 'react-router-dom';
-import ActivityFlow from '@/features/diagram/components/ActivityFlow';
 
-const Home: React.FC = () => {
+const PathwayEditor: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const [searchParams] = useSearchParams();
@@ -44,13 +42,12 @@ const Home: React.FC = () => {
     <div className="flex flex-col h-full">
       <div className="flex-1 p-0 overflow-hidden">
         {graphModel && (
-          <ReactFlowProvider>
-            <ActivityFlow />
-          </ReactFlowProvider>
+          /* The new Pathway Diagram */
+          <></>
         )}
       </div>
     </div>
   );
 };
 
-export default Home;
+export default PathwayEditor;

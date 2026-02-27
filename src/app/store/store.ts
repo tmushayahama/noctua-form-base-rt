@@ -3,11 +3,7 @@ import { combineSlices, configureStore } from '@reduxjs/toolkit'
 import { setupListeners } from '@reduxjs/toolkit/query'
 import apiService from './apiService'
 import { drawerSlice } from '@/@noctua.core/components/drawer/drawerSlice'
-import { annotationSlice } from '@/features/annotations/slices/annotationsSlice'
-import { selectedAnnotationSlice } from '@/features/annotations/slices/selectedAnnotationSlice'
-import { geneSlice } from '@/features/genes/slices/genesSlice'
 import { searchSlice } from '@/features/search/searchSlice'
-import { termsSlice } from '@/features/terms/slices/termsSlice'
 import { camSlice } from '@/features/gocam/slices/camSlice'
 import { activityFormSlice } from '@/features/gocam/slices/activityFormSlice'
 import { metadataSlice } from '@/features/users/slices/metadataSlice'
@@ -22,10 +18,6 @@ const rootReducer = combineSlices({
   cam: camSlice.reducer,
   relation: relationSlice.reducer,
   search: searchSlice.reducer,
-  genes: geneSlice.reducer,
-  terms: termsSlice.reducer,
-  annotations: annotationSlice.reducer,
-  selectedAnnotation: selectedAnnotationSlice.reducer,
   drawer: drawerSlice.reducer,
   dialog: dialogSlice.reducer,
   [apiService.reducerPath]: apiService.reducer,

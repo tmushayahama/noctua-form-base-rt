@@ -4,7 +4,7 @@ import Layout from './app/layout/Layout'
 import { ThemeProvider } from '@emotion/react'
 import CssBaseline from '@mui/material/CssBaseline'
 import theme from './@noctua.core/theme/theme'
-import Home from './app/Home'
+import PathwayEditor from './app/PathwayViewer'
 import SplashScreen from './features/users/components/SplashScreen'
 import { AuthProvider } from './features/auth/authProvider'
 import RightDrawerContent from './app/layout/RightDrawer'
@@ -14,7 +14,7 @@ const routes = [
   {
     path: '/',
     element: <Layout rightDrawerContent={<RightDrawerContent />} />,
-    children: [{ path: '', element: <Home /> }],
+    children: [{ path: '', element: <PathwayEditor /> }],
   },
 ]
 
