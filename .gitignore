@@ -32,4 +32,9 @@ dist-ssr
 .env.production
 .env.development
 
+downloads
 workbenches/*
+
+
+# Claude Code
+.claude/settings.local.json

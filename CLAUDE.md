@@ -74,3 +74,10 @@ Vitest + React Testing Library + jsdom. Use `renderWithProviders` from `src/util
 - Prettier: no semicolons, single quotes, 2-space indent, trailing comma es5, 100 char width, arrow parens avoid
 - Tailwind CSS classes are auto-sorted by prettier-plugin-tailwindcss
 - Unused function args prefixed with `_` are allowed
+
+
+## Task Management
+
+### Always Create and Maintain Task Plans
+
+See [.plans/template.md](plans/template.md) for detailed examples and formats.
