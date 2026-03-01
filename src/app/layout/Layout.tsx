@@ -3,7 +3,6 @@ import { Outlet, useLocation } from 'react-router-dom'
 import Toolbar from './Toolbar'
 import Footer from './Footer'
 import {
-  selectLeftDrawerOpen,
   selectRightDrawerOpen,
   setRightDrawerOpen,
 } from '@/@noctua.core/components/drawer/drawerSlice'
@@ -18,20 +17,16 @@ import { ENVIRONMENT } from '@/@noctua.core/data/constants'
 import CamToolbar from '@/features/gocam/components/CamToolbar'
 
 interface LayoutProps {
-  leftDrawerContent?: React.ReactNode
   rightDrawerContent?: React.ReactNode
 }
 // TODO update google analytics
-const drawerWidth = 420
-
-const Layout: React.FC<LayoutProps> = ({ leftDrawerContent, rightDrawerContent }) => {
+const Layout: React.FC<LayoutProps> = ({ rightDrawerContent }) => {
   const isDev = ENVIRONMENT.isDev
   const location = useLocation()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const dispatch = useAppDispatch()
 
-  const leftDrawerOpen = useAppSelector(selectLeftDrawerOpen)
   const rightDrawerOpen = useAppSelector(selectRightDrawerOpen)
 
   const handleRightDrawerClose = () => {
@@ -64,38 +59,6 @@ const Layout: React.FC<LayoutProps> = ({ leftDrawerContent, rightDrawerContent }
       </div>
 
       <Box className="fixed flex w-full flex-1" style={{ top: isDev ? 115 : 90, bottom: 0 }}>
-
-        {leftDrawerContent && (
-          <Box
-            sx={{
-              width: leftDrawerOpen ? (isMobile ? '100%' : drawerWidth) : 0,
-              height: '100%',
-              transition: theme =>
-                theme.transitions.create('width', {
-                  easing: theme.transitions.easing.sharp,
-                  duration: theme.transitions.duration.enteringScreen,
-                }),
-              overflow: 'hidden',
-            }}
-          >
-            <Drawer
-              variant="persistent"
-              anchor="left"
-              open={leftDrawerOpen}
-              sx={{
-                height: '100%',
-                '& .MuiDrawer-paper': {
-                  position: 'static',
-                  width: isMobile ? '100%' : drawerWidth,
-                  height: '100%',
-                  overflow: 'auto',
-                },
-              }}
-            >
-              {leftDrawerContent}
-            </Drawer>
-          </Box>
-        )}
 
         <div className="flex-1 overflow-auto">
           <Outlet />

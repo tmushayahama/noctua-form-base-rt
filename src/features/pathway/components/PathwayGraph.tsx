@@ -58,6 +58,7 @@ export default function PathwayGraph({
     canvas.onLinkClick = onLinkClick
     canvas.onLinkCreated = onLinkCreated
     canvas.onUpdateLocations = onUpdateLocations
+    canvas.onStencilDrop = onStencilDrop as CamCanvas['onStencilDrop']
   }, [
     onActivityClick,
     onEditClick,
@@ -65,6 +66,7 @@ export default function PathwayGraph({
     onLinkClick,
     onLinkCreated,
     onUpdateLocations,
+    onStencilDrop,
     canvasRef,
   ])
 
@@ -86,41 +88,11 @@ export default function PathwayGraph({
     [canvasRef]
   )
 
-  // Stencil drag-drop
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    if (e.dataTransfer.types.includes('application/noctua-stencil')) {
-      e.preventDefault()
-      e.dataTransfer.dropEffect = 'copy'
-    }
-  }, [])
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      const raw = e.dataTransfer.getData('application/noctua-stencil')
-      if (!raw || !onStencilDrop) return
-
-      e.preventDefault()
-      const data = JSON.parse(raw) as { type: ActivityType; id: string }
-
-      // Convert page coordinates to canvas-local coordinates
-      const container = containerRef.current
-      if (!container) return
-      const rect = container.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const y = e.clientY - rect.top
-
-      onStencilDrop(data.type, x, y)
-    },
-    [onStencilDrop]
-  )
-
   return (
     <div
-      className="absolute inset-0"
+      className="absolute inset-0 overflow-auto select-none"
       ref={containerRef}
       onWheel={handleWheel}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
     />
   )
 }

@@ -9,17 +9,11 @@ import SplashScreen from './features/users/components/SplashScreen'
 import { AuthProvider } from './features/auth/authProvider'
 import RightDrawerContent from './app/layout/RightDrawer'
 import GlobalDialog from './@noctua.core/components/dialog/GlobalDIalog'
-import StencilPalette from './features/pathway/components/StencilPalette'
 
 const routes = [
   {
     path: '/',
-    element: (
-      <Layout
-        leftDrawerContent={<StencilPalette onDrop={() => {}} />}
-        rightDrawerContent={<RightDrawerContent />}
-      />
-    ),
+    element: <Layout rightDrawerContent={<RightDrawerContent />} />,
     children: [{ path: '', element: <PathwayEditor /> }],
   },
 ]

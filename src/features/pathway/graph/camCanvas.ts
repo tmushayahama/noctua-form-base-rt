@@ -23,7 +23,10 @@ export class CamCanvas {
   paper: joint.dia.Paper
   graph: joint.dia.Graph
   private _wrapper: HTMLDivElement
+  private _container: HTMLElement
   private _layoutChanged = false
+  private _loading = false
+  readOnly = false
 
   // Event callbacks — wired by the React component
   onActivityClick?: (activityId: string) => void
@@ -32,10 +35,12 @@ export class CamCanvas {
   onLinkClick?: (sourceId: string, targetId: string) => void
   onLinkCreated?: (sourceId: string, targetId: string) => void
   onUpdateLocations?: (positions: Record<string, { x: number; y: number }>) => void
+  onStencilDrop?: (type: string, x: number, y: number) => void
 
   constructor(container: HTMLElement) {
     registerShapes()
 
+    this._container = container
     this._wrapper = document.createElement('div')
     this._wrapper.style.width = '100%'
     this._wrapper.style.height = '100%'
@@ -76,6 +81,7 @@ export class CamCanvas {
     })
 
     this._initEvents()
+    this._initStencilDrop()
   }
 
   private _initEvents() {
@@ -94,7 +100,7 @@ export class CamCanvas {
       }
     })
 
-    // ── Element hover: highlight successor/predecessor nodes ──
+    // ── Element hover: highlight + show edit/delete icons ──
     this.paper.on('element:mouseover', (cellView: joint.dia.CellView) => {
       const element = cellView.model
       if (element instanceof NodeCellList) {
@@ -113,6 +119,19 @@ export class CamCanvas {
       } else if (element instanceof NodeCellMolecule) {
         element.hover(false)
       }
+    })
+
+    // ── Edit/delete icon clicks (from shape markup events) ──
+    this.paper.on('element:edit:pointerdown', (cellView: joint.dia.CellView, evt: Event) => {
+      evt.stopPropagation()
+      const activity = cellView.model.prop('activity') as Activity | undefined
+      if (activity) this.onEditClick?.(activity.uid)
+    })
+
+    this.paper.on('element:delete:pointerdown', (cellView: joint.dia.CellView, evt: Event) => {
+      evt.stopPropagation()
+      const activity = cellView.model.prop('activity') as Activity | undefined
+      if (activity) this.onDeleteClick?.(activity.uid)
     })
 
     // ── Link hover ──
@@ -143,6 +162,7 @@ export class CamCanvas {
 
     // ── New link creation (drag between nodes) ──
     this.graph.on('change:source change:target', (link: joint.dia.Cell) => {
+      if (this._loading) return
       const sourceId = link.get('source')?.id as string | undefined
       const targetId = link.get('target')?.id as string | undefined
       if (sourceId && targetId) {
@@ -188,8 +208,28 @@ export class CamCanvas {
     }
 
     this.paper.setDimensions('30000px', '30000px')
+    this._loading = true
     this.graph.resetCells(cells)
-    this.autoLayout(spacing)
+    this._loading = false
+
+    // Try to restore saved positions (Phase 7.2)
+    const savedPositions = this._loadPositions(model.id)
+    let hasManualLayout = false
+
+    if (savedPositions) {
+      for (const element of this.graph.getElements()) {
+        const activity = element.prop('activity') as Activity | undefined
+        if (activity && savedPositions[activity.uid]) {
+          element.position(savedPositions[activity.uid].x, savedPositions[activity.uid].y)
+          hasManualLayout = true
+        }
+      }
+    }
+
+    if (!hasManualLayout) {
+      this.autoLayout(spacing)
+    }
+
     this.paper.scaleContentToFit({
       minScaleX: 0.3,
       minScaleY: 0.3,
@@ -271,7 +311,38 @@ export class CamCanvas {
   }
 
   destroy() {
+    this._container.removeEventListener('dragover', this._handleDragOver)
+    this._container.removeEventListener('drop', this._handleDrop)
     this.paper.remove()
+  }
+
+  // ── Stencil drag-drop (native DOM events on container) ─────
+
+  private _handleDragOver = (e: DragEvent) => {
+    if (e.dataTransfer && e.dataTransfer.types.indexOf('application/noctua-stencil') !== -1) {
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'copy'
+    }
+  }
+
+  private _handleDrop = (e: DragEvent) => {
+    if (!e.dataTransfer) return
+    const raw = e.dataTransfer.getData('application/noctua-stencil')
+    if (!raw || !this.onStencilDrop) return
+
+    e.preventDefault()
+    const data = JSON.parse(raw) as { type: string; id: string }
+
+    const rect = this._container.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+
+    this.onStencilDrop(data.type, x, y)
+  }
+
+  private _initStencilDrop() {
+    this._container.addEventListener('dragover', this._handleDragOver)
+    this._container.addEventListener('drop', this._handleDrop)
   }
 
   // ── Highlighting ──────────────────────────────────────────────
@@ -330,6 +401,15 @@ export class CamCanvas {
       }
     }
     this.onUpdateLocations?.(positions)
+  }
+
+  private _loadPositions(modelId: string): Record<string, { x: number; y: number }> | null {
+    try {
+      const raw = localStorage.getItem(`activityLocations-${modelId}`)
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
   }
 
   // ── Node/Link creation ────────────────────────────────────────

@@ -1,27 +1,7 @@
 import { camStencil } from '../data/stencilData'
-import type { ActivityType } from '@/features/gocam/models/cam'
 import type { StencilItemNode } from '../data/stencilData'
-import CategoryIcon from '@mui/icons-material/Category'
-import HubIcon from '@mui/icons-material/Hub'
-import ScienceIcon from '@mui/icons-material/Science'
-import { ActivityType as AT } from '@/features/gocam/models/cam'
 
-function stencilIcon(type: ActivityType) {
-  switch (type) {
-    case AT.PROTEIN_COMPLEX:
-      return <HubIcon className="text-purple-600" />
-    case AT.MOLECULE:
-      return <ScienceIcon className="text-amber-700" />
-    default:
-      return <CategoryIcon className="text-green-600" />
-  }
-}
-
-interface StencilPaletteProps {
-  onDrop: (type: ActivityType, x: number, y: number) => void
-}
-
-export default function StencilPalette({ onDrop: _onDrop }: StencilPaletteProps) {
+export default function StencilPalette() {
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, node: StencilItemNode) => {
     e.dataTransfer.setData(
       'application/noctua-stencil',
@@ -31,11 +11,11 @@ export default function StencilPalette({ onDrop: _onDrop }: StencilPaletteProps)
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center border-b border-gray-300 bg-gray-100 px-4 py-2">
-        <span className="text-xs font-bold uppercase tracking-wide text-gray-600">Toolbox</span>
+    <div className="flex h-full w-[100px] shrink-0 flex-col border-r border-[#002255] bg-white">
+      <div className="flex items-center border-b border-gray-300 bg-gray-100 px-2 py-2">
+        <span className="text-2xs font-bold uppercase tracking-wide text-gray-600">Toolbox</span>
       </div>
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 overflow-y-auto">
         {camStencil.map(group => (
           <div key={group.id}>
             {group.nodes.map(node => (
@@ -43,18 +23,18 @@ export default function StencilPalette({ onDrop: _onDrop }: StencilPaletteProps)
                 key={node.id}
                 draggable
                 onDragStart={e => handleDragStart(e, node)}
-                className="mb-2 flex cursor-grab items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing"
+                className="flex cursor-grab flex-col items-center border-b border-gray-200 bg-white px-1 py-2 hover:bg-gray-50 active:cursor-grabbing"
                 title={node.description}
               >
-                {stencilIcon(node.type)}
-                <div className="flex flex-col">
-                  <span className="text-xs font-semibold">{node.label}</span>
-                  <span className="text-2xs text-gray-500">
-                    {node.description.length > 80
-                      ? node.description.slice(0, 80) + '...'
-                      : node.description}
-                  </span>
-                </div>
+                <img
+                  src={node.iconUrl}
+                  alt={node.label}
+                  className="h-[50px] w-full object-contain"
+                  draggable={false}
+                />
+                <span className="mt-1 text-center text-[8px] font-medium leading-tight">
+                  {node.label}
+                </span>
               </div>
             ))}
           </div>
