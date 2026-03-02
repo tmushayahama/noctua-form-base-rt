@@ -1,30 +1,15 @@
-// components/dialog/GlobalDialog.tsx
-import { useAppSelector, useAppDispatch } from '@/app/hooks';
-import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice';
-import type { RootState } from '@/app/store/store';
-import SimpleDialog from './SimpleDialog';
-import SearchAnnotations from '@/features/gocam/components/forms/SearchAnnotations';
+import { useAppSelector, useAppDispatch } from '@/app/hooks'
+import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice'
+import type { RootState } from '@/app/store/store'
+import SimpleDialog from './SimpleDialog'
+import SearchAnnotations from '@/features/gocam/components/forms/SearchAnnotations'
 
-// Optional: define a prop interface for each dialog
-interface DialogPropsMap {
-  SearchAnnotations: {
-    gpId: string;
-    aspect: string;
-    term: string;
-    evidence: string;
-  };
-  // Add more dialog mappings here as needed
+const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
+  SearchAnnotations,
 }
 
-// Type-safe component map
-const COMPONENT_MAP: {
-  [K in keyof DialogPropsMap]: React.ComponentType<DialogPropsMap[K]>;
-} = {
-  SearchAnnotations,
-};
-
 const GlobalDialog: React.FC = () => {
-  const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch()
   const {
     open,
     title,
@@ -35,11 +20,11 @@ const GlobalDialog: React.FC = () => {
     cancelLabel,
     component,
     customProps,
-  } = useAppSelector((state: RootState) => state.dialog);
+  } = useAppSelector((state: RootState) => state.dialog)
 
-  if (!open || !component || !(component in COMPONENT_MAP)) return null;
+  if (!open || !component || !(component in COMPONENT_MAP)) return null
 
-  const DialogContent = COMPONENT_MAP[component as keyof DialogPropsMap];
+  const DialogContent = COMPONENT_MAP[component]
 
   return (
     <SimpleDialog
@@ -51,14 +36,11 @@ const GlobalDialog: React.FC = () => {
       confirmLabel={confirmLabel}
       cancelLabel={cancelLabel}
       onClose={() => dispatch(closeDialog())}
-      onConfirm={() => {
-        console.log('Confirm clicked');
-      }}
+      onConfirm={() => dispatch(closeDialog())}
     >
       <DialogContent {...customProps} />
     </SimpleDialog>
-  );
-};
+  )
+}
 
-export default GlobalDialog;
-
+export default GlobalDialog

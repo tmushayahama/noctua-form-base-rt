@@ -1,10 +1,13 @@
 import type { GOlrResponse } from "@/features/search/models/search";
 import type { Group, Contributor } from "@/features/users/models/contributor";
+import { v4 as uuidv4 } from 'uuid';
 
 
 
 export enum ActivityType {
   ACTIVITY = 'activity',
+  BP_ONLY = 'bpOnly',
+  CC_ONLY = 'ccOnly',
   MOLECULE = 'molecule',
   PROTEIN_COMPLEX = 'proteinComplex',
 }
@@ -127,6 +130,13 @@ export interface EvidenceForm {
   withFrom: string;
 }
 
+export const createEmptyEvidence = (): EvidenceForm => ({
+  uuid: uuidv4(),
+  evidenceCode: { id: '', label: '' },
+  reference: '',
+  withFrom: '',
+})
+
 export interface TreeNode {
   uid: string;
   nodeType?: NodeType;
@@ -134,7 +144,8 @@ export interface TreeNode {
   aspect?: string;
   relation?: Entity
   parentId: string | null;
-  evidence?: EvidenceForm;
+  isComplement?: boolean;
+  evidences: EvidenceForm[];
   rootTypes: Entity[];
   children: TreeNode[];
 }
@@ -145,3 +156,29 @@ export interface ShexShape {
   object: string[];
   exclude_from_extensions?: boolean;
 }
+
+// Root term constants for "Fill with root term" action
+export const ROOT_TERMS: Record<string, { id: string; label: string }> = {
+  F: { id: 'GO:0003674', label: 'molecular_function' },
+  P: { id: 'GO:0008150', label: 'biological_process' },
+  C: { id: 'GO:0005575', label: 'cellular_component' },
+}
+
+export const EVIDENCE_ND = {
+  evidence: { id: 'ECO:0000307', label: 'no biological data found used in manual assertion' },
+  reference: 'GO_REF:0000015',
+}
+
+export const EVIDENCE_ISS = {
+  evidence: { id: 'ECO:0000250', label: 'sequence similarity evidence used in manual assertion' },
+  reference: 'GO_REF:0000024',
+}
+
+export const BP_ONLY_EDGES = [
+  { id: 'RO:0002418', label: 'causally upstream of or within' },
+  { id: 'RO:0002411', label: 'causally upstream of' },
+  { id: 'RO:0002304', label: 'causally upstream of, positive effect' },
+  { id: 'RO:0002305', label: 'causally upstream of, negative effect' },
+  { id: 'RO:0004047', label: 'causally upstream of or within, positive effect' },
+  { id: 'RO:0004046', label: 'causally upstream of or within, negative effect' },
+]

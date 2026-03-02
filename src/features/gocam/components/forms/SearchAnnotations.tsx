@@ -1,78 +1,109 @@
-import type { AnnotationsResponse } from "@/features/search/models/search";
-import { Checkbox, Button } from "@mui/material";
-import { useState } from "react";
-import { FaCheckCircle } from "react-icons/fa";
-import type { Aspect, Evidence } from "../../models/cam";
-import { useSearchAnnotationsQuery } from "@/features/search/slices/lookupApiSlice";
+import { useAppDispatch } from '@/app/hooks'
+import type { AnnotationsResponse } from '@/features/search/models/search'
+import { Checkbox, Button } from '@mui/material'
+import { useState } from 'react'
+import { v4 as uuidv4 } from 'uuid'
+import { FaCheckCircle } from 'react-icons/fa'
+import type { Aspect, Evidence, EvidenceForm } from '../../models/cam'
+import { useSearchAnnotationsQuery } from '@/features/search/slices/lookupApiSlice'
+import { updateNode, setNodeEvidences } from '../../slices/activityFormSlice'
+import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice'
 
 interface SearchAnnotationsProps {
-  gpId: string;
-  aspect?: Aspect;
-  term?: string;
-  onSelectTerm: (result: AnnotationsResponse) => void;
+  gpId: string
+  aspect?: Aspect
+  term?: string
+  targetNodeUid?: string
 }
 
 const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
   gpId,
   aspect,
   term,
-  onSelectTerm
+  targetNodeUid,
 }) => {
-
-  console.log('SearchAnnotations', { gpId, aspect, term });
-  const [selectedTerm, setSelectedTerm] = useState<AnnotationsResponse | null>(null);
-  const [selectedEvidences, setSelectedEvidences] = useState<Evidence[]>([]);
+  const dispatch = useAppDispatch()
+  const [selectedTerm, setSelectedTerm] = useState<AnnotationsResponse | null>(
+    null
+  )
+  const [selectedEvidences, setSelectedEvidences] = useState<Evidence[]>([])
   const { data: annotations = [] } = useSearchAnnotationsQuery({
     gpId,
     aspect,
     term,
-  });
+  })
 
   const handleSelectTerm = (annotation: AnnotationsResponse) => {
-    setSelectedTerm(annotation);
-    setSelectedEvidences([]);
-  };
+    setSelectedTerm(annotation)
+    setSelectedEvidences([])
+  }
 
   const handleEvidenceToggle = (evidence: Evidence) => {
-    // Check if evidence is already selected by comparing UUID
-    const isSelected = selectedEvidences.some(e => e.uid === evidence.uid);
+    const isSelected = selectedEvidences.some(e => e.uid === evidence.uid)
 
     if (isSelected) {
-      setSelectedEvidences(selectedEvidences.filter(e => e.uid !== evidence.uid));
+      setSelectedEvidences(
+        selectedEvidences.filter(e => e.uid !== evidence.uid)
+      )
     } else {
-      setSelectedEvidences([...selectedEvidences, evidence]);
+      setSelectedEvidences([...selectedEvidences, evidence])
     }
-  };
+  }
 
   const handleSave = () => {
-    if (selectedTerm) {
-      onSelectTerm({
-        ...selectedTerm,
-        evidences: selectedEvidences
-      });
+    if (!selectedTerm || !targetNodeUid) return
+
+    // Update the node's term
+    dispatch(
+      updateNode({
+        uid: targetNodeUid,
+        term: {
+          id: selectedTerm.term.id,
+          label: selectedTerm.term.label,
+          link: '',
+          description: '',
+          isObsolete: false,
+          rootTypes: [],
+        },
+      })
+    )
+
+    // Convert selected Evidence[] to EvidenceForm[]
+    if (selectedEvidences.length > 0) {
+      const evidenceForms: EvidenceForm[] = selectedEvidences.map(ev => ({
+        uuid: uuidv4(),
+        evidenceCode: {
+          id: ev.evidenceCode.id,
+          label: ev.evidenceCode.label,
+        },
+        reference: ev.reference || '',
+        withFrom: ev.with || '',
+      }))
+
+      dispatch(setNodeEvidences({ uid: targetNodeUid, evidences: evidenceForms }))
     }
-  };
+
+    dispatch(closeDialog())
+  }
 
   return (
     <div className="grid grid-cols-3 gap-4">
       {/* Left Panel - Activity Nodes */}
-      <div className="col-span-1 border-r p-4 overflow-y-auto">
+      <div className="col-span-1 overflow-y-auto border-r p-4">
         <div className="mb-4">
           <div className="font-semibold">Select Term</div>
           <div className="text-xs text-gray-500">Please select below</div>
         </div>
 
-        {annotations.map((annotation) => (
+        {annotations.map(annotation => (
           <div
             key={annotation.uid}
             onClick={() => handleSelectTerm(annotation)}
-            className={`
-              flex items-center p-2 cursor-pointer border-b 
-              ${selectedTerm?.term.id === annotation.uid
+            className={`flex cursor-pointer items-center border-b p-2 ${
+              selectedTerm?.uid === annotation.uid
                 ? 'bg-blue-100 font-bold'
                 : 'hover:bg-gray-200'
-              }
-            `}
+            }`}
           >
             {selectedTerm?.uid === annotation.uid && (
               <FaCheckCircle className="mr-2 text-green-500" />
@@ -84,30 +115,46 @@ const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
 
       {/* Right Panel - Evidence Table */}
       <div className="col-span-2 p-4">
-        <div className="mb-4 flex justify-between items-center">
+        <div className="mb-4 flex items-center justify-between">
           <div className="font-semibold">
-            Select Evidence {selectedTerm && `(${selectedTerm.term.label})`}
+            Select Evidence{' '}
+            {selectedTerm && `(${selectedTerm.term.label})`}
           </div>
           {selectedTerm?.evidences?.length > 0 && (
             <div className="text-sm text-gray-600">
-              {selectedEvidences.length} of {selectedTerm?.evidences?.length} selected
+              {selectedEvidences.length} of {selectedTerm?.evidences?.length}{' '}
+              selected
             </div>
           )}
         </div>
 
         {/* Table Header with Select All */}
-        <div className="flex border-b border-gray-300 py-2 font-medium text-gray-700 bg-gray-50">
+        <div className="flex border-b border-gray-300 bg-gray-50 py-2 font-medium text-gray-700">
           <div className="w-10">
             {selectedTerm?.evidences?.length > 0 && (
               <Checkbox
-                checked={selectedTerm?.evidences && selectedTerm.evidences.length > 0 && selectedEvidences.length === (selectedTerm.evidences?.length || 0)}
-                indeterminate={selectedEvidences.length > 0 && selectedEvidences.length < (selectedTerm?.evidences?.length || 0)}
+                checked={
+                  selectedTerm?.evidences &&
+                  selectedTerm.evidences.length > 0 &&
+                  selectedEvidences.length ===
+                    (selectedTerm.evidences?.length || 0)
+                }
+                indeterminate={
+                  selectedEvidences.length > 0 &&
+                  selectedEvidences.length <
+                    (selectedTerm?.evidences?.length || 0)
+                }
                 onChange={() => {
-                  if (selectedTerm?.evidences && selectedTerm.evidences.length > 0) {
-                    if (selectedEvidences.length < selectedTerm.evidences.length) {
-                      setSelectedEvidences([...selectedTerm.evidences]);
+                  if (
+                    selectedTerm?.evidences &&
+                    selectedTerm.evidences.length > 0
+                  ) {
+                    if (
+                      selectedEvidences.length < selectedTerm.evidences.length
+                    ) {
+                      setSelectedEvidences([...selectedTerm.evidences])
                     } else {
-                      setSelectedEvidences([]);
+                      setSelectedEvidences([])
                     }
                   }
                 }}
@@ -121,41 +168,48 @@ const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
         </div>
 
         {/* Table Body */}
-        <div className="space-y-1 max-h-[70vh] overflow-y-auto">
+        <div className="max-h-[70vh] space-y-1 overflow-y-auto">
           {selectedTerm?.evidences?.map((evidence: Evidence) => (
             <div
               key={evidence.uid}
-              className="flex items-center border-b border-gray-200 hover:bg-gray-50 py-2 cursor-pointer"
-              onClick={(e) => {
-                // Only toggle if click wasn't on the checkbox itself
-                if (!e.target.closest('input[type="checkbox"]')) {
-                  handleEvidenceToggle(evidence);
+              className="flex cursor-pointer items-center border-b border-gray-200 py-2 hover:bg-gray-50"
+              onClick={e => {
+                if (
+                  !(e.target as HTMLElement).closest('input[type="checkbox"]')
+                ) {
+                  handleEvidenceToggle(evidence)
                 }
               }}
             >
               <div className="w-10">
                 <Checkbox
-                  checked={selectedEvidences.some(e => e.uid === evidence.uid)}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    handleEvidenceToggle(evidence);
+                  checked={selectedEvidences.some(
+                    e => e.uid === evidence.uid
+                  )}
+                  onChange={e => {
+                    e.stopPropagation()
+                    handleEvidenceToggle(evidence)
                   }}
                 />
               </div>
-              <div className="flex-1 truncate">{evidence.evidenceCode.label}</div>
+              <div className="flex-1 truncate">
+                {evidence.evidenceCode.label}
+              </div>
               <div className="flex-1 truncate">{evidence.reference}</div>
               <div className="flex-1 truncate">{evidence.with}</div>
               <div className="flex-1 truncate">
-                {evidence.groups?.map((group) => group.label).join(', ')}
+                {evidence.groups?.map(group => group.label).join(', ')}
               </div>
             </div>
           ))}
 
-          {selectedTerm && (!selectedTerm.evidences || selectedTerm.evidences.length === 0) && (
-            <div className="py-4 text-center text-gray-500">
-              No evidence available for this term
-            </div>
-          )}
+          {selectedTerm &&
+            (!selectedTerm.evidences ||
+              selectedTerm.evidences.length === 0) && (
+              <div className="py-4 text-center text-gray-500">
+                No evidence available for this term
+              </div>
+            )}
 
           {!selectedTerm && (
             <div className="py-4 text-center text-gray-500">
@@ -166,16 +220,22 @@ const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
 
         <div className="mt-4 flex justify-end space-x-2">
           <Button
+            onClick={() => dispatch(closeDialog())}
+            variant="outlined"
+          >
+            Cancel
+          </Button>
+          <Button
             onClick={handleSave}
             disabled={!selectedTerm || selectedEvidences.length === 0}
             variant="contained"
           >
-            Save
+            Use Selected Evidence
           </Button>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default SearchAnnotations;
+export default SearchAnnotations

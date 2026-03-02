@@ -5,15 +5,21 @@ import type { Activity } from '@/features/gocam/models/cam'
 interface ConnectorFormProps {
   sourceActivity: Activity
   targetActivity: Activity
+  existingEdgeId?: string
+  existingSourceUid?: string
+  existingTargetUid?: string
   onClose: () => void
-  onSave?: () => void
+  onSaved?: () => void
 }
 
 const ConnectorForm: React.FC<ConnectorFormProps> = ({
   sourceActivity,
   targetActivity,
+  existingEdgeId,
+  existingSourceUid,
+  existingTargetUid,
   onClose,
-  onSave,
+  onSaved,
 }) => {
   return (
     <div className="flex flex-col">
@@ -21,21 +27,28 @@ const ConnectorForm: React.FC<ConnectorFormProps> = ({
         <div className="flex gap-1">
           <span className="w-[60px] font-medium text-[#3b5998]">Subject:</span>
           <span>
-            {sourceActivity.enabledBy?.label ?? sourceActivity.rootNode?.label ?? 'Unknown'}
+            {sourceActivity.enabledBy?.label ??
+              sourceActivity.rootNode?.label ??
+              'Unknown'}
           </span>
         </div>
         <div className="flex gap-1">
           <span className="w-[60px] font-medium text-[#3b5998]">Object:</span>
           <span>
-            {targetActivity.enabledBy?.label ?? targetActivity.rootNode?.label ?? 'Unknown'}
+            {targetActivity.enabledBy?.label ??
+              targetActivity.rootNode?.label ??
+              'Unknown'}
           </span>
         </div>
       </div>
       <RelationForm
         sourceActivity={sourceActivity}
         targetActivity={targetActivity}
+        existingEdgeId={existingEdgeId}
+        existingSourceUid={existingSourceUid}
+        existingTargetUid={existingTargetUid}
         onClose={onClose}
-        onSave={onSave}
+        onSaved={onSaved}
       />
     </div>
   )

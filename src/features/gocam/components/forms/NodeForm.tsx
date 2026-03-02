@@ -1,24 +1,49 @@
-import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import TermAutocomplete from "@/features/search/components/Autocomplete2";
-import type { GOlrResponse } from "@/features/search/models/search";
-import { AutocompleteType } from "@/features/search/models/search";
-import { IconButton, Menu, MenuItem } from "@mui/material";
-import { useMemo, useCallback } from "react";
-import type { TreeNode, ShexShape } from "../../models/cam";
-import { RootTypes } from "../../models/cam";
-import { updateNode, addChildNode, removeNode } from "../../slices/activityFormSlice";
-import useNestedMenu from "../../hooks/useNestedMenu";
-import shapesData from '@/@noctua.core/data/shapes.json';
-import { getRelationLabel, getTermLabel } from "@/@noctua.core/utils/dataUtil";
-import { FiDelete } from "react-icons/fi";
+import { useAppDispatch } from '@/app/hooks'
+import TermAutocomplete from '@/features/search/components/Autocomplete2'
+import type { GOlrResponse } from '@/features/search/models/search'
+import { AutocompleteType } from '@/features/search/models/search'
+import { IconButton, Menu, MenuItem } from '@mui/material'
+import { useMemo, useCallback } from 'react'
+import type { TreeNode, ShexShape } from '../../models/cam'
+import { RootTypes } from '../../models/cam'
+import {
+  updateNode,
+  updateEvidence,
+  addChildNode,
+  addEvidence,
+  removeEvidence,
+  cloneEvidence,
+  clearNodeValues,
+  toggleNotQualifier,
+  removeNode,
+  fillRootTerm,
+  addISSEvidence,
+} from '../../slices/activityFormSlice'
+import useNestedMenu from '../../hooks/useNestedMenu'
+import shapesData from '@/@noctua.core/data/shapes.json'
+import { getRelationLabel, getTermLabel } from '@/@noctua.core/utils/dataUtil'
+import { FiX } from 'react-icons/fi'
+import { FaEllipsisV, FaPlus } from 'react-icons/fa'
 
 interface NodeFormProps {
-  node: TreeNode;
-  onOpenDialog: (node: TreeNode) => void;
+  node: TreeNode
+  onOpenDialog: (node: TreeNode) => void
+  displayMenuButton?: boolean
+  displayAddButton?: boolean
 }
 
-const NodeForm: React.FC<NodeFormProps> = ({ node, onOpenDialog }) => {
-  const dispatch = useAppDispatch();
+/**
+ * Renders a single node row: term (left, flex-1) + evidence section (right, basis-65%).
+ * Matches Angular's entity-form.component.html layout.
+ * Does NOT render children or wrapper — parent handles those.
+ */
+const NodeForm: React.FC<NodeFormProps> = ({
+  node,
+  onOpenDialog,
+  displayMenuButton = true,
+  displayAddButton = false,
+}) => {
+  const dispatch = useAppDispatch()
   const {
     mainMenuAnchor,
     relationMenuAnchor,
@@ -32,277 +57,269 @@ const NodeForm: React.FC<NodeFormProps> = ({ node, onOpenDialog }) => {
     closeRelationMenu,
     openEvidenceMenu,
     closeEvidenceMenu,
-  } = useNestedMenu();
-
-
-  const dialogState = useAppSelector(state => state.dialog);
+  } = useNestedMenu()
 
   const handleOpenDialog = () => {
-    console.log('Open dialog');
     onOpenDialog(node)
-    closeMainMenu();
-  };
+    closeMainMenu()
+  }
 
-  const handleConfirm = () => {
-    // Process form data
-    console.log('Confirmed');
-  };
-
-
-  // Get predicates based on rootTypeIds (parent objects)
   const availablePredicates = useMemo(() => {
-    // Filter shapes where subject is in node's rootTypeIds
     const matchingShapes = ((shapesData.goshapes || []) as ShexShape[]).filter(shape =>
       node.rootTypes.some(rootType => rootType.id === shape.subject)
-    );
+    )
 
-    // Get unique predicates with their objects
-    const predicateMap = new Map<string, string[]>();
+    const predicateMap = new Map<string, string[]>()
     matchingShapes.forEach(shape => {
       if (!predicateMap.has(shape.predicate)) {
-        predicateMap.set(shape.predicate, []);
+        predicateMap.set(shape.predicate, [])
       }
-      const objects = predicateMap.get(shape.predicate) || [];
-      predicateMap.set(shape.predicate, [...new Set([...objects, ...shape.object])]);
-    });
+      const objects = predicateMap.get(shape.predicate) || []
+      predicateMap.set(shape.predicate, [...new Set([...objects, ...shape.object])])
+    })
 
     return Array.from(predicateMap.entries()).map(([predId, objects]) => ({
       id: predId,
       label: getRelationLabel(predId),
-      objects
-    }));
-  }, [node.rootTypes]);
+      objects,
+    }))
+  }, [node.rootTypes])
 
-  const handleTermChange = useCallback((term: GOlrResponse | null) => {
-    if (!term) return;
+  const handleTermChange = useCallback(
+    (term: GOlrResponse | null) => {
+      if (!term) return
+      dispatch(updateNode({ uid: node.uid, term }))
+    },
+    [dispatch, node.uid]
+  )
 
-    dispatch(updateNode({
-      uid: node.uid,
-      term: term,
-    }));
-  }, [dispatch, node.uid]);
+  const handleEvidenceFieldChange = useCallback(
+    (
+      evidenceIndex: number,
+      field: 'evidenceCode' | 'reference' | 'withFrom',
+      value: GOlrResponse | string | null
+    ) => {
+      if (value === null) return
+      dispatch(
+        updateEvidence({
+          uid: node.uid,
+          evidenceIndex,
+          field,
+          value: value as GOlrResponse | string,
+        })
+      )
+    },
+    [dispatch, node.uid]
+  )
 
-  // Handle evidence code selection
-  const handleEvidenceCodeChange = useCallback((evidenceCode: GOlrResponse | null) => {
-    if (!evidenceCode) return;
+  const handleRelationSelect = useCallback(
+    (predicateId: string, objects: string[]) => {
+      dispatch(
+        addChildNode({
+          parentId: node.uid,
+          relation: { id: predicateId, label: getRelationLabel(predicateId) },
+          rootTypes: objects.map(objId => ({ id: objId, label: getTermLabel(objId) })),
+        })
+      )
+      closeRelationMenu()
+      closeMainMenu()
+    },
+    [dispatch, node.uid, closeRelationMenu, closeMainMenu]
+  )
 
-    dispatch(updateNode({
-      uid: node.uid,
-      evidence: {
-        ...(node.evidence || {}),
-        evidenceCode
-      }
-    }));
-  }, [dispatch, node.uid, node.evidence]);
+  const handleAddEvidence = useCallback(() => {
+    dispatch(addEvidence(node.uid))
+    closeEvidenceMenu()
+    closeMainMenu()
+  }, [dispatch, node.uid, closeEvidenceMenu, closeMainMenu])
 
-  // Handle reference selection
-  const handleReferenceChange = useCallback((reference: GOlrResponse | null) => {
-    if (!reference) return;
+  const handleRemoveEvidence = useCallback(
+    (index: number) => {
+      dispatch(removeEvidence({ uid: node.uid, evidenceIndex: index }))
+    },
+    [dispatch, node.uid]
+  )
 
-    dispatch(updateNode({
-      uid: node.uid,
-      evidence: {
-        ...(node.evidence || {}),
-        reference
-      }
-    }));
-  }, [dispatch, node.uid, node.evidence]);
+  const handleCloneEvidence = useCallback(() => {
+    dispatch(cloneEvidence({ uid: node.uid, evidenceIndex: 0 }))
+    closeEvidenceMenu()
+    closeMainMenu()
+  }, [dispatch, node.uid, closeEvidenceMenu, closeMainMenu])
 
-  // Handle withFrom selection
-  const handleWithFromChange = useCallback((withFrom: GOlrResponse | null) => {
-    if (!withFrom) return;
+  const handleRemoveEvidenceMenu = useCallback(() => {
+    dispatch(removeEvidence({ uid: node.uid, evidenceIndex: 0 }))
+    closeEvidenceMenu()
+    closeMainMenu()
+  }, [dispatch, node.uid, closeEvidenceMenu, closeMainMenu])
 
-    dispatch(updateNode({
-      uid: node.uid,
-      evidence: {
-        ...(node.evidence || {}),
-        withFrom
-      }
-    }));
-  }, [dispatch, node.uid, node.evidence]);
+  const handleFillRootTerm = useCallback(() => {
+    dispatch(fillRootTerm(node.uid))
+    closeMainMenu()
+  }, [dispatch, node.uid, closeMainMenu])
 
-  // Add child node when relation selected
-  const handleRelationSelect = useCallback((predicateId: string, objects: string[]) => {
-    const relationLabel = getRelationLabel(predicateId);
+  const handleAddISSEvidence = useCallback(() => {
+    dispatch(addISSEvidence(node.uid))
+    closeMainMenu()
+  }, [dispatch, node.uid, closeMainMenu])
 
-    const rootTypes = objects.map(objId => {
-      return {
-        id: objId,
-        label: getTermLabel(objId)
-      }
-    });
+  const handleClearValues = useCallback(() => {
+    dispatch(clearNodeValues(node.uid))
+    closeMainMenu()
+  }, [dispatch, node.uid, closeMainMenu])
 
-    dispatch(addChildNode({
-      parentId: node.uid,
-      relation: { id: predicateId, label: relationLabel },
-      rootTypes,
-    }));
+  const handleToggleNot = useCallback(() => {
+    if (node.children.length > 0) {
+      alert('Cannot add NOT qualifier: remove extension rows first.')
+      closeMainMenu()
+      return
+    }
+    dispatch(toggleNotQualifier(node.uid))
+    closeMainMenu()
+  }, [dispatch, node.uid, node.children.length, closeMainMenu])
 
-    closeRelationMenu();
-    closeMainMenu();
-  }, [dispatch, node.uid, closeRelationMenu, closeMainMenu]);
+  const handleDeleteRow = useCallback(() => {
+    dispatch(removeNode(node.uid))
+    closeMainMenu()
+  }, [dispatch, node.uid, closeMainMenu])
 
-  // Create label for autocomplete
-  const autocompleteLabel = node.parentId === null
-    ? node.rootTypes.map(rt => rt.label).join(', ')
-    : `${node.relation?.label} (${node.rootTypes.map(rt => rt.label).join(', ')})`;
+  const autocompleteLabel =
+    node.parentId === null
+      ? node.rootTypes.map(rt => rt.label).join(', ')
+      : `${node.relation?.label || ''} (${node.rootTypes.map(rt => rt.label).join(', ')})`
 
   return (
-    <div className="pl-4 my-4">
-      <div className="flex items-center gap-2 w-full">
-        <div className="flex-1">
-          <TermAutocomplete
-            label={autocompleteLabel}
-            name={`term-${node.uid}`}
-            rootTypeIds={node.rootTypes.map(rt => rt.id)}
-            autocompleteType={AutocompleteType.TERM}
-            value={node.term || null}
-            onChange={handleTermChange}
-            onOpenTermDetails={() => { }}
-          />
-        </div>
-        <div className="w-[250px]">
-          <TermAutocomplete
-            label="Evidence"
-            name={`evidence-${node.uid}`}
-            rootTypeIds={[RootTypes.EVIDENCE]}
-            autocompleteType={AutocompleteType.EVIDENCE_CODE}
-            value={node.evidence?.evidenceCode || null}
-            onChange={handleEvidenceCodeChange}
-            onOpenTermDetails={() => { }}
-          />
+    <>
+      {/* Entity row: term (flex-1) + evidence section (basis-65%) */}
+      <div className="flex w-full items-stretch">
+        {/* Term field — left */}
+        <div className="flex min-w-0 flex-1 items-start p-4">
+          <div className="flex w-full items-center gap-1">
+            <div className="flex-1">
+              <TermAutocomplete
+                label={autocompleteLabel}
+                name={`term-${node.uid}`}
+                rootTypeIds={node.rootTypes.map(rt => rt.id)}
+                autocompleteType={AutocompleteType.TERM}
+                value={node.term || null}
+                onChange={handleTermChange}
+                onOpenTermDetails={() => {}}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="w-[150px]">
-          <TermAutocomplete
-            label="Reference"
-            name={`reference-${node.uid}`}
-            autocompleteType={AutocompleteType.REFERENCE}
-            value={node.evidence?.reference || null}
-            onChange={handleReferenceChange}
-            onOpenTermDetails={() => { }}
-          />
-        </div>
-
-        <div className="w-[150px]">
-          <TermAutocomplete
-            label="With"
-            name={`with-${node.uid}`}
-            autocompleteType={AutocompleteType.WITH}
-            value={node.evidence?.withFrom || null}
-            onChange={handleWithFromChange}
-            onOpenTermDetails={() => { }}
-          />
-        </div>
-
-
-        {/* NEW NESTED MENU SYSTEM */}
-        <IconButton
-          size="small"
-          onClick={openMainMenu}
-        >
-          +
-        </IconButton>
-
-        {/* Main Menu */}
-        <Menu
-          anchorEl={mainMenuAnchor}
-          open={isMainMenuOpen}
-          onClose={closeMainMenu}
-          className=""
-        >
-          <MenuItem onClick={handleOpenDialog}>
-            Search Annotations
-          </MenuItem>
-          <MenuItem onClick={closeMainMenu}>
-            NOT Qualifier
-          </MenuItem>
-          <MenuItem
-            onClick={(event) => {
-              openRelationMenu(event);
-            }}
-          >
-            Add an Extension
-          </MenuItem>
-          <MenuItem
-            onClick={(event) => {
-              openEvidenceMenu(event);
-            }}
-          >
-            Evidence
-          </MenuItem>
-          <MenuItem onClick={closeMainMenu}>
-            Add Root Term
-          </MenuItem>
-          <MenuItem onClick={closeMainMenu}>
-            Clear Values
-          </MenuItem>
-          {node.parentId !== null && (
-            <MenuItem onClick={closeMainMenu}>
-              <IconButton
-                color="error"
-                size="small"
-                onClick={() => dispatch(removeNode(node.uid))}
-              >
-                <FiDelete />
-              </IconButton> Delete Row
-            </MenuItem>
-          )}
-        </Menu>
-
-        {/* Add Extensions Submenu */}
-        <Menu
-          anchorEl={relationMenuAnchor}
-          open={isRelationMenuOpen}
-          onClose={closeRelationMenu}
-          className=""
-        >
-          {availablePredicates.map(predicate => (
-            <MenuItem
-              key={predicate.id}
-              onClick={() => handleRelationSelect(predicate.id, predicate.objects)}
-            >
-              {predicate.label}
-            </MenuItem>
+        {/* Evidence section — right, basis-65% */}
+        <div className="flex min-w-0 basis-[65%] flex-col">
+          {node.evidences.map((ev, index) => (
+            <div key={ev.uuid} className="flex w-full items-stretch">
+              <div className="w-1/2 p-4">
+                <TermAutocomplete
+                  label="Evidence"
+                  name={`evidence-${node.uid}-${index}`}
+                  rootTypeIds={[RootTypes.EVIDENCE]}
+                  autocompleteType={AutocompleteType.EVIDENCE_CODE}
+                  value={ev.evidenceCode?.id ? ev.evidenceCode : null}
+                  onChange={value => handleEvidenceFieldChange(index, 'evidenceCode', value)}
+                  onOpenTermDetails={() => {}}
+                />
+              </div>
+              <div className="w-1/4 p-4">
+                <TermAutocomplete
+                  label="Reference"
+                  name={`reference-${node.uid}-${index}`}
+                  autocompleteType={AutocompleteType.REFERENCE}
+                  value={ev.reference || ''}
+                  onChange={value => handleEvidenceFieldChange(index, 'reference', value as string)}
+                  onOpenTermDetails={() => {}}
+                  onOpenReference={() => {}}
+                />
+              </div>
+              <div className="w-1/4 p-4">
+                <TermAutocomplete
+                  label="With"
+                  name={`with-${node.uid}-${index}`}
+                  autocompleteType={AutocompleteType.WITH}
+                  value={ev.withFrom || ''}
+                  onChange={value => handleEvidenceFieldChange(index, 'withFrom', value as string)}
+                  onOpenTermDetails={() => {}}
+                />
+              </div>
+              {displayMenuButton && (
+                <div className="flex shrink-0 items-center justify-center p-4">
+                  {index === 0 ? (
+                    <IconButton size="small" className="!shadow" onClick={openMainMenu}>
+                      <FaEllipsisV size={12} />
+                    </IconButton>
+                  ) : (
+                    <IconButton
+                      size="small"
+                      onClick={() => handleRemoveEvidence(index)}
+                      className="!text-gray-400 hover:!text-red-500"
+                    >
+                      <FiX size={14} />
+                    </IconButton>
+                  )}
+                </div>
+              )}
+            </div>
           ))}
-        </Menu>
-
-        {/* Evidence Submenu */}
-        <Menu
-          anchorEl={evidenceMenuAnchor}
-          open={isEvidenceMenuOpen}
-          onClose={closeEvidenceMenu}
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'left',
-          }}
-          className=""
-        >
-          <MenuItem onClick={closeEvidenceMenu}>
-            Add Evidence
-          </MenuItem>
-          <MenuItem onClick={closeEvidenceMenu}>
-            Remove Evidence
-          </MenuItem>
-          <MenuItem onClick={closeEvidenceMenu}>
-            Clone Evidence
-          </MenuItem>
-        </Menu>
+        </div>
       </div>
 
-      {/* Children nodes */}
-      {node.children.length > 0 && (
-        <div className="ml-2 mt-3">
-          {node.children.map(child => (
-            <NodeForm key={child.uid} node={child} onOpenDialog={onOpenDialog} />
-          ))}
+      {/* Add button (for GP section — displayAddButton=true, displayMenuButton=false) */}
+      {displayAddButton && availablePredicates.length > 0 && (
+        <div className="mt-2 px-4 pb-2">
+          <IconButton size="small" className="!shadow" onClick={openRelationMenu}>
+            <FaPlus size={10} />
+          </IconButton>
         </div>
       )}
 
+      {/* Menus */}
+      <Menu anchorEl={mainMenuAnchor} open={isMainMenuOpen} onClose={closeMainMenu}>
+        {node.aspect && <MenuItem onClick={handleOpenDialog}>Search Annotations</MenuItem>}
+        <MenuItem onClick={handleToggleNot}>
+          {node.isComplement ? 'Remove NOT Qualifier' : 'NOT Qualifier'}
+        </MenuItem>
+        {availablePredicates.length > 0 && (
+          <MenuItem onClick={event => openRelationMenu(event)}>Add</MenuItem>
+        )}
+        <MenuItem onClick={event => openEvidenceMenu(event)}>Evidence</MenuItem>
+        {node.aspect && <MenuItem onClick={handleFillRootTerm}>Fill with root term</MenuItem>}
+        {node.aspect && <MenuItem onClick={handleAddISSEvidence}>Add ISS Evidence</MenuItem>}
+        <MenuItem onClick={handleClearValues}>Clear Values</MenuItem>
+        {node.parentId !== null && (
+          <MenuItem onClick={handleDeleteRow} className="!text-red-600">
+            Delete Row
+          </MenuItem>
+        )}
+      </Menu>
 
+      <Menu anchorEl={relationMenuAnchor} open={isRelationMenuOpen} onClose={closeRelationMenu}>
+        {availablePredicates.map(predicate => (
+          <MenuItem
+            key={predicate.id}
+            onClick={() => handleRelationSelect(predicate.id, predicate.objects)}
+          >
+            <div className="flex w-full flex-col items-start">
+              <span>{predicate.label}</span>
+            </div>
+          </MenuItem>
+        ))}
+      </Menu>
 
-    </div>
-  );
-};
+      <Menu
+        anchorEl={evidenceMenuAnchor}
+        open={isEvidenceMenuOpen}
+        onClose={closeEvidenceMenu}
+        anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+      >
+        <MenuItem onClick={handleAddEvidence}>Add Evidence</MenuItem>
+        <MenuItem onClick={handleRemoveEvidenceMenu}>Remove Evidence</MenuItem>
+        <MenuItem onClick={handleCloneEvidence}>Clone Evidence</MenuItem>
+      </Menu>
+    </>
+  )
+}
 
-export default NodeForm;
+export default NodeForm

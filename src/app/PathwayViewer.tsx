@@ -16,7 +16,7 @@ import {
   setRightPanelTab,
 } from '@/@noctua.core/components/drawer/drawerSlice'
 import type { Activity, ActivityType } from '@/features/gocam/models/cam'
-import { resetForm } from '@/features/gocam/slices/activityFormSlice'
+import { resetForm, setActivityType } from '@/features/gocam/slices/activityFormSlice'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
@@ -44,6 +44,11 @@ const PathwayEditor: React.FC = () => {
   const [connectorFormOpen, setConnectorFormOpen] = useState(false)
   const [connectorSource, setConnectorSource] = useState<Activity | null>(null)
   const [connectorTarget, setConnectorTarget] = useState<Activity | null>(null)
+  const [existingEdge, setExistingEdge] = useState<{
+    id: string
+    sourceUid: string
+    targetUid: string
+  } | null>(null)
 
   const user = useAppSelector((state: RootState) => state.auth.user)
   const isLoggedIn = !!user
@@ -171,8 +176,25 @@ const PathwayEditor: React.FC = () => {
       const source = graphModel?.data?.activities.find(a => a.uid === sourceId)
       const target = graphModel?.data?.activities.find(a => a.uid === targetId)
       if (source && target) {
+        // Find existing connection edge between these activities
+        const connection = graphModel?.data?.activityConnections.find(
+          c =>
+            (c.sourceId === source.rootNode?.uid &&
+              c.targetId === target.rootNode?.uid) ||
+            (c.sourceId === target.rootNode?.uid &&
+              c.targetId === source.rootNode?.uid)
+        )
         setConnectorSource(source)
         setConnectorTarget(target)
+        setExistingEdge(
+          connection
+            ? {
+                id: connection.id,
+                sourceUid: connection.sourceId,
+                targetUid: connection.targetId,
+              }
+            : null
+        )
         setConnectorFormOpen(true)
       }
     },
@@ -186,6 +208,7 @@ const PathwayEditor: React.FC = () => {
       if (source && target) {
         setConnectorSource(source)
         setConnectorTarget(target)
+        setExistingEdge(null)
         setConnectorFormOpen(true)
       }
     },
@@ -196,11 +219,13 @@ const PathwayEditor: React.FC = () => {
     setConnectorFormOpen(false)
     setConnectorSource(null)
     setConnectorTarget(null)
+    setExistingEdge(null)
   }, [])
 
   const handleStencilDrop = useCallback(
-    (_type: ActivityType, _x: number, _y: number) => {
+    (type: ActivityType, _x: number, _y: number) => {
       dispatch(resetForm())
+      dispatch(setActivityType(type))
       setActivityFormOpen(true)
     },
     [dispatch]
@@ -337,7 +362,11 @@ const PathwayEditor: React.FC = () => {
             <ConnectorForm
               sourceActivity={connectorSource}
               targetActivity={connectorTarget}
+              existingEdgeId={existingEdge?.id}
+              existingSourceUid={existingEdge?.sourceUid}
+              existingTargetUid={existingEdge?.targetUid}
               onClose={handleCloseConnectorForm}
+              onSaved={handleCloseConnectorForm}
             />
           )}
         </div>

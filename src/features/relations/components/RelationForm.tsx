@@ -1,7 +1,8 @@
 import { globalKnownRelations } from '@/@noctua.core/data/relations'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import type { Activity } from '@/features/gocam/models/cam'
-import { useMemo, useEffect } from 'react'
+import { RootTypes } from '@/features/gocam/models/cam'
+import { useMemo, useEffect, useCallback } from 'react'
 import {
   ConnectorType,
   ActivityRelationshipId,
@@ -11,15 +12,36 @@ import {
   EffectDirectionId,
   DirectnessId,
 } from '../models/decisionTree'
-import { getConnectorType } from '../services/decisionTree'
-import { resetSelection, updateSelection } from '../slices/relationSlice'
+import { getConnectorType, reverseLookup } from '../services/decisionTree'
+import {
+  resetSelection,
+  updateSelection,
+  addConnectorEvidence,
+  removeConnectorEvidence,
+  updateConnectorEvidence,
+  setConnectorEvidences,
+} from '../slices/relationSlice'
+import { useUpdateGraphModelMutation } from '@/features/gocam/slices/camApiSlice'
+import {
+  buildConnectorOperations,
+  buildConnectorDeleteOperations,
+} from '../services/connectorServices'
+import TermAutocomplete from '@/features/search/components/Autocomplete2'
+import { AutocompleteType } from '@/features/search/models/search'
+import type { GOlrResponse } from '@/features/search/models/search'
 import Button from '@mui/material/Button'
+import IconButton from '@mui/material/IconButton'
+import { FiX, FiPlus } from 'react-icons/fi'
+import type { RootState } from '@/app/store/store'
 
 interface Props {
   sourceActivity: Activity
   targetActivity: Activity
+  existingEdgeId?: string
+  existingSourceUid?: string
+  existingTargetUid?: string
   onClose?: () => void
-  onSave?: () => void
+  onSaved?: () => void
 }
 
 const relationLabelMap = new Map<string, string>()
@@ -31,9 +53,21 @@ const PRIMARY = '#3b5998'
 const PRIMARY_BORDER = 'rgba(59,89,152,0.7)'
 const SECTION_BG = 'rgba(121,143,184,0.3)'
 
-const RelationForm: React.FC<Props> = ({ sourceActivity, targetActivity, onClose, onSave }) => {
+const RelationForm: React.FC<Props> = ({
+  sourceActivity,
+  targetActivity,
+  existingEdgeId,
+  existingSourceUid,
+  existingTargetUid,
+  onClose,
+  onSaved,
+}) => {
   const dispatch = useAppDispatch()
-  const { selected, relation } = useAppSelector(state => state.relation)
+  const { selected, relation, connectorEvidences } = useAppSelector(
+    (state: RootState) => state.relation
+  )
+  const model = useAppSelector((state: RootState) => state.cam.model)
+  const [updateGraphModel, { isLoading: isSaving }] = useUpdateGraphModelMutation()
 
   const connectorType = useMemo(
     () => getConnectorType(sourceActivity.type, targetActivity.type),
@@ -42,9 +76,50 @@ const RelationForm: React.FC<Props> = ({ sourceActivity, targetActivity, onClose
 
   useEffect(() => {
     dispatch(
-      resetSelection({ sourceType: sourceActivity.type, targetType: targetActivity.type })
+      resetSelection({
+        sourceType: sourceActivity.type,
+        targetType: targetActivity.type,
+      })
     )
-  }, [dispatch, sourceActivity.type, targetActivity.type])
+
+    // Pre-populate from existing edge
+    if (existingEdgeId) {
+      const lookup = reverseLookup(existingEdgeId as any)
+      if (lookup) {
+        dispatch(
+          updateSelection({
+            relationshipId: lookup.relationshipId,
+            directionId: lookup.directionId,
+            directnessId: lookup.directnessId,
+          })
+        )
+      }
+
+      // Pre-populate evidence from existing connection
+      const existingConn = model?.activityConnections.find(
+        c => c.sourceId === existingSourceUid && c.targetId === existingTargetUid
+      )
+      if (existingConn?.evidence && existingConn.evidence.length > 0) {
+        const evForms = existingConn.evidence.map(ev => ({
+          uuid: ev.uid,
+          evidenceCode: ev.evidenceCode
+            ? { id: ev.evidenceCode.id, label: ev.evidenceCode.label }
+            : { id: '', label: '' },
+          reference: ev.reference || '',
+          withFrom: ev.with || '',
+        }))
+        dispatch(setConnectorEvidences(evForms))
+      }
+    }
+  }, [
+    dispatch,
+    sourceActivity.type,
+    targetActivity.type,
+    existingEdgeId,
+    existingSourceUid,
+    existingTargetUid,
+    model,
+  ])
 
   const relationshipOptions =
     connectorType === ConnectorType.ACTIVITY_ACTIVITY
@@ -81,6 +156,87 @@ const RelationForm: React.FC<Props> = ({ sourceActivity, targetActivity, onClose
     }
 
   const resolvedLabel = relation ? relationLabelMap.get(relation) || relation : null
+
+  const handleSave = useCallback(async () => {
+    if (!relation || !model?.id) return
+
+    const modelId = model.id
+
+    // If editing existing connector: delete old, add new
+    if (existingEdgeId && existingSourceUid && existingTargetUid) {
+      const deleteOps = buildConnectorDeleteOperations(
+        existingSourceUid,
+        existingTargetUid,
+        existingEdgeId,
+        modelId
+      )
+      await updateGraphModel(deleteOps).unwrap()
+    }
+
+    const ops = buildConnectorOperations(
+      sourceActivity,
+      targetActivity,
+      relation,
+      connectorEvidences,
+      modelId
+    )
+
+    await updateGraphModel(ops).unwrap()
+    onSaved?.()
+    onClose?.()
+  }, [
+    relation,
+    model,
+    sourceActivity,
+    targetActivity,
+    connectorEvidences,
+    existingEdgeId,
+    existingSourceUid,
+    existingTargetUid,
+    updateGraphModel,
+    onSaved,
+    onClose,
+  ])
+
+  const handleDelete = useCallback(async () => {
+    if (!existingEdgeId || !existingSourceUid || !existingTargetUid || !model?.id) return
+
+    const ops = buildConnectorDeleteOperations(
+      existingSourceUid,
+      existingTargetUid,
+      existingEdgeId,
+      model.id
+    )
+    await updateGraphModel(ops).unwrap()
+    onSaved?.()
+    onClose?.()
+  }, [
+    existingEdgeId,
+    existingSourceUid,
+    existingTargetUid,
+    model,
+    updateGraphModel,
+    onSaved,
+    onClose,
+  ])
+
+  const handleEvidenceFieldChange = useCallback(
+    (
+      evidenceIndex: number,
+      field: 'evidenceCode' | 'reference' | 'withFrom',
+      value: GOlrResponse | string | null
+    ) => {
+      if (value === null) return
+      dispatch(
+        updateConnectorEvidence({
+          evidenceIndex,
+          field,
+          value: value as GOlrResponse | string,
+        })
+      )
+    },
+    [dispatch]
+  )
 
   return (
     <div className="flex flex-col">
@@ -138,7 +294,10 @@ const RelationForm: React.FC<Props> = ({ sourceActivity, targetActivity, onClose
       >
         Suggested Causal Relation
       </div>
-      <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: `1px solid ${PRIMARY_BORDER}` }}>
+      <div
+        className="flex items-center gap-3 px-4 py-3"
+        style={{ borderBottom: `1px solid ${PRIMARY_BORDER}` }}
+      >
         <span className="w-[100px] shrink-0 text-xs font-medium" style={{ color: PRIMARY }}>
           Relation
         </span>
@@ -147,32 +306,96 @@ const RelationForm: React.FC<Props> = ({ sourceActivity, targetActivity, onClose
         </span>
       </div>
 
-      {/* Evidence section placeholder */}
+      {/* Evidence section */}
       <div
         className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wide"
         style={{ backgroundColor: SECTION_BG, color: PRIMARY }}
       >
         Evidence
       </div>
-      <div className="px-4 py-3 text-xs italic text-gray-400">
-        Evidence editing coming soon
+      <div className="px-4 py-2">
+        {connectorEvidences.map((ev, index) => (
+          <div key={ev.uuid} className="mb-2 flex items-center gap-2">
+            <div className="w-[220px]">
+              <TermAutocomplete
+                label="Evidence Code"
+                name={`conn-evidence-${index}`}
+                rootTypeIds={[RootTypes.EVIDENCE]}
+                autocompleteType={AutocompleteType.EVIDENCE_CODE}
+                value={ev.evidenceCode?.id ? ev.evidenceCode : null}
+                onChange={value => handleEvidenceFieldChange(index, 'evidenceCode', value)}
+                onOpenTermDetails={() => {}}
+              />
+            </div>
+            <div className="w-[140px]">
+              <TermAutocomplete
+                label="Reference"
+                name={`conn-reference-${index}`}
+                autocompleteType={AutocompleteType.REFERENCE}
+                value={ev.reference || ''}
+                onChange={value => handleEvidenceFieldChange(index, 'reference', value as string)}
+                onOpenTermDetails={() => {}}
+              />
+            </div>
+            <div className="w-[140px]">
+              <TermAutocomplete
+                label="With"
+                name={`conn-with-${index}`}
+                autocompleteType={AutocompleteType.WITH}
+                value={ev.withFrom || ''}
+                onChange={value => handleEvidenceFieldChange(index, 'withFrom', value as string)}
+                onOpenTermDetails={() => {}}
+              />
+            </div>
+            <IconButton
+              size="small"
+              onClick={() => dispatch(removeConnectorEvidence(index))}
+              className="!text-gray-400 hover:!text-red-500"
+            >
+              <FiX size={14} />
+            </IconButton>
+          </div>
+        ))}
+        <Button
+          size="small"
+          startIcon={<FiPlus />}
+          onClick={() => dispatch(addConnectorEvidence())}
+          className="!text-xs !normal-case"
+        >
+          Add Evidence
+        </Button>
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-end gap-2 border-t border-gray-200 bg-gray-100 px-4 py-3">
-        {onClose && (
-          <Button variant="outlined" size="small" onClick={onClose}>
-            Cancel
+      <div className="flex items-center justify-between gap-2 border-t border-gray-200 bg-gray-100 px-4 py-3">
+        <div>
+          {existingEdgeId && (
+            <Button
+              variant="outlined"
+              size="small"
+              color="error"
+              onClick={handleDelete}
+              disabled={isSaving}
+            >
+              Delete
+            </Button>
+          )}
+        </div>
+        <div className="flex gap-2">
+          {onClose && (
+            <Button variant="outlined" size="small" onClick={onClose} disabled={isSaving}>
+              Cancel
+            </Button>
+          )}
+          <Button
+            variant="contained"
+            size="small"
+            disabled={!relation || isSaving}
+            onClick={handleSave}
+          >
+            {isSaving ? 'Saving...' : 'Save'}
           </Button>
-        )}
-        <Button
-          variant="contained"
-          size="small"
-          disabled={!relation}
-          onClick={onSave}
-        >
-          Save
-        </Button>
+        </div>
       </div>
     </div>
   )
@@ -186,10 +409,7 @@ const SectionRow: React.FC<{ label: string; children: React.ReactNode }> = ({
 }) => (
   <div style={{ borderBottom: `1px solid ${PRIMARY_BORDER}` }}>
     <div className="flex items-start gap-3 px-4 py-2">
-      <span
-        className="w-[100px] shrink-0 pt-1.5 text-xs font-medium"
-        style={{ color: PRIMARY }}
-      >
+      <span className="w-[100px] shrink-0 pt-1.5 text-xs font-medium" style={{ color: PRIMARY }}>
         {label}
       </span>
       <div className="flex-1">{children}</div>
