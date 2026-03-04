@@ -1,5 +1,6 @@
 import type { TreeNode } from '../models/cam'
 import { ActivityType, NodeType } from '../models/cam'
+import { isValidEvidence } from './evidenceUtils'
 
 export interface ValidationError {
   nodeUid: string
@@ -75,7 +76,7 @@ const validateNodeEvidence = (node: TreeNode, errors: ValidationError[]): void =
   // If node has a term selected, it should have at least one valid evidence
   if (!node.term?.id) return
 
-  const hasValidEvidence = node.evidences.some(ev => ev.evidenceCode?.id)
+  const hasValidEvidence = node.evidences.some(isValidEvidence)
   if (!hasValidEvidence) {
     errors.push({
       nodeUid: node.uid,

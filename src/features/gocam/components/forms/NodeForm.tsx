@@ -4,7 +4,7 @@ import type { GOlrResponse } from '@/features/search/models/search'
 import { AutocompleteType } from '@/features/search/models/search'
 import { IconButton, Menu, MenuItem } from '@mui/material'
 import { useMemo, useCallback } from 'react'
-import type { TreeNode, ShexShape } from '../../models/cam'
+import type { TreeNode } from '../../models/cam'
 import { RootTypes } from '../../models/cam'
 import {
   updateNode,
@@ -20,7 +20,7 @@ import {
   addISSEvidence,
 } from '../../slices/activityFormSlice'
 import useNestedMenu from '../../hooks/useNestedMenu'
-import shapesData from '@/@noctua.core/data/shapes.json'
+import { getAvailablePredicates } from '../../services/shapeService'
 import { getRelationLabel, getTermLabel } from '@/@noctua.core/utils/dataUtil'
 import { FiX } from 'react-icons/fi'
 import { FaEllipsisV, FaPlus } from 'react-icons/fa'
@@ -64,26 +64,10 @@ const NodeForm: React.FC<NodeFormProps> = ({
     closeMainMenu()
   }
 
-  const availablePredicates = useMemo(() => {
-    const matchingShapes = ((shapesData.goshapes || []) as ShexShape[]).filter(shape =>
-      node.rootTypes.some(rootType => rootType.id === shape.subject)
-    )
-
-    const predicateMap = new Map<string, string[]>()
-    matchingShapes.forEach(shape => {
-      if (!predicateMap.has(shape.predicate)) {
-        predicateMap.set(shape.predicate, [])
-      }
-      const objects = predicateMap.get(shape.predicate) || []
-      predicateMap.set(shape.predicate, [...new Set([...objects, ...shape.object])])
-    })
-
-    return Array.from(predicateMap.entries()).map(([predId, objects]) => ({
-      id: predId,
-      label: getRelationLabel(predId),
-      objects,
-    }))
-  }, [node.rootTypes])
+  const availablePredicates = useMemo(
+    () => getAvailablePredicates(node.rootTypes),
+    [node.rootTypes]
+  )
 
   const handleTermChange = useCallback(
     (term: GOlrResponse | null) => {

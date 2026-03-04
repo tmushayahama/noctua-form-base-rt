@@ -1,29 +1,13 @@
 import { v4 as uuidv4 } from 'uuid'
-import type { TreeNode, EvidenceForm, NodeType } from '../models/cam'
+import type { TreeNode, EvidenceForm } from '../models/cam'
+import { isValidEvidence } from './evidenceUtils'
+
+export { findNodeByType as findNodeByNodeType } from './treeUtils'
 
 type Operation = {
   entity: string
   operation: string
   arguments: Record<string, unknown>
-}
-
-// Selector to find nodes by nodeType
-export const findNodeByNodeType = (
-  nodes: TreeNode[],
-  nodeType: NodeType
-): TreeNode | null => {
-  for (const node of nodes) {
-    if (node.nodeType === nodeType) {
-      return node
-    }
-
-    const foundInChildren = findNodeByNodeType(node.children, nodeType)
-    if (foundInChildren) {
-      return foundInChildren
-    }
-  }
-
-  return null
 }
 
 /**
@@ -83,9 +67,7 @@ const processNodes = (
     })
 
     // Process all evidence entries for this node
-    const validEvidences = node.evidences.filter(
-      ev => ev.evidenceCode?.id
-    )
+    const validEvidences = node.evidences.filter(isValidEvidence)
     validEvidences.forEach((evidence, index) => {
       addEvidenceForNode(
         node.uid,
