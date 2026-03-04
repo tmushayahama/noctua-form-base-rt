@@ -5,58 +5,6 @@ import { Relations } from "@/@noctua.core/models/relations";
 import { v4 as uuidv4 } from 'uuid';
 import { store } from "@/app/store/store";
 
-/* const annotationsMap = {
-  "contributor": "contributor",
-  "date": "date",
-  "providedBy": "groups",
-  "with": "with",
-  "source": "reference",
-  "evidence": "evidence",
-  "conforms-to-gpad": "conformsToGpad",
-  "state": "state",
-  "title": "title"
-};
-
-
-
-// TODO Contributor and groups
-// TODO is Compliment
-
-function processAnnotations(nodes: GraphNode[], annotations: Record<string, string>, target: any): void {
-  if (!annotations || !Array.isArray(annotations)) return;
-
-  const contributors: Contributor[] = [];
-  const groups: Group[] = [];
-  const evidence: Evidence[] = [];
-
-  annotations.forEach((annotation: string, value: string) => {
-    switch (annotation) {
-      case 'contributor':
-        contributors.push({ uri: value });
-        break
-      case 'providedBy':
-        groups.push({ id: value });
-        break;
-
-      case 'conforms-to-gpad':
-        if (target.conformsToGPAD !== undefined) {
-          target.conformsToGPAD = value === 'true';
-        }
-        break;
-
-      case 'evidence':
-        evidence.push(extractEvidence(value, nodes));
-        break;
-      default:
-        target[annotationsMap[annotation]] = value;
-    }
-  })
-}
-
- */
-
-
-
 
 export function extractActivities(nodes: GraphNode[], edges: Edge[]): Activity[] {
   const activities: Activity[] = [];
