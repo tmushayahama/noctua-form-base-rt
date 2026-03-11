@@ -4,7 +4,8 @@ import { Checkbox, Button } from '@mui/material'
 import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { FaCheckCircle } from 'react-icons/fa'
-import type { Aspect, Evidence, EvidenceForm } from '../../models/cam'
+import type { Aspect, Evidence } from '../../models/cam'
+import type { EvidenceForm } from '../../models/formModels'
 import { useSearchAnnotationsQuery } from '@/features/search/slices/lookupApiSlice'
 import { updateNode, setNodeEvidences } from '../../slices/activityFormSlice'
 import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice'
@@ -71,7 +72,7 @@ const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
     // Convert selected Evidence[] to EvidenceForm[]
     if (selectedEvidences.length > 0) {
       const evidenceForms: EvidenceForm[] = selectedEvidences.map(ev => ({
-        uuid: uuidv4(),
+        uid: uuidv4(),
         evidenceCode: {
           id: ev.evidenceCode.id,
           label: ev.evidenceCode.label,

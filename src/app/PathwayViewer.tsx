@@ -15,8 +15,9 @@ import {
   setRightDrawerOpen,
   setRightPanelTab,
 } from '@/@noctua.core/components/drawer/drawerSlice'
-import type { Activity, ActivityType } from '@/features/gocam/models/cam'
-import { resetForm, setActivityType } from '@/features/gocam/slices/activityFormSlice'
+import type { Activity } from '@/features/gocam/models/cam'
+import type { ActivityFormType } from '@/features/gocam/models/formModels'
+import { resetForm, initCreateForm } from '@/features/gocam/slices/activityFormSlice'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
@@ -223,9 +224,9 @@ const PathwayEditor: React.FC = () => {
   }, [])
 
   const handleStencilDrop = useCallback(
-    (type: ActivityType, _x: number, _y: number) => {
+    (type: string, _x: number, _y: number) => {
       dispatch(resetForm())
-      dispatch(setActivityType(type))
+      dispatch(initCreateForm(type as ActivityFormType))
       setActivityFormOpen(true)
     },
     [dispatch]
@@ -378,7 +379,7 @@ const PathwayEditor: React.FC = () => {
         onClose={handleCloseActivityForm}
         title="Add Activity"
       >
-        <ActivityForm />
+        <ActivityForm onSaved={handleCloseActivityForm} onCancel={handleCloseActivityForm} />
       </ActivityDialog>
     </div>
   )

@@ -24,11 +24,12 @@ export enum RootTypes {
   CHEMICAL_ENTITY = 'CHEBI:24431',
   EVIDENCE = 'ECO:0000352',
   EVIDENCE_NODE = 'ECO:0000000',
-  CELL_TYPE_ENTITY = 'CL:0000003',
-  ANATOMICAL_ENTITY = 'CARO:0000000',
-  ORGANISM = 'NCBITaxon',
+  CELL_TYPE = 'CL:0000000',
+  ANATOMICAL_ENTITY = 'UBERON:0001062',
+  ORGANISM = 'NCBITaxon:1',
   BIOLOGICAL_PHASE = 'GO:0044848',
   UBERON_STAGE = 'UBERON:0000105',
+  PLANT_STAGE = 'PO:0009012',
 }
 
 export enum NodeType {
@@ -137,23 +138,4 @@ export const createEmptyEvidence = (): EvidenceForm => ({
   withFrom: '',
 })
 
-export interface TreeNode {
-  uid: string;
-  nodeType?: NodeType;
-  term?: GOlrResponse
-  aspect?: string;
-  relation?: Entity
-  parentId: string | null;
-  isComplement?: boolean;
-  evidences: EvidenceForm[];
-  rootTypes: Entity[];
-  children: TreeNode[];
-}
-
-export interface ShexShape {
-  subject: string;
-  predicate: string;
-  object: string[];
-  exclude_from_extensions?: boolean;
-}
 
