@@ -17,12 +17,17 @@ import {
   updateEvidenceForm,
   removeRelationForm,
   addRelationForm,
+  addISSEvidence,
+  clearNodeValues,
+  fillRootTerm,
 } from '../../slices/activityFormSlice'
 import {
   getNodeCategory,
   getExtensionRelations,
   type RelationEntry,
 } from '../../data/nodeCategories'
+import ReferenceDropdown from './ReferenceDropdown'
+import WithDropdown from './WithDropdown'
 
 interface EntityRowProps {
   node: TermNode
@@ -32,6 +37,8 @@ interface EntityRowProps {
   errors: ValidationError[]
   displayMenuButton?: boolean
   displayAddButton?: boolean
+  onSearchAnnotations?: (node: TermNode) => void
+  onCloneEvidence?: (relationUid: string) => void
 }
 
 const EntityRow: React.FC<EntityRowProps> = ({
@@ -42,11 +49,23 @@ const EntityRow: React.FC<EntityRowProps> = ({
   errors,
   displayMenuButton = true,
   displayAddButton = false,
+  onSearchAnnotations,
+  onCloneEvidence,
 }) => {
   const dispatch = useAppDispatch()
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null)
   const [evidenceMenuAnchor, setEvidenceMenuAnchor] = useState<HTMLElement | null>(null)
+
+  // Dropdown state for reference/with per evidence row
+  const [refDropdown, setRefDropdown] = useState<{
+    anchorEl: HTMLElement | null
+    evidenceUid: string
+  }>({ anchorEl: null, evidenceUid: '' })
+  const [withDropdown, setWithDropdown] = useState<{
+    anchorEl: HTMLElement | null
+    evidenceUid: string
+  }>({ anchorEl: null, evidenceUid: '' })
 
   const evidence = relation?.evidence ?? []
 
@@ -107,6 +126,34 @@ const EntityRow: React.FC<EntityRowProps> = ({
     [dispatch, relation]
   )
 
+  // Save from reference dropdown → update evidence reference field
+  const handleRefDropdownSave = (value: string) => {
+    if (relation && refDropdown.evidenceUid) {
+      dispatch(
+        updateEvidenceForm({
+          relationUid: relation.uid,
+          evidenceUid: refDropdown.evidenceUid,
+          field: 'reference',
+          value,
+        })
+      )
+    }
+  }
+
+  // Save from with dropdown → update evidence withFrom field
+  const handleWithDropdownSave = (value: string) => {
+    if (relation && withDropdown.evidenceUid) {
+      dispatch(
+        updateEvidenceForm({
+          relationUid: relation.uid,
+          evidenceUid: withDropdown.evidenceUid,
+          field: 'withFrom',
+          value,
+        })
+      )
+    }
+  }
+
   const closeAllMenus = () => {
     setMenuAnchor(null)
     setAddMenuAnchor(null)
@@ -144,6 +191,41 @@ const EntityRow: React.FC<EntityRowProps> = ({
     closeAllMenus()
   }
 
+  const handleFillRootTerm = () => {
+    if (relation) {
+      dispatch(fillRootTerm({ termUid: node.uid, relationUid: relation.uid }))
+    }
+    closeAllMenus()
+  }
+
+  const handleAddISSEvidence = () => {
+    if (relation) {
+      dispatch(addISSEvidence({ relationUid: relation.uid }))
+    }
+    closeAllMenus()
+  }
+
+  const handleClearValues = () => {
+    if (relation) {
+      dispatch(clearNodeValues({ termUid: node.uid, relationUid: relation.uid }))
+    }
+    closeAllMenus()
+  }
+
+  const handleCloneEvidence = () => {
+    if (relation && onCloneEvidence) {
+      onCloneEvidence(relation.uid)
+    }
+    closeAllMenus()
+  }
+
+  const handleSearchAnnotations = () => {
+    if (onSearchAnnotations) {
+      onSearchAnnotations(node)
+    }
+    closeAllMenus()
+  }
+
   const category = getNodeCategory(node.category)
   const extensionRelations = category ? getExtensionRelations(category) : []
 
@@ -163,7 +245,6 @@ const EntityRow: React.FC<EntityRowProps> = ({
     closeAllMenus()
   }
 
-  const termError = errors.find(e => e.uid === node.uid && e.field === 'term')
 
   return (
     <>
@@ -205,14 +286,11 @@ const EntityRow: React.FC<EntityRowProps> = ({
             onChange={handleTermChange}
             variant="outlined"
           />
-          {termError && (
-            <div className="mt-1 text-xs text-red-500">{termError.message}</div>
-          )}
         </div>
 
         {/* Evidence columns */}
         <div className="flex min-w-0 basis-[65%] flex-col items-stretch justify-start">
-          {evidence.map((ev, i) => (
+          {evidence.map(ev => (
             <div
               key={ev.uid}
               className="flex w-full flex-row items-stretch justify-start"
@@ -243,6 +321,9 @@ const EntityRow: React.FC<EntityRowProps> = ({
                   value={ev.reference}
                   onChange={handleReferenceChange(ev)}
                   variant="outlined"
+                  onOpenReference={e =>
+                    setRefDropdown({ anchorEl: e.currentTarget as HTMLElement, evidenceUid: ev.uid })
+                  }
                 />
               </div>
               <div className="w-1/4 p-4">
@@ -253,6 +334,9 @@ const EntityRow: React.FC<EntityRowProps> = ({
                   value={ev.withFrom}
                   onChange={handleWithChange(ev)}
                   variant="outlined"
+                  onOpenReference={e =>
+                    setWithDropdown({ anchorEl: e.currentTarget as HTMLElement, evidenceUid: ev.uid })
+                  }
                 />
               </div>
             </div>
@@ -291,7 +375,9 @@ const EntityRow: React.FC<EntityRowProps> = ({
         onClose={() => setMenuAnchor(null)}
       >
         {node.aspect && (
-          <MenuItem onClick={() => closeAllMenus()}>Search Annotations</MenuItem>
+          <MenuItem onClick={handleSearchAnnotations}>
+            Search Annotations
+          </MenuItem>
         )}
         <MenuItem onClick={handleToggleComplement}>NOT Qualifier</MenuItem>
         {extensionRelations.length > 0 && (
@@ -314,10 +400,13 @@ const EntityRow: React.FC<EntityRowProps> = ({
             Evidence
           </MenuItem>
         )}
-        {node.aspect && (
-          <MenuItem onClick={() => closeAllMenus()}>Fill with root term</MenuItem>
+        {node.aspect && relation && (
+          <MenuItem onClick={handleFillRootTerm}>Fill with root term</MenuItem>
         )}
-        <MenuItem onClick={() => closeAllMenus()}>Clear Values</MenuItem>
+        {node.aspect && relation && (
+          <MenuItem onClick={handleAddISSEvidence}>Add ISS Evidence</MenuItem>
+        )}
+        <MenuItem onClick={handleClearValues}>Clear Values</MenuItem>
         {node.canDelete && parentTermUid && (
           <MenuItem onClick={handleRemoveNode}>Remove</MenuItem>
         )}
@@ -359,7 +448,27 @@ const EntityRow: React.FC<EntityRowProps> = ({
             Remove Evidence
           </MenuItem>
         )}
+        {onCloneEvidence && relation && (
+          <MenuItem onClick={handleCloneEvidence}>Clone Evidence</MenuItem>
+        )}
       </Menu>
+
+      {/* Reference dropdown */}
+      <ReferenceDropdown
+        anchorEl={refDropdown.anchorEl}
+        onClose={() => setRefDropdown({ anchorEl: null, evidenceUid: '' })}
+        onSave={handleRefDropdownSave}
+      />
+
+      {/* With dropdown */}
+      <WithDropdown
+        anchorEl={withDropdown.anchorEl}
+        currentValue={
+          evidence.find(e => e.uid === withDropdown.evidenceUid)?.withFrom ?? ''
+        }
+        onClose={() => setWithDropdown({ anchorEl: null, evidenceUid: '' })}
+        onSave={handleWithDropdownSave}
+      />
     </>
   )
 }

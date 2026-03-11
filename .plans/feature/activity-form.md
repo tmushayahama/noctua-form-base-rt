@@ -250,9 +250,104 @@ Update components to use tree directly. Mostly prop type changes.
 
 ---
 
+### Phase 5: Angular-Matching Form Layout & Features
+Rewrite form to match Angular entity-form row layout and add missing features.
+
+**Files:**
+- `components/forms/EntityRow.tsx` — NEW: replaces TermNode+RelationRow+EvidenceRow with Angular-style flat row
+- `components/forms/ActivityForm.tsx` — Rewrite: GP/FD sections, flatten tree, real-time validation, error dialog
+- `services/formValidation.ts` — Update: match Angular validation rules
+- `slices/activityFormSlice.ts` — Update: new actions (fillRootTerm, addISSEvidence, clearNodeValues)
+- `search/components/Autocomplete.tsx` — Update: suffix button for WITH type too
+
+**5.1 — EntityRow.tsx (Angular entity-form equivalent):**
+- Single horizontal row: [tree-indicators] [term ~35%] [evidence ~65%: code(50%)+ref(25%)+with(25%)] [ellipsis menu]
+- Tree level indicators (dotted borders for nesting depth)
+- Plus-square suffix buttons on Reference and With fields (via onOpenReference/onOpenWith callbacks)
+- Ellipsis menu with: Search Annotations, NOT Qualifier, Add (submenu), Evidence (Add/Remove/Clone), Fill with root term, Add ISS Evidence, Clear Values, Remove
+- `displayMenuButton` (true for FD rows) and `displayAddButton` (true for GP rows) props
+
+**5.2 — ActivityForm.tsx layout:**
+- GP section: enabled_by targets with no evidence, just term + add button
+- FD section: root MF node (with enabled_by relation's evidence) + part_of/occurs_in targets
+- Each node group in shadow box with aspect-colored left border (blue=MF, green=BP, orange=CC)
+- IS NOT indicator bar when isComplement=true
+- Header with activity type title + toggle buttons
+
+**5.3 — Real-time validation:**
+- useEffect runs `validateActivityForm()` on every form state change
+- Errors stored in Redux via `setErrors()`
+- Save button disabled when errors.length > 0
+
+**5.4 — "Why is Save disabled?" button:**
+- Shown in footer when errors exist (warning color)
+- Opens a Dialog listing all validation errors with icons
+
+**5.5 — New slice actions:**
+- `fillRootTerm({ termUid, relationUid })` — auto-fills term with root GO term for aspect + adds ND evidence
+- `addISSEvidence({ relationUid })` — adds ISS (ECO:0000250) evidence entry
+- `clearNodeValues({ termUid, relationUid })` — clears term + resets evidence to empty
+
+**5.6 — Validation rules (matching Angular):**
+- Required nodes must have a term
+- Evidence code provided → reference required
+- Reference must be in DB:accession format (contain colon)
+- With/from must be in DB:accession format (if provided)
+- Error messages include position: "on evidence(N)"
+- Activity must have at least 2 nodes with values
+
+**Status:** DONE (code + type-check pass)
+
+**Verify:** Form layout matches Angular — each entity is a horizontal row with term+evidence+menu. Validation runs automatically. Save disabled until valid. Error dialog lists all issues.
+
+---
+
+### Phase 6: Form Dialogs & Database Browsers
+All dialog and popover features matching Angular.
+
+**Files:**
+- `components/forms/ReferenceDropdown.tsx` — NEW: Popover with DB selector (PMID/DOI/GO_REF) + accession input
+- `components/forms/WithDropdown.tsx` — NEW: Popover with DB selector (21 allowed DBs) + accession input
+- `components/forms/CloneEvidenceDialog.tsx` — NEW: Dialog showing unique activity evidences for selection
+- `components/forms/AllowedDatabasesPopover.tsx` — NEW: Info popover showing allowed DB chips
+- `data/allowedDatabases.ts` — NEW: `referenceAllowedDBs` and `withFromAllowedDBs` constants
+- `components/forms/EntityRow.tsx` — Updated: wired reference/with dropdowns inline
+- `components/forms/ActivityForm.tsx` — Updated: wired Search Annotations, Clone Evidence, info buttons
+
+**6.1 — Search Annotations:**
+- Wired existing `SearchAnnotations.tsx` into EntityRow via `onSearchAnnotations` callback
+- Opens via GlobalDialog system (`openDialog({ component: 'SearchAnnotations', ... })`)
+- Passes gpId (from GP node), aspect, targetNodeUid to the dialog
+- Only available when the entity has an aspect (MF/BP/CC nodes)
+
+**6.2 — Clone Evidence dialog:**
+- `CloneEvidenceDialog.tsx`: table with checkbox selection, select-all toggle
+- Columns: Evidence Code, Reference, With, Assigned By
+- `collectUniqueEvidences()` walks tree to find all unique evidence entries
+- Selected evidences are converted to EvidenceForm[] and dispatched via `setNodeEvidences`
+
+**6.3 — Reference dropdown:**
+- `ReferenceDropdown.tsx`: Popover with Select (PMID/DOI/GO_REF) + TextField (accession)
+- Save produces `"DB:accession"` string, dispatched to `updateEvidenceForm` for the reference field
+- Enter key submits
+
+**6.4 — With dropdown:**
+- `WithDropdown.tsx`: Same pattern, 21 allowed databases from `withFromAllowedDBs`
+- MenuProps maxHeight for scrollable long list
+
+**6.5 — Section info buttons:**
+- Info icons (ℹ) in FD section header aligned with Reference and With columns
+- Click opens `AllowedDatabasesPopover` showing chips with allowed DB prefixes
+
+**Status:** DONE
+
+**Verify:** Plus-square buttons on Reference/With open dropdowns. Clone Evidence shows activity evidences. Info buttons show allowed databases. Search Annotations opens existing dialog.
+
+---
+
 ## Recovery Checkpoint
 
-> **Last completed action:** All 4 phases implemented + type-check + build pass
+> **Last completed action:** Phase 6 complete — all form dialogs and database browsers implemented
 > **Next immediate action:** Manual testing / user review
 
 ## Failed Approaches
@@ -268,16 +363,23 @@ Update components to use tree directly. Mostly prop type changes.
 |------|--------|--------|
 | `models/formModels.ts` | Rewrite (simplify) | Phase 1 |
 | `data/activityTemplates.ts` | Rewrite (declarative) | Phase 1 |
-| `slices/activityFormSlice.ts` | Rewrite (tree state) | Phase 2 |
-| `services/formValidation.ts` | Rewrite (walk tree) | Phase 3 |
+| `slices/activityFormSlice.ts` | Rewrite + new actions (fillRootTerm, addISSEvidence, clearNodeValues) | Phase 2+5 |
+| `services/formValidation.ts` | Rewrite (walk tree, Angular-matching rules) | Phase 3+5 |
 | `services/activityOperations.ts` | Rewrite (walk tree) | Phase 3 |
 | `services/formTreeBuilder.ts` | Delete | Phase 3 |
-| `components/forms/ActivityForm.tsx` | Update (minor) | Phase 4 |
-| `components/forms/TermNode.tsx` | Update (prop types) | Phase 4 |
-| `components/forms/RelationRow.tsx` | Update (prop types) | Phase 4 |
-| `components/forms/EvidenceRow.tsx` | Update (minimal) | Phase 4 |
-| `components/forms/AddNodeMenu.tsx` | Update (prop types) | Phase 4 |
-| `components/forms/SearchAnnotations.tsx` | Update (imports) | Phase 4 |
+| `components/forms/ActivityForm.tsx` | Rewrite (GP/FD sections, real-time validation, error dialog) | Phase 5 |
+| `components/forms/EntityRow.tsx` | NEW (Angular entity-form equivalent — flat row layout) | Phase 5 |
+| `components/forms/TermNode.tsx` | Now unused (replaced by EntityRow) | Phase 5 |
+| `components/forms/RelationRow.tsx` | Now unused (replaced by EntityRow) | Phase 5 |
+| `components/forms/EvidenceRow.tsx` | Now unused (replaced by EntityRow) | Phase 5 |
+| `components/forms/AddNodeMenu.tsx` | Now unused (menu logic in EntityRow) | Phase 5 |
+| `search/components/Autocomplete.tsx` | Update (suffix button for WITH type) | Phase 5 |
+| `components/forms/ReferenceDropdown.tsx` | NEW (DB selector + accession popover) | Phase 6 |
+| `components/forms/WithDropdown.tsx` | NEW (21 DB selector + accession popover) | Phase 6 |
+| `components/forms/CloneEvidenceDialog.tsx` | NEW (select from existing evidences) | Phase 6 |
+| `components/forms/AllowedDatabasesPopover.tsx` | NEW (info popover with DB chips) | Phase 6 |
+| `data/allowedDatabases.ts` | NEW (referenceAllowedDBs, withFromAllowedDBs) | Phase 6 |
+| `components/forms/SearchAnnotations.tsx` | Existing (wired into EntityRow) | Phase 4+6 |
 | `components/ActivityDetails.tsx` | Update (imports) | Phase 4 |
 
 ## Blockers

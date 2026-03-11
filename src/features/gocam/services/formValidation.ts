@@ -4,17 +4,23 @@ import type {
   ValidationError,
 } from '../models/formModels'
 
-const VALID_REFERENCE_PREFIXES = ['PMID:', 'DOI:', 'GO_REF:']
-
+/**
+ * Validate reference format — must be in DB:accession format.
+ * e.g. PMID:12345, DOI:10.xxx, GO_REF:0000015
+ */
 export const isValidReference = (ref: string): boolean => {
   if (!ref?.trim()) return false
-  return VALID_REFERENCE_PREFIXES.some(prefix =>
-    ref.trim().toUpperCase().startsWith(prefix.toUpperCase())
-  )
+  return ref.trim().includes(':')
 }
 
 /**
  * Validate the activity form by walking the tree.
+ * Matches Angular validation:
+ *   1. Required nodes must have a term
+ *   2. If a node has a term, evidence is checked:
+ *      - Evidence code provided → reference is required
+ *      - Reference must be in DB:accession format (contain colon)
+ *   3. Activity must have at least 2 nodes with values
  */
 export const validateActivityForm = (
   state: ActivityFormState
@@ -27,19 +33,20 @@ export const validateActivityForm = (
   const errors: ValidationError[] = []
   let filledCount = 0
 
-  function walkTerm(node: TermNode) {
+  function walkTerm(node: TermNode, position: number) {
     if (node.term) filledCount++
 
+    // Required node must have a term
     if (node.required && !node.term) {
       errors.push({
         uid: node.uid,
         field: 'term',
-        message: `${node.label} is required`,
+        message: `"${node.label}" is required`,
       })
     }
 
     for (const rel of node.relations) {
-      // If the target has a value, it needs evidence
+      // If the target has a value, validate evidence
       if (rel.target.term) {
         if (rel.evidence.length === 0) {
           errors.push({
@@ -49,31 +56,44 @@ export const validateActivityForm = (
           })
         }
 
-        for (const ev of rel.evidence) {
-          if (ev.evidenceCode?.id) {
-            if (!ev.reference) {
-              errors.push({
-                uid: ev.uid,
-                field: 'reference',
-                message: 'Reference is required when evidence code is set',
-              })
-            } else if (!isValidReference(ev.reference)) {
-              errors.push({
-                uid: ev.uid,
-                field: 'reference',
-                message:
-                  'Reference must be in DB:accession format (PMID:xxx, DOI:xxx, GO_REF:xxx)',
-              })
-            }
+        for (let i = 0; i < rel.evidence.length; i++) {
+          const ev = rel.evidence[i]
+          const evPosition = i + 1
+
+          // Evidence code provided but no reference
+          if (ev.evidenceCode?.id && !ev.reference) {
+            errors.push({
+              uid: ev.uid,
+              field: 'reference',
+              message: `You provided an evidence for "${rel.target.label}" but no reference: on evidence(${evPosition})`,
+            })
+          }
+
+          // Reference provided but not in DB:accession format
+          if (ev.reference && !isValidReference(ev.reference)) {
+            errors.push({
+              uid: ev.uid,
+              field: 'reference',
+              message: `Use DB:accession format for reference "${rel.target.label}" on evidence(${evPosition})`,
+            })
+          }
+
+          // With field provided but not in DB:accession format
+          if (ev.withFrom && !ev.withFrom.includes(':')) {
+            errors.push({
+              uid: ev.uid,
+              field: 'withFrom',
+              message: `Use DB:accession format for with/from "${rel.target.label}" on evidence(${evPosition})`,
+            })
           }
         }
       }
 
-      walkTerm(rel.target)
+      walkTerm(rel.target, position + 1)
     }
   }
 
-  walkTerm(root)
+  walkTerm(root, 1)
 
   if (filledCount < 2) {
     errors.push({

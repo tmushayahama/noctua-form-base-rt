@@ -1,13 +1,29 @@
 import type React from 'react'
-import { useCallback, useEffect, useMemo } from 'react'
-import { Button, ToggleButton, ToggleButtonGroup } from '@mui/material'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  Button,
+  IconButton,
+  ToggleButton,
+  ToggleButtonGroup,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material'
+import { FaExclamationCircle, FaInfoCircle } from 'react-icons/fa'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import type { RootState } from '@/app/store/store'
 import { Relations } from '@/@noctua.core/models/relations'
+import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
 import {
   initCreateForm,
   resetForm,
   setErrors,
+  setNodeEvidences,
   selectActivityForm,
   selectFormRoot,
   selectFormMode,
@@ -23,7 +39,12 @@ import {
 } from '../../services/activityOperations'
 import type { ActivityFormType } from '../../models/formModels'
 import type { TermNode, RelationNode, ValidationError } from '../../models/formModels'
+import type { Evidence } from '../../models/cam'
+import { referenceAllowedDBs, withFromAllowedDBs } from '../../data/allowedDatabases'
 import EntityRow from './EntityRow'
+import CloneEvidenceDialog from './CloneEvidenceDialog'
+import AllowedDatabasesPopover from './AllowedDatabasesPopover'
+import { v4 as uuidv4 } from 'uuid'
 
 // ── Flatten tree into renderable rows ────────────────────────────────
 
@@ -61,6 +82,36 @@ function getAspectBorderClass(node: TermNode): string {
   }
 }
 
+/** Collect all unique evidences from the current activity (for clone evidence) */
+function collectUniqueEvidences(root: TermNode): Evidence[] {
+  const seen = new Set<string>()
+  const result: Evidence[] = []
+
+  function walk(node: TermNode) {
+    for (const rel of node.relations) {
+      for (const ev of rel.evidence) {
+        if (!ev.evidenceCode?.id) continue
+        const key = `${ev.evidenceCode.id}|${ev.reference}|${ev.withFrom}`
+        if (seen.has(key)) continue
+        seen.add(key)
+        result.push({
+          uid: ev.uid,
+          evidenceCode: ev.evidenceCode,
+          reference: ev.reference,
+          referenceUrl: '',
+          with: ev.withFrom,
+          groups: [],
+          contributors: [],
+        })
+      }
+      walk(rel.target)
+    }
+  }
+
+  walk(root)
+  return result
+}
+
 interface ActivityFormProps {
   onSaved?: () => void
   onCancel?: () => void
@@ -77,11 +128,29 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
   const model = useAppSelector((state: RootState) => state.cam.model)
   const [updateGraphModel, { isLoading: isSaving }] = useUpdateGraphModelMutation()
 
+  const [showErrorsDialog, setShowErrorsDialog] = useState(false)
+  const [cloneEvidenceState, setCloneEvidenceState] = useState<{
+    open: boolean
+    relationUid: string
+  }>({ open: false, relationUid: '' })
+  const [refInfoAnchor, setRefInfoAnchor] = useState<HTMLElement | null>(null)
+  const [withInfoAnchor, setWithInfoAnchor] = useState<HTMLElement | null>(null)
+
   useEffect(() => {
     if (!root && mode === 'create' && !activityType) {
       dispatch(initCreateForm('activity'))
     }
   }, [root, mode, activityType, dispatch])
+
+  // Real-time validation: run on every form state change
+  useEffect(() => {
+    if (!formState.root) return
+    const validationErrors = validateActivityForm(formState)
+    dispatch(setErrors(validationErrors))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formState.root, formState.mode, formState.isDirty, dispatch])
+
+  const hasErrors = errors.length > 0
 
   // Separate GP (enabled_by) and FD (everything else) sections
   const { gpRows, fdRows } = useMemo(() => {
@@ -90,21 +159,18 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
     const gp: FlatRow[] = []
     const fd: FlatRow[] = []
 
-    // Find the enabled_by relation (evidence lives here but displays on MF row)
     const enabledByRelation =
       root.relations.find(r => r.predicate.id === Relations.ENABLED_BY) ?? null
 
-    // GP section: enabled_by targets, NO evidence (just the term + add button)
+    // GP section
     for (const rel of root.relations) {
       if (rel.predicate.id === Relations.ENABLED_BY) {
-        // Pass relation=null so no evidence columns are shown on GP row
         gp.push({
           termNode: rel.target,
           relation: null,
           parentTermUid: root.uid,
           treeLevel: 1,
         })
-        // If the GP target has children (e.g. protein complex has_part), flatten those
         for (const childRel of rel.target.relations) {
           const rows: FlatRow[] = []
           flattenNode(childRel.target, childRel, rel.target.uid, 2, rows)
@@ -113,7 +179,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
       }
     }
 
-    // FD section: root MF node (with enabled_by evidence) + non-enabled_by relations
+    // FD section
     fd.push({
       termNode: root,
       relation: enabledByRelation,
@@ -141,11 +207,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
   )
 
   const handleSave = useCallback(async () => {
-    if (!root || !model?.id) return
-
-    const validationErrors = validateActivityForm(formState)
-    dispatch(setErrors(validationErrors))
-    if (validationErrors.length > 0) return
+    if (!root || !model?.id || hasErrors) return
 
     let operations
     if (mode === 'edit' && existingActivityUid) {
@@ -160,12 +222,74 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
 
     await updateGraphModel(operations)
     onSaved?.()
-  }, [formState, root, model, mode, existingActivityUid, dispatch, updateGraphModel, onSaved])
+  }, [root, model, mode, existingActivityUid, hasErrors, updateGraphModel, onSaved])
 
   const handleCancel = useCallback(() => {
     dispatch(resetForm())
     onCancel?.()
   }, [dispatch, onCancel])
+
+  // Find GP node for Search Annotations (needs gpId)
+  const gpNode = useMemo(() => {
+    if (!root) return null
+    const enabledByRel = root.relations.find(
+      r => r.predicate.id === Relations.ENABLED_BY
+    )
+    return enabledByRel?.target ?? null
+  }, [root])
+
+  const handleSearchAnnotations = useCallback(
+    (node: TermNode) => {
+      if (!gpNode?.term?.id) {
+        // GP not filled yet — can't search
+        return
+      }
+      dispatch(
+        openDialog({
+          component: 'SearchAnnotations',
+          title: 'Search Annotations',
+          size: 'lg',
+          customProps: {
+            gpId: gpNode.term.id,
+            aspect: node.aspect,
+            targetNodeUid: node.uid,
+          },
+        })
+      )
+    },
+    [dispatch, gpNode]
+  )
+
+  const handleCloneEvidence = useCallback((relationUid: string) => {
+    setCloneEvidenceState({ open: true, relationUid })
+  }, [])
+
+  const handleCloneEvidenceSelect = useCallback(
+    (selected: Evidence[]) => {
+      if (!cloneEvidenceState.relationUid) return
+      // Find the relation's target node uid to set evidences
+      // We use the relation uid to find the right target
+      const evidenceForms = selected.map(ev => ({
+        uid: uuidv4(),
+        evidenceCode: { id: ev.evidenceCode.id, label: ev.evidenceCode.label },
+        reference: ev.reference || '',
+        withFrom: ev.with || '',
+      }))
+
+      // Find target uid from relation uid by walking tree
+      if (!root) return
+      const targetUid = findTargetUidByRelation(root, cloneEvidenceState.relationUid)
+      if (targetUid) {
+        dispatch(setNodeEvidences({ uid: targetUid, evidences: evidenceForms }))
+      }
+    },
+    [dispatch, root, cloneEvidenceState.relationUid]
+  )
+
+  const uniqueEvidences = useMemo(() => {
+    if (!root) return []
+    return collectUniqueEvidences(root)
+  }, [root])
 
   if (!root) {
     return <div className="p-4 text-gray-500">Loading form...</div>
@@ -235,6 +359,28 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
             <div className="text-xs font-semibold uppercase text-gray-500">
               Function Description
             </div>
+            <span className="grow" />
+            <div className="flex basis-[65%] flex-row items-center justify-end">
+              <div className="w-1/4">
+                <IconButton
+                  size="small"
+                  onClick={e => setRefInfoAnchor(e.currentTarget)}
+                  title="Allowed reference databases"
+                >
+                  <FaInfoCircle size={14} className="text-gray-400" />
+                </IconButton>
+              </div>
+              <div className="w-1/4">
+                <IconButton
+                  size="small"
+                  onClick={e => setWithInfoAnchor(e.currentTarget)}
+                  title="Allowed with/from databases"
+                >
+                  <FaInfoCircle size={14} className="text-gray-400" />
+                </IconButton>
+              </div>
+              <span className="w-10" />
+            </div>
           </div>
           <div className="flex flex-col items-stretch justify-start">
             {fdRows.map(row => {
@@ -258,28 +404,38 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
                         treeLevel={1}
                         errors={errors}
                         displayMenuButton={true}
+                        onSearchAnnotations={handleSearchAnnotations}
+                        onCloneEvidence={handleCloneEvidence}
                       />
                     </div>
                   </div>
                 )
               }
-              // Deeper nested rows rendered inside the previous node group
               return null
             })}
 
-            {/* Render deeper rows grouped under their parent */}
-            {renderNestedNodeGroups(root, errors)}
+            {renderNestedNodeGroups(
+              root,
+              errors,
+              handleSearchAnnotations,
+              handleCloneEvidence
+            )}
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      {errors.some(e => e.field === 'activity') && (
-        <div className="px-4 text-sm text-red-500">
-          {errors.find(e => e.field === 'activity')?.message}
-        </div>
-      )}
       <div className="flex flex-row items-center justify-start border-t px-4 py-3">
+        {hasErrors && (
+          <Button
+            variant="text"
+            color="warning"
+            size="small"
+            onClick={() => setShowErrorsDialog(true)}
+          >
+            Why is the &quot;Save&quot; button disabled?
+          </Button>
+        )}
         <span className="grow" />
         <Button
           variant="outlined"
@@ -289,25 +445,87 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
         >
           Clear
         </Button>
-        <Button variant="contained" onClick={handleSave} disabled={isSaving}>
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          disabled={isSaving || hasErrors}
+        >
           {isSaving ? 'Saving...' : 'Save'}
         </Button>
       </div>
+
+      {/* Errors dialog */}
+      <Dialog
+        open={showErrorsDialog}
+        onClose={() => setShowErrorsDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Validation Errors</DialogTitle>
+        <DialogContent>
+          <List dense>
+            {errors.map((err, i) => (
+              <ListItem key={`${err.uid}-${err.field}-${i}`}>
+                <ListItemIcon className="!min-w-[32px]">
+                  <FaExclamationCircle className="text-red-500" />
+                </ListItemIcon>
+                <ListItemText primary={err.message} />
+              </ListItem>
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowErrorsDialog(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Clone evidence dialog */}
+      <CloneEvidenceDialog
+        open={cloneEvidenceState.open}
+        evidences={uniqueEvidences}
+        onClose={() => setCloneEvidenceState({ open: false, relationUid: '' })}
+        onSelect={handleCloneEvidenceSelect}
+      />
+
+      {/* Info popovers */}
+      <AllowedDatabasesPopover
+        anchorEl={refInfoAnchor}
+        onClose={() => setRefInfoAnchor(null)}
+        title="Allowed Reference Databases"
+        databases={referenceAllowedDBs}
+      />
+      <AllowedDatabasesPopover
+        anchorEl={withInfoAnchor}
+        onClose={() => setWithInfoAnchor(null)}
+        title="Allowed With/From Databases"
+        databases={withFromAllowedDBs}
+      />
     </div>
   )
+}
+
+/** Find the target TermNode uid for a given relation uid */
+function findTargetUidByRelation(root: TermNode, relationUid: string): string | null {
+  for (const rel of root.relations) {
+    if (rel.uid === relationUid) return rel.target.uid
+    const found = findTargetUidByRelation(rel.target, relationUid)
+    if (found) return found
+  }
+  return null
 }
 
 /** Render FD node groups that have nested children (tree level 3+) */
 function renderNestedNodeGroups(
   root: TermNode,
-  errors: ValidationError[]
+  errors: ValidationError[],
+  onSearchAnnotations: (node: TermNode) => void,
+  onCloneEvidence: (relationUid: string) => void
 ): React.ReactNode[] {
   const groups: React.ReactNode[] = []
 
   for (const rel of root.relations) {
     if (rel.predicate.id === Relations.ENABLED_BY) continue
 
-    // Check if this target has its own children
     if (rel.target.relations.length > 0) {
       for (const childRel of rel.target.relations) {
         const rows: FlatRow[] = []
@@ -332,6 +550,8 @@ function renderNestedNodeGroups(
                   treeLevel={row.treeLevel}
                   errors={errors}
                   displayMenuButton={true}
+                  onSearchAnnotations={onSearchAnnotations}
+                  onCloneEvidence={onCloneEvidence}
                 />
               </div>
             </div>

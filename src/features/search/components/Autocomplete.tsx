@@ -191,21 +191,21 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
           fullWidth
           InputProps={{
             className: "bg-white rounded",
-            endAdornment: (
-              <>
-                {autocompleteType === AutocompleteType.REFERENCE && onOpenReference && (
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenReference(e);
-                    }}
-                    className="min-w-0 p-2"
-                  >
-                    <FaFileMedical />
-                  </Button>
-                )}
-              </>
-            ),
+            endAdornment: (autocompleteType === AutocompleteType.REFERENCE ||
+              autocompleteType === AutocompleteType.WITH) &&
+              onOpenReference ? (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenReference(e);
+                  }}
+                  className="min-w-0 p-1 self-end"
+                  style={{ position: 'absolute', right: 4, bottom: 4 }}
+                >
+                  <FaFileMedical />
+                </Button>
+              ) : undefined,
+            style: { position: 'relative' },
           }}
         />
       </div>

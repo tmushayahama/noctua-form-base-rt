@@ -269,6 +269,82 @@ export const activityFormSlice = createSlice({
       state.isDirty = true
     },
 
+    fillRootTerm(
+      state,
+      action: PayloadAction<{ termUid: string; relationUid: string }>
+    ) {
+      if (!state.root) return
+      const node = findTermNode(state.root, action.payload.termUid)
+      const rel = findRelationNode(state.root, action.payload.relationUid)
+      if (!node || !rel) return
+
+      // Fill term with root term for the node's aspect
+      const rootTerms: Record<string, { id: string; label: string }> = {
+        F: { id: 'GO:0003674', label: 'molecular_function' },
+        P: { id: 'GO:0008150', label: 'biological_process' },
+        C: { id: 'GO:0005575', label: 'cellular_component' },
+      }
+      const rootTerm = node.aspect ? rootTerms[node.aspect] : null
+      if (!rootTerm) return
+
+      node.term = {
+        id: rootTerm.id,
+        label: rootTerm.label,
+        link: '',
+        description: '',
+        isObsolete: false,
+        replacedBy: '',
+        rootTypes: [],
+        xref: '',
+        notAnnotatable: true,
+        neighborhoodGraphJson: '',
+      }
+
+      // Add ND evidence
+      rel.evidence = [
+        {
+          uid: uuidv4(),
+          evidenceCode: { id: 'ECO:0000307', label: 'ND' },
+          reference: 'GO_REF:0000015',
+          withFrom: '',
+        },
+      ]
+      state.isDirty = true
+    },
+
+    addISSEvidence(
+      state,
+      action: PayloadAction<{ relationUid: string }>
+    ) {
+      if (!state.root) return
+      const rel = findRelationNode(state.root, action.payload.relationUid)
+      if (!rel) return
+      rel.evidence.push({
+        uid: uuidv4(),
+        evidenceCode: { id: 'ECO:0000250', label: 'ISS' },
+        reference: '',
+        withFrom: '',
+      })
+      state.isDirty = true
+    },
+
+    clearNodeValues(
+      state,
+      action: PayloadAction<{ termUid: string; relationUid: string }>
+    ) {
+      if (!state.root) return
+      const node = findTermNode(state.root, action.payload.termUid)
+      const rel = findRelationNode(state.root, action.payload.relationUid)
+      if (!node) return
+
+      node.term = null
+      node.isComplement = false
+      if (rel) {
+        rel.evidence = [createEvidenceForm()]
+      }
+      state.isDirty = true
+    },
+
     setErrors(state, action: PayloadAction<ValidationError[]>) {
       state.errors = action.payload
     },
@@ -293,6 +369,9 @@ export const {
   setNodeEvidences,
   addRelationForm,
   removeRelationForm,
+  fillRootTerm,
+  addISSEvidence,
+  clearNodeValues,
   setErrors,
   resetForm,
 } = activityFormSlice.actions
