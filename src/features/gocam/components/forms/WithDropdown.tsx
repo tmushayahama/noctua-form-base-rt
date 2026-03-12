@@ -1,5 +1,5 @@
 import type React from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Popover,
   TextField,
@@ -65,6 +65,13 @@ const WithDropdown: React.FC<WithDropdownProps> = ({
   onSave,
 }) => {
   const [groups, setGroups] = useState<WithGroup[]>(() => parseWithValue(currentValue))
+
+  // Re-parse when opened with a different value
+  useEffect(() => {
+    if (anchorEl) {
+      setGroups(parseWithValue(currentValue))
+    }
+  }, [anchorEl, currentValue])
 
   const updateEntity = (groupIdx: number, entityIdx: number, field: keyof WithEntity, value: string) => {
     setGroups(prev => {

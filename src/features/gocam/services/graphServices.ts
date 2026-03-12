@@ -233,11 +233,16 @@ export const transformGraphData = (data: any): GraphModel => {
 
   if (data.individuals && Array.isArray(data.individuals)) {
     data.individuals.forEach((individual: any) => {
+      const rawType = individual.type?.[0]
+      const isComplement = rawType?.type === 'complement'
+      const resolvedType = isComplement ? rawType?.filler : rawType
+
       const nodeData: GraphNode = {
         uid: individual.id,
-        id: individual.type?.[0]?.id,
-        label: individual.type?.[0]?.label,
+        id: resolvedType?.id,
+        label: resolvedType?.label,
         rootTypes: individual['root-type']?.map((rt: any) => rt.id) || [],
+        isComplement,
         contributors: [],
         groups: [],
         sources: [],

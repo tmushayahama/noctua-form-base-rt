@@ -245,7 +245,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
   }, [root])
 
   const handleSearchAnnotations = useCallback(
-    (node: TermNode) => {
+    (node: TermNode, relation: RelationNode | null) => {
       if (!gpNode?.term?.id) {
         // GP not filled yet — can't search
         return
@@ -259,6 +259,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
             gpId: gpNode.term.id,
             aspect: node.aspect,
             targetNodeUid: node.uid,
+            relationUid: relation?.uid,
           },
         })
       )
@@ -524,7 +525,7 @@ function findTargetUidByRelation(root: TermNode, relationUid: string): string | 
 function renderNestedNodeGroups(
   root: TermNode,
   errors: ValidationError[],
-  onSearchAnnotations: (node: TermNode) => void,
+  onSearchAnnotations: (node: TermNode, relation: RelationNode | null) => void,
   onCloneEvidence: (relationUid: string) => void
 ): React.ReactNode[] {
   const groups: React.ReactNode[] = []

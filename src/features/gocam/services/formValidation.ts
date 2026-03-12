@@ -38,7 +38,7 @@ export const validateActivityForm = (
   const errors: ValidationError[] = []
   let filledCount = 0
 
-  function walkTerm(node: TermNode, position: number) {
+  function walkTerm(node: TermNode) {
     if (node.term) filledCount++
 
     // Required node must have a term
@@ -94,11 +94,11 @@ export const validateActivityForm = (
         }
       }
 
-      walkTerm(rel.target, position + 1)
+      walkTerm(rel.target)
     }
   }
 
-  walkTerm(root, 1)
+  walkTerm(root)
 
   if (filledCount < 2) {
     errors.push({

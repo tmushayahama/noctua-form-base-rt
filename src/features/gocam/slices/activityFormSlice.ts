@@ -124,18 +124,6 @@ export const activityFormSlice = createSlice({
       }
     },
 
-    updateNode(
-      state,
-      action: PayloadAction<{ uid: string; term: GOlrResponse | null }>
-    ) {
-      if (!state.root) return
-      const node = findTermNode(state.root, action.payload.uid)
-      if (node) {
-        node.term = action.payload.term
-        state.isDirty = true
-      }
-    },
-
     updateRelationPredicate(
       state,
       action: PayloadAction<{ uid: string; predicate: Entity }>
@@ -213,6 +201,18 @@ export const activityFormSlice = createSlice({
     ) {
       if (!state.root) return
       const rel = findRelationByTargetUid(state.root, action.payload.uid)
+      if (rel) {
+        rel.evidence = action.payload.evidences
+        state.isDirty = true
+      }
+    },
+
+    setRelationEvidences(
+      state,
+      action: PayloadAction<{ relationUid: string; evidences: EvidenceForm[] }>
+    ) {
+      if (!state.root) return
+      const rel = findRelationNode(state.root, action.payload.relationUid)
       if (rel) {
         rel.evidence = action.payload.evidences
         state.isDirty = true
@@ -360,13 +360,13 @@ export const {
   initEditForm,
   loadActivity,
   updateTerm,
-  updateNode,
   updateRelationPredicate,
   toggleComplement,
   addEvidenceForm,
   removeEvidenceForm,
   updateEvidenceForm,
   setNodeEvidences,
+  setRelationEvidences,
   addRelationForm,
   removeRelationForm,
   fillRootTerm,

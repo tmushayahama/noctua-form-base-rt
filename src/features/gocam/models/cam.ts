@@ -55,6 +55,7 @@ export interface GraphNode {
   label: string;
   rootTypes: string[];
   nodeType?: NodeType
+  isComplement: boolean;
   contributors: Contributor[];
   date?: string;
   groups: Group[];

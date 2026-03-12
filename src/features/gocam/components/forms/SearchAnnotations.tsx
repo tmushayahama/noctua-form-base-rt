@@ -7,7 +7,7 @@ import { FaCheckCircle } from 'react-icons/fa'
 import type { Aspect, Evidence } from '../../models/cam'
 import type { EvidenceForm } from '../../models/formModels'
 import { useSearchAnnotationsQuery } from '@/features/search/slices/lookupApiSlice'
-import { updateNode, setNodeEvidences } from '../../slices/activityFormSlice'
+import { updateTerm, setNodeEvidences, setRelationEvidences } from '../../slices/activityFormSlice'
 import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice'
 
 interface SearchAnnotationsProps {
@@ -15,6 +15,7 @@ interface SearchAnnotationsProps {
   aspect?: Aspect
   term?: string
   targetNodeUid?: string
+  relationUid?: string
 }
 
 const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
@@ -22,6 +23,7 @@ const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
   aspect,
   term,
   targetNodeUid,
+  relationUid,
 }) => {
   const dispatch = useAppDispatch()
   const [selectedTerm, setSelectedTerm] = useState<AnnotationsResponse | null>(
@@ -56,7 +58,7 @@ const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
 
     // Update the node's term
     dispatch(
-      updateNode({
+      updateTerm({
         uid: targetNodeUid,
         term: {
           id: selectedTerm.term.id,
@@ -81,7 +83,11 @@ const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
         withFrom: ev.with || '',
       }))
 
-      dispatch(setNodeEvidences({ uid: targetNodeUid, evidences: evidenceForms }))
+      if (relationUid) {
+        dispatch(setRelationEvidences({ relationUid, evidences: evidenceForms }))
+      } else {
+        dispatch(setNodeEvidences({ uid: targetNodeUid, evidences: evidenceForms }))
+      }
     }
 
     dispatch(closeDialog())

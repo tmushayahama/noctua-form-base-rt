@@ -37,7 +37,7 @@ interface EntityRowProps {
   errors: ValidationError[]
   displayMenuButton?: boolean
   displayAddButton?: boolean
-  onSearchAnnotations?: (node: TermNode) => void
+  onSearchAnnotations?: (node: TermNode, relation: RelationNode | null) => void
   onCloneEvidence?: (relationUid: string) => void
 }
 
@@ -221,7 +221,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
 
   const handleSearchAnnotations = () => {
     if (onSearchAnnotations) {
-      onSearchAnnotations(node)
+      onSearchAnnotations(node, relation)
     }
     closeAllMenus()
   }

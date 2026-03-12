@@ -128,7 +128,7 @@ function graphNodeToGOlrResponse(node: GraphNode): import('@/features/search/mod
 function edgeToEvidenceForms(edge: Edge): EvidenceForm[] {
   if (!edge.evidence?.length) return [createEvidenceForm()]
   return edge.evidence.map(ev => ({
-    uid: uuidv4(),
+    uid: ev.uid,
     evidenceCode: { id: ev.evidenceCode.id, label: ev.evidenceCode.label },
     reference: ev.reference || '',
     withFrom: ev.with || '',
@@ -171,7 +171,7 @@ export function activityToFormTree(activity: Activity): TermNode {
       term: graphNodeToGOlrResponse(node),
       aspect: inferAspect(category),
       rootTypes: node.rootTypes,
-      isComplement: false,
+      isComplement: node.isComplement ?? false,
       canDelete: !isRoot,
       required: isRoot,
       relations: outEdges.map(edge => {
