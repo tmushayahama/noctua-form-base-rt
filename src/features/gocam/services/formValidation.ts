@@ -3,14 +3,19 @@ import type {
   TermNode,
   ValidationError,
 } from '../models/formModels'
+import { referenceAllowedDBs } from '../data/allowedDatabases'
 
 /**
- * Validate reference format — must be in DB:accession format.
- * e.g. PMID:12345, DOI:10.xxx, GO_REF:0000015
+ * Validate reference format — must be in DB:accession format
+ * where DB is one of the allowed reference databases (PMID, DOI, GO_REF).
  */
 export const isValidReference = (ref: string): boolean => {
   if (!ref?.trim()) return false
-  return ref.trim().includes(':')
+  const trimmed = ref.trim()
+  const colonIdx = trimmed.indexOf(':')
+  if (colonIdx === -1) return false
+  const prefix = trimmed.slice(0, colonIdx)
+  return referenceAllowedDBs.some(db => db === prefix)
 }
 
 /**

@@ -1,6 +1,6 @@
 import { ActivityType } from '@/features/gocam/models/cam'
-import type { EvidenceForm } from '@/features/gocam/models/cam'
-import { createEmptyEvidence } from '@/features/gocam/models/cam'
+import type { EvidenceForm } from '@/features/gocam/models/formModels'
+import { createEvidenceForm } from '@/features/gocam/models/formModels'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { createSlice } from '@reduxjs/toolkit'
 import { getConnectorType, getDefaultSelection, determineRelation } from '../services/decisionTree'
@@ -48,7 +48,7 @@ const initialState: RelationState = {
     targetType: initialTargetType,
     ...initialDefaults,
   }),
-  connectorEvidences: [createEmptyEvidence()],
+  connectorEvidences: [createEvidenceForm()],
 }
 
 export const relationSlice = createSlice({
@@ -81,17 +81,17 @@ export const relationSlice = createSlice({
 
       state.selected = fullSelection
       state.relation = determineRelation(fullSelection)
-      state.connectorEvidences = [createEmptyEvidence()]
+      state.connectorEvidences = [createEvidenceForm()]
     },
 
     // Connector evidence reducers
     addConnectorEvidence: state => {
-      state.connectorEvidences.push(createEmptyEvidence())
+      state.connectorEvidences.push(createEvidenceForm())
     },
     removeConnectorEvidence: (state, action: PayloadAction<number>) => {
       const index = action.payload
       if (state.connectorEvidences.length <= 1) {
-        state.connectorEvidences[0] = createEmptyEvidence()
+        state.connectorEvidences[0] = createEvidenceForm()
       } else {
         state.connectorEvidences.splice(index, 1)
       }
@@ -115,11 +115,11 @@ export const relationSlice = createSlice({
       }
     },
     resetConnectorEvidences: state => {
-      state.connectorEvidences = [createEmptyEvidence()]
+      state.connectorEvidences = [createEvidenceForm()]
     },
     setConnectorEvidences: (state, action: PayloadAction<EvidenceForm[]>) => {
       state.connectorEvidences =
-        action.payload.length > 0 ? action.payload : [createEmptyEvidence()]
+        action.payload.length > 0 ? action.payload : [createEvidenceForm()]
     },
   },
 })

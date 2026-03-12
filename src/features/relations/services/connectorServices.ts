@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
-import type { Activity, EvidenceForm } from '@/features/gocam/models/cam'
+import type { Activity, UserContext } from '@/features/gocam/models/cam'
+import type { EvidenceForm } from '@/features/gocam/models/formModels'
 
 type Operation = {
   entity: string
@@ -16,7 +17,8 @@ export const buildConnectorOperations = (
   targetActivity: Activity,
   relationId: string,
   evidences: EvidenceForm[],
-  modelId: string
+  modelId: string,
+  userContext?: UserContext
 ): Operation[] => {
   const operations: Operation[] = []
   const subjectId = sourceActivity.rootNode.uid
@@ -50,13 +52,19 @@ export const buildConnectorOperations = (
       },
     })
 
-    // Add annotations to evidence (source/reference, with)
+    // Add annotations to evidence (source/reference, with, user attribution)
     const annotationValues: { key: string; value: string }[] = []
     if (evidence.reference) {
       annotationValues.push({ key: 'source', value: evidence.reference })
     }
     if (evidence.withFrom) {
       annotationValues.push({ key: 'with', value: evidence.withFrom })
+    }
+    if (userContext?.orcid) {
+      annotationValues.push({ key: 'contributor', value: userContext.orcid })
+    }
+    if (userContext?.groupUrl) {
+      annotationValues.push({ key: 'providedBy', value: userContext.groupUrl })
     }
 
     if (annotationValues.length > 0) {

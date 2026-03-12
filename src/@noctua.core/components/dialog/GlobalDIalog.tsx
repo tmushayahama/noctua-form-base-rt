@@ -3,9 +3,13 @@ import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice'
 import type { RootState } from '@/app/store/store'
 import SimpleDialog from './SimpleDialog'
 import SearchAnnotations from '@/features/gocam/components/forms/SearchAnnotations'
+import CamMetadataForm from '@/features/gocam/components/CamMetadataForm'
+import CopyModelDialog from '@/features/gocam/components/CopyModelDialog'
 
 const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
   SearchAnnotations,
+  CamMetadataForm,
+  CopyModelDialog,
 }
 
 const GlobalDialog: React.FC = () => {

@@ -1,6 +1,6 @@
 import { globalKnownRelations } from '@/@noctua.core/data/relations'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
-import type { Activity } from '@/features/gocam/models/cam'
+import type { Activity, UserContext } from '@/features/gocam/models/cam'
 import { RootTypes } from '@/features/gocam/models/cam'
 import { useMemo, useEffect, useCallback } from 'react'
 import {
@@ -67,7 +67,13 @@ const RelationForm: React.FC<Props> = ({
     (state: RootState) => state.relation
   )
   const model = useAppSelector((state: RootState) => state.cam.model)
+  const authUser = useAppSelector((state: RootState) => state.auth.user)
   const [updateGraphModel, { isLoading: isSaving }] = useUpdateGraphModelMutation()
+
+  const userContext: UserContext | undefined = useMemo(() => {
+    if (!authUser?.uri || !authUser?.group?.id) return undefined
+    return { orcid: authUser.uri, groupUrl: authUser.group.id }
+  }, [authUser])
 
   const connectorType = useMemo(
     () => getConnectorType(sourceActivity.type, targetActivity.type),
@@ -101,7 +107,7 @@ const RelationForm: React.FC<Props> = ({
       )
       if (existingConn?.evidence && existingConn.evidence.length > 0) {
         const evForms = existingConn.evidence.map(ev => ({
-          uuid: ev.uid,
+          uid: ev.uid,
           evidenceCode: ev.evidenceCode
             ? { id: ev.evidenceCode.id, label: ev.evidenceCode.label }
             : { id: '', label: '' },
@@ -178,7 +184,8 @@ const RelationForm: React.FC<Props> = ({
       targetActivity,
       relation,
       connectorEvidences,
-      modelId
+      modelId,
+      userContext
     )
 
     await updateGraphModel(ops).unwrap()
@@ -194,6 +201,7 @@ const RelationForm: React.FC<Props> = ({
     existingSourceUid,
     existingTargetUid,
     updateGraphModel,
+    userContext,
     onSaved,
     onClose,
   ])
@@ -315,7 +323,7 @@ const RelationForm: React.FC<Props> = ({
       </div>
       <div className="px-4 py-2">
         {connectorEvidences.map((ev, index) => (
-          <div key={ev.uuid} className="mb-2 flex items-center gap-2">
+          <div key={ev.uid} className="mb-2 flex items-center gap-2">
             <div className="w-[220px]">
               <TermAutocomplete
                 label="Evidence Code"

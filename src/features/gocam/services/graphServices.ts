@@ -1,5 +1,5 @@
 import type { Contributor, Group } from "@/features/users/models/contributor";
-import type { Entity, Evidence } from "../models/cam";
+import type { Entity, Evidence, ShExViolation } from "../models/cam";
 import { type Edge, type GraphModel, type GraphNode, type Activity, ActivityType, RootTypes, Aspect } from "../models/cam";
 import { Relations } from "@/@noctua.core/models/relations";
 import { v4 as uuidv4 } from 'uuid';
@@ -164,15 +164,17 @@ export function extractEvidence(evidenceId: string, nodes: GraphNode[]): Evidenc
     return undefined;
   }
 
-  // Create evidence object from the node
+  const sortedSources = [...evidenceNode.sources].sort((a, b) => (a > b ? -1 : 1))
+  const reference = sortedSources.join('| ')
+
   const evidence: Evidence = {
     uid: evidenceNode.uid,
     evidenceCode: {
       id: evidenceNode.id,
       label: evidenceNode.label
     },
-    reference: evidenceNode.source || '',
-    referenceUrl: evidenceNode.source || '',
+    reference,
+    referenceUrl: reference,
     with: evidenceNode.with || '',
     groups: evidenceNode.groups,
     contributors: evidenceNode.contributors,
@@ -224,7 +226,7 @@ function exploreSubgraph(
 }
 
 export const transformGraphData = (data: any): GraphModel => {
-  if (!data) return { id: '', nodes: [], edges: [], activities: [], activityConnections: [] };
+  if (!data) return { id: '', nodes: [], edges: [], activities: [], activityConnections: [], contributors: [], groups: [], comments: [], violations: [], modified: false };
 
   const nodes: GraphNode[] = [];
   const edges: Edge[] = [];
@@ -238,12 +240,11 @@ export const transformGraphData = (data: any): GraphModel => {
         rootTypes: individual['root-type']?.map((rt: any) => rt.id) || [],
         contributors: [],
         groups: [],
+        sources: [],
       };
 
       if (individual.annotations && Array.isArray(individual.annotations)) {
         individual.annotations.forEach((annotation: any) => {
-
-
           if (annotation.key === 'contributor') {
             nodeData.contributors.push(getContributor(annotation.value));
           } else if (annotation.key === 'date') {
@@ -251,7 +252,7 @@ export const transformGraphData = (data: any): GraphModel => {
           } else if (annotation.key === 'providedBy') {
             nodeData.groups.push(getGroup(annotation.value));
           } else if (annotation.key === 'source') {
-            nodeData.source = annotation.value;
+            nodeData.sources.push(annotation.value);
           } else if (annotation.key === 'with') {
             nodeData.with = annotation.value;
           }
@@ -316,6 +317,9 @@ export const transformGraphData = (data: any): GraphModel => {
     activityConnections,
     contributors: [],
     groups: [],
+    comments: [],
+    violations: [],
+    modified: data['modified-p'] === true,
   };
 
   if (data.annotations && Array.isArray(data.annotations)) {
@@ -330,14 +334,17 @@ export const transformGraphData = (data: any): GraphModel => {
         graphModel.title = annotation.value;
       } else if (annotation.key === 'contributor') {
         graphModel.contributors.push(getContributor(annotation.value));
-        graphModel.contributors.push(getContributor("https://orcid.org/0000-0001-9969-8610"));
-        graphModel.contributors.push(getContributor("https://orcid.org/0000-0001-8682-8754"));
-        graphModel.contributors.push(getContributor("https://orcid.org/0000-0003-3212-6364"));
       } else if (annotation.key === 'providedBy') {
         graphModel.groups.push(getGroup(annotation.value));
+      } else if (annotation.key === 'comment') {
+        graphModel.comments.push(annotation.value);
+      } else if (annotation.key === 'https://w3id.org/biolink/vocab/in_taxon') {
+        graphModel.taxon = annotation.value;
       }
     });
   }
+
+  graphModel.violations = parseValidationResults(data['validation-results']);
 
   return graphModel;
 };
@@ -372,4 +379,29 @@ export function getAspect(rootTypes: Entity[]): Aspect | null {
     if (aspect) return aspect;
   }
   return null;
+}
+
+function parseValidationResults(validationResults: any): ShExViolation[] {
+  const violations: ShExViolation[] = [];
+
+  if (!validationResults?.['shex-validation']?.violations) return violations;
+
+  for (const violation of validationResults['shex-validation'].violations) {
+    for (const explanation of violation.explanations ?? []) {
+      const constraints = (explanation.constraints ?? []).map((c: any) => ({
+        property: c.property,
+        object: c.object,
+        cardinality: c.cardinality,
+        nobjects: c.nobjects,
+      }));
+
+      violations.push({
+        node: violation.node,
+        shape: explanation.shape ?? '',
+        constraints,
+      });
+    }
+  }
+
+  return violations;
 }

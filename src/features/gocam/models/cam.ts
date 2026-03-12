@@ -1,7 +1,4 @@
-import type { GOlrResponse } from "@/features/search/models/search";
 import type { Group, Contributor } from "@/features/users/models/contributor";
-import { v4 as uuidv4 } from 'uuid';
-
 
 
 export enum ActivityType {
@@ -61,7 +58,7 @@ export interface GraphNode {
   contributors: Contributor[];
   date?: string;
   groups: Group[];
-  source?: string;
+  sources: string[];
   with?: string;
 }
 
@@ -103,6 +100,19 @@ export interface Activity {
   edges: Edge[];
 }
 
+export interface ShExConstraint {
+  property: string;
+  object?: string;
+  cardinality?: number;
+  nobjects?: number;
+}
+
+export interface ShExViolation {
+  node: string;
+  shape: string;
+  constraints: ShExConstraint[];
+}
+
 export interface GraphModel {
   id: string;
   nodes: GraphNode[];
@@ -111,31 +121,21 @@ export interface GraphModel {
   activityConnections: Edge[];
   conformsToGPAD?: boolean;
   state?: string;
-  comments?: string[];
+  comments: string[];
   contributors: Contributor[];
   date?: string;
   title?: string;
   groups: Group[];
+  modified: boolean;
+  taxon?: string;
+  violations: ShExViolation[];
 }
 
 export interface GraphModelApiResponse {
   data: GraphModel;
 }
 
-// Activity Form 
-
-export interface EvidenceForm {
-  uuid: string;
-  evidenceCode: Entity;
-  reference: string;
-  withFrom: string;
+export interface UserContext {
+  orcid: string;
+  groupUrl: string;
 }
-
-export const createEmptyEvidence = (): EvidenceForm => ({
-  uuid: uuidv4(),
-  evidenceCode: { id: '', label: '' },
-  reference: '',
-  withFrom: '',
-})
-
-

@@ -2,7 +2,6 @@ import type React from 'react';
 import { useState } from 'react';
 import { Button, IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
 import {
-  FaUser,
   FaCalendarDay,
   FaComment,
   FaClone,
@@ -10,9 +9,11 @@ import {
   FaPen,
   FaTasks,
 } from 'react-icons/fa';
-import { useAppSelector } from '@/app/hooks';
+import { useAppSelector, useAppDispatch } from '@/app/hooks';
+import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice';
 
 const CamToolbar: React.FC = () => {
+  const dispatch = useAppDispatch();
   const cam = useAppSelector(state => state.cam.model);
 
   const [exportMenuAnchor, setExportMenuAnchor] = useState<null | HTMLElement>(null);
@@ -35,11 +36,11 @@ const CamToolbar: React.FC = () => {
   };
 
   const openCamForm = () => {
-    console.log('Opening CAM form');
-  };
-
-  const openCopyModel = () => {
-    console.log('Copying model');
+    dispatch(openDialog({
+      component: 'CamMetadataForm',
+      title: 'Edit Model',
+      size: 'sm',
+    }));
   };
 
   const getStateColor = (stateName?: string) => {
@@ -83,7 +84,7 @@ const CamToolbar: React.FC = () => {
 
       {/* Comments */}
       <div className="px-1 h-full">
-        <Tooltip title={cam.comments || 'No comments'} placement="top">
+        <Tooltip title={cam.comments.length > 0 ? cam.comments.join(', ') : 'No comments'} placement="top">
           <IconButton
             className="text-gray-600 hover:text-gray-800"
             onClick={openCamForm}
@@ -98,7 +99,11 @@ const CamToolbar: React.FC = () => {
         <Tooltip title="Make a copy of this model" placement="top">
           <IconButton
             className=" text-gray-600 hover:text-gray-800"
-            onClick={openCopyModel}
+            onClick={() => dispatch(openDialog({
+              component: 'CopyModelDialog',
+              title: 'Copy Model',
+              size: 'sm',
+            }))}
           >
             <FaClone size={16} />
           </IconButton>

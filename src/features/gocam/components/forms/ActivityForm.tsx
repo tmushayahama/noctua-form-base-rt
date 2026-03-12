@@ -39,7 +39,7 @@ import {
 } from '../../services/activityOperations'
 import type { ActivityFormType } from '../../models/formModels'
 import type { TermNode, RelationNode, ValidationError } from '../../models/formModels'
-import type { Evidence } from '../../models/cam'
+import type { Evidence, UserContext } from '../../models/cam'
 import { referenceAllowedDBs, withFromAllowedDBs } from '../../data/allowedDatabases'
 import EntityRow from './EntityRow'
 import CloneEvidenceDialog from './CloneEvidenceDialog'
@@ -126,6 +126,12 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
   const errors = useAppSelector(selectFormErrors)
   const existingActivityUid = useAppSelector(selectExistingActivityUid)
   const model = useAppSelector((state: RootState) => state.cam.model)
+  const authUser = useAppSelector((state: RootState) => state.auth.user)
+
+  const userContext: UserContext | undefined = useMemo(() => {
+    if (!authUser?.uri || !authUser?.group?.id) return undefined
+    return { orcid: authUser.uri, groupUrl: authUser.group.id }
+  }, [authUser])
   const [updateGraphModel, { isLoading: isSaving }] = useUpdateGraphModelMutation()
 
   const [showErrorsDialog, setShowErrorsDialog] = useState(false)
@@ -215,14 +221,14 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
         a => a.uid === existingActivityUid
       )
       if (!existingActivity) return
-      operations = buildEditActivityOperations(root, existingActivity, model.id)
+      operations = buildEditActivityOperations(root, existingActivity, model.id, userContext)
     } else {
-      operations = buildCreateActivityOperations(root, model.id)
+      operations = buildCreateActivityOperations(root, model.id, userContext)
     }
 
     await updateGraphModel(operations)
     onSaved?.()
-  }, [root, model, mode, existingActivityUid, hasErrors, updateGraphModel, onSaved])
+  }, [root, model, mode, existingActivityUid, hasErrors, updateGraphModel, onSaved, userContext])
 
   const handleCancel = useCallback(() => {
     dispatch(resetForm())

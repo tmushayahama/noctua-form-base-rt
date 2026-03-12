@@ -1,7 +1,6 @@
 import apiService from '@/app/store/apiService';
 import { transformGraphData } from '../services/graphServices';
 import type { GraphModelApiResponse } from '../models/cam';
-import { ENVIRONMENT } from '@/@noctua.core/data/constants';
 import type { RootState } from '@/app/store/store';
 import { getBaristaApiUrl } from '@/@noctua.core/services/linksService';
 
@@ -37,6 +36,50 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
         };
       },
       providesTags: ['graph'],
+    }),
+
+    copyGraphModel: builder.mutation<{ newModelId: string } | null, { modelId: string; title: string; preserveEvidence: boolean }>({
+      async queryFn({ modelId, title, preserveEvidence }, _queryApi, _extraOptions, baseQuery) {
+        const state = _queryApi.getState() as RootState;
+        const baristaToken = state.auth.baristaToken || '';
+        const user = state.auth.user;
+        const groupId = user?.group?.id || '';
+
+        const baseUrl = getBaristaApiUrl(baristaToken);
+
+        const requests = JSON.stringify([
+          {
+            entity: 'model',
+            operation: 'copy',
+            arguments: {
+              'model-id': modelId,
+              'preserve-evidence': preserveEvidence,
+              values: [{ key: 'title', value: title }],
+            },
+          },
+        ]);
+
+        const bodyParams = new URLSearchParams();
+        bodyParams.append('token', baristaToken);
+        if (groupId) bodyParams.append('provided-by', groupId);
+        bodyParams.append('intention', 'action');
+        bodyParams.append('requests', requests);
+
+        const result = await baseQuery({
+          url: baseUrl,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          },
+          body: bodyParams.toString(),
+        });
+
+        if (result.error) return { error: result.error };
+
+        const newModelId = result.data?.data?.id || null;
+        return { data: newModelId ? { newModelId } : null };
+      },
+      invalidatesTags: ['graph'],
     }),
 
     updateGraphModel: builder.mutation<GraphModelApiResponse | null, any>({
@@ -79,4 +122,5 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
 export const {
   useGetGraphModelQuery,
   useUpdateGraphModelMutation,
+  useCopyGraphModelMutation,
 } = graphApi;
