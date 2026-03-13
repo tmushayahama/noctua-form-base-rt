@@ -373,6 +373,7 @@ export class NodeLink extends joint.shapes.standard.Link {
         {
           markup: [
             { tagName: 'rect', selector: 'labelBody' },
+            { tagName: 'image', selector: 'noEvidenceIcon' },
             { tagName: 'text', selector: 'labelText' },
           ],
           attrs: {
@@ -396,6 +397,16 @@ export class NodeLink extends joint.shapes.standard.Link {
               strokeWidth: 1,
               rx: 5,
               ry: 5,
+            },
+            noEvidenceIcon: {
+              xlinkHref: './assets/icons/no-evidence.png',
+              ref: 'labelText',
+              refX: -15,
+              refY: '50%',
+              y: -6,
+              width: 12,
+              height: 12,
+              visibility: 'hidden',
             },
           },
           position: {
@@ -444,6 +455,18 @@ export class NodeLink extends joint.shapes.standard.Link {
       attrs: {
         labelText: { fill: textColor },
         labelBody: { stroke: lineColor },
+      },
+    })
+    return this
+  }
+
+  setNoEvidence(show: boolean): this {
+    this.label(0, {
+      attrs: {
+        noEvidenceIcon: { visibility: show ? 'visible' : 'hidden' },
+        labelBody: show
+          ? { refX: -20, refWidth2: 25 }
+          : { refX: -5, refWidth2: 10 },
       },
     })
     return this

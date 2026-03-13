@@ -512,6 +512,10 @@ export class CamCanvas {
     link.attr('line/targetMarker/stroke', color)
     link.attr('line/targetMarker/fill', color)
 
+    if (!conn.evidence?.length) {
+      link.setNoEvidence(true)
+    }
+
     return link
   }
 
