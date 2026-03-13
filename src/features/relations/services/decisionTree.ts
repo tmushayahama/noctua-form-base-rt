@@ -108,6 +108,8 @@ export const reverseLookup = (relation: RelationId): RelationshipInput | null =>
     }
 
     for (const [dirKey, dirVal] of Object.entries(base)) {
+      if (typeof dirVal !== 'object' || dirVal === null) continue
+
       if ('relation' in dirVal && dirVal.relation === relation) {
         return {
           relationshipId: relationshipId as any,
@@ -118,6 +120,7 @@ export const reverseLookup = (relation: RelationId): RelationshipInput | null =>
       }
 
       for (const [dirKey2, val] of Object.entries(dirVal)) {
+        if (typeof val !== 'object' || val === null) continue
         if (val.relation === relation) {
           return {
             relationshipId: relationshipId as any,

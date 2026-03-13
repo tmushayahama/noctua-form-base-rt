@@ -80,6 +80,7 @@ const RelationForm: React.FC<Props> = ({
     [sourceActivity.type, targetActivity.type]
   )
 
+  // Initialize form when connection changes (not on every model refresh)
   useEffect(() => {
     dispatch(
       resetSelection({
@@ -100,8 +101,13 @@ const RelationForm: React.FC<Props> = ({
           })
         )
       }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, sourceActivity.type, targetActivity.type, existingEdgeId])
 
-      // Pre-populate evidence from existing connection
+  // Pre-populate evidence from existing connection (only on mount)
+  useEffect(() => {
+    if (existingEdgeId && existingSourceUid && existingTargetUid) {
       const existingConn = model?.activityConnections.find(
         c => c.sourceId === existingSourceUid && c.targetId === existingTargetUid
       )
@@ -117,15 +123,8 @@ const RelationForm: React.FC<Props> = ({
         dispatch(setConnectorEvidences(evForms))
       }
     }
-  }, [
-    dispatch,
-    sourceActivity.type,
-    targetActivity.type,
-    existingEdgeId,
-    existingSourceUid,
-    existingTargetUid,
-    model,
-  ])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, existingEdgeId, existingSourceUid, existingTargetUid])
 
   const relationshipOptions =
     connectorType === ConnectorType.ACTIVITY_ACTIVITY

@@ -5,7 +5,11 @@ import {
   useUpdateGraphModelMutation,
 } from '@/features/gocam/slices/camApiSlice'
 import { useAppDispatch, useAppSelector } from './hooks'
-import { setModel, setSelectedActivity } from '@/features/gocam/slices/camSlice'
+import {
+  setModel,
+  setSelectedActivity,
+  setSelectedConnection,
+} from '@/features/gocam/slices/camSlice'
 import { useSearchParams } from 'react-router-dom'
 import PathwayGraph from '@/features/pathway/components/PathwayGraph'
 import GraphToolbar from '@/features/pathway/components/GraphToolbar'
@@ -41,15 +45,10 @@ const PathwayEditor: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [activityFormOpen, setActivityFormOpen] = useState(false)
 
-  // Connector dialog state
+  // Connector dialog state (for new connections created via drag — no existing edge)
   const [connectorFormOpen, setConnectorFormOpen] = useState(false)
   const [connectorSource, setConnectorSource] = useState<Activity | null>(null)
   const [connectorTarget, setConnectorTarget] = useState<Activity | null>(null)
-  const [existingEdge, setExistingEdge] = useState<{
-    id: string
-    sourceUid: string
-    targetUid: string
-  } | null>(null)
 
   const user = useAppSelector((state: RootState) => state.auth.user)
   const isLoggedIn = !!user
@@ -177,7 +176,6 @@ const PathwayEditor: React.FC = () => {
       const source = graphModel?.data?.activities.find(a => a.uid === sourceId)
       const target = graphModel?.data?.activities.find(a => a.uid === targetId)
       if (source && target) {
-        // Find existing connection edge between these activities
         const connection = graphModel?.data?.activityConnections.find(
           c =>
             (c.sourceId === source.rootNode?.uid &&
@@ -185,21 +183,20 @@ const PathwayEditor: React.FC = () => {
             (c.sourceId === target.rootNode?.uid &&
               c.targetId === source.rootNode?.uid)
         )
-        setConnectorSource(source)
-        setConnectorTarget(target)
-        setExistingEdge(
-          connection
-            ? {
-                id: connection.id,
-                sourceUid: connection.sourceId,
-                targetUid: connection.targetId,
-              }
-            : null
-        )
-        setConnectorFormOpen(true)
+        if (connection) {
+          dispatch(
+            setSelectedConnection({
+              sourceActivity: source,
+              targetActivity: target,
+              edge: connection,
+            })
+          )
+          dispatch(setRightPanelTab('connectorTable'))
+          dispatch(setRightDrawerOpen(true))
+        }
       }
     },
-    [graphModel]
+    [graphModel, dispatch]
   )
 
   const handleLinkCreated = useCallback(
@@ -209,7 +206,6 @@ const PathwayEditor: React.FC = () => {
       if (source && target) {
         setConnectorSource(source)
         setConnectorTarget(target)
-        setExistingEdge(null)
         setConnectorFormOpen(true)
       }
     },
@@ -220,7 +216,6 @@ const PathwayEditor: React.FC = () => {
     setConnectorFormOpen(false)
     setConnectorSource(null)
     setConnectorTarget(null)
-    setExistingEdge(null)
   }, [])
 
   const handleStencilDrop = useCallback(
@@ -338,7 +333,7 @@ const PathwayEditor: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Connector form dialog */}
+      {/* Connector form dialog — for NEW connections (drag-created, no existing edge) */}
       <Dialog
         open={connectorFormOpen}
         onClose={handleCloseConnectorForm}
@@ -363,9 +358,6 @@ const PathwayEditor: React.FC = () => {
             <ConnectorForm
               sourceActivity={connectorSource}
               targetActivity={connectorTarget}
-              existingEdgeId={existingEdge?.id}
-              existingSourceUid={existingEdge?.sourceUid}
-              existingTargetUid={existingEdge?.targetUid}
               onClose={handleCloseConnectorForm}
               onSaved={handleCloseConnectorForm}
             />

@@ -87,8 +87,7 @@ RightDrawer.tsx (enhanced: 3 tabs)
 4. **RelationForm.tsx is already complete — just needs drawer wrapper.**
    The connector table is mostly wiring: add drawer header, selected connector state, and pass props to RelationForm.
 
-5. **Expand/collapse uses local component state, not Redux.**
-   Tree expand/collapse is UI-only state. Each ActivityTableNode manages its own `expanded` boolean.
+5. **No expand/collapse** — all tree nodes are always fully expanded (simpler, matches typical usage).
 
 ---
 
@@ -199,11 +198,10 @@ Sections:
 
 Each node row displays:
 ```
-[▶/▼ caret] [Aspect badge] [Term label + ID] | [Evidence rows] | [⋮ menu]
+[Aspect badge] [Term label + ID] | [Evidence rows] | [⋮ menu]
 ```
 
 **Term cell** (left ~35%):
-- Expand/collapse caret (if node has children)
 - Aspect floating label (MF/BP/CC/etc.) with color
 - Term label (bold)
 - Term ID as link to amigo2 (http://amigo.geneontology.org/amigo/term/{id})
@@ -218,11 +216,7 @@ Each node row displays:
 **Action cell** (right ~10%):
 - Menu button (⋮)
 
-**Expand/collapse:**
-- Local state: `const [expanded, setExpanded] = useState(true)`
-- Caret icon toggles between FaCaretRight / FaCaretDown
-- When collapsed, children are hidden
-- All nodes expanded by default (matching Angular `onTreeLoad → expandAll`)
+**No expand/collapse** — all nodes are always fully expanded.
 
 **Verify:** Select an activity → right drawer shows full tree with GP and FD sections, all nodes with evidence, expand/collapse works.
 
@@ -451,15 +445,15 @@ Each `Edge` has:
 **Node row layout:**
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ [▼] [F] molecular_function_term     │ ECO:xxx | PMID:xxx | With │ [⋮]│
-│                GO:0003674           │ ECO:yyy | DOI:xxx  |      │    │
+│ [F] molecular_function_term          │ ECO:xxx | PMID:xxx | With │ [⋮]│
+│     GO:0003674                      │ ECO:yyy | DOI:xxx  |      │    │
 │                                     │                           │    │
 ├─────────────────────────────────────────────────────────┤
-│   [▼] [P] biological_process_term   │ ECO:xxx | PMID:xxx |      │ [⋮]│
-│                GO:0008150           │                           │    │
+│   [P] biological_process_term        │ ECO:xxx | PMID:xxx |      │ [⋮]│
+│       GO:0008150                    │                           │    │
 ├─────────────────────────────────────────────────────────┤
-│   [▼] [C] cellular_component_term   │ ECO:xxx | PMID:xxx |      │ [⋮]│
-│                GO:0005575           │                           │    │
+│   [C] cellular_component_term        │ ECO:xxx | PMID:xxx |      │ [⋮]│
+│       GO:0005575                    │                           │    │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -554,8 +548,8 @@ Conditional sections:
 
 ## Recovery Checkpoint
 
-> **Last completed action:** Plan created
-> **Next immediate action:** Phase 0 — Enhance drawer infrastructure (drawerSlice, camSlice, RightDrawer)
+> **Last completed action:** Phases 0-3 implemented — all components created, type-check + lint pass
+> **Next immediate action:** Phase 4 — Polish, remove old ActivityDetails.tsx, manual testing
 
 ## Failed Approaches
 
@@ -587,7 +581,7 @@ Conditional sections:
 - **Tree building is a pure function** — `buildDisplayTree(activity)` returns two trees from the Activity's nodes/edges. No Redux, no side effects.
 - **The existing RelationForm is already 95% complete** — ConnectorTable is mostly a drawer wrapper with header, activity labels, and unsupported-relation alert.
 - **Evidence inline editing is the most complex part** — each evidence edit needs a targeted Barista operation. Consider batching if performance is an issue.
-- **Expand/collapse is local state** — no need to persist in Redux. All nodes start expanded.
+- **No expand/collapse** — tree is always fully expanded.
 
 ## Additional Context
 

@@ -414,25 +414,41 @@ export class CamCanvas {
 
   // ── Node/Link creation ────────────────────────────────────────
 
+  private _activityIconUrl(activity: Activity): string {
+    switch (activity.type) {
+      case ActivityType.MOLECULE:
+        return './assets/images/activity/molecule.png'
+      case ActivityType.PROTEIN_COMPLEX:
+        return './assets/images/activity/proteinComplex.png'
+      default:
+        return './assets/images/activity/default.png'
+    }
+  }
+
   private _createNode(activity: Activity, layoutDetail: LayoutDetail = 'detailed'): NodeCellList {
     const el = new NodeCellList()
     const colorKey = activityColorKey(activity)
 
     const gpLabel = activity.enabledBy?.label ?? activity.rootNode?.label ?? 'Unknown'
     el.addHeader(gpLabel)
+    el.addIcon(this._activityIconUrl(activity))
 
     if (layoutDetail === 'detailed') {
       if (activity.molecularFunction) {
-        el.addEntity('', activity.molecularFunction.label, true)
+        const enabledByEdge = activity.edges?.find(e => e.id === 'RO:0002333')
+        const hasEvidence = !!enabledByEdge?.evidence?.length
+        el.addEntity('', activity.molecularFunction.label, hasEvidence)
       }
       for (const edge of activity.edges ?? []) {
         if (edge.target?.label) {
-          el.addEntity(edge.label ?? '', edge.target.label, true)
+          el.addEntity(edge.label ?? '', edge.target.label, !!edge.evidence?.length)
         }
       }
     } else if (layoutDetail === 'activity') {
       if (activity.molecularFunction) {
-        el.addEntity('', activity.molecularFunction.label, true)
+        const enabledByEdge = activity.edges?.find(e => e.id === 'RO:0002333')
+        const hasEvidence = !!enabledByEdge?.evidence?.length
+        el.addEntity('', activity.molecularFunction.label, hasEvidence)
       }
     }
     // 'simple' layout: header only, no entity rows

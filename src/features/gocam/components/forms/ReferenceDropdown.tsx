@@ -1,5 +1,5 @@
 import type React from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Popover,
   TextField,
@@ -13,19 +13,42 @@ import { referenceAllowedDBs } from '../../data/allowedDatabases'
 
 interface ReferenceDropdownProps {
   anchorEl: HTMLElement | null
+  currentValue?: string
   onClose: () => void
   onSave: (value: string) => void
 }
 
 const dbOptions = referenceAllowedDBs.map(db => ({ name: db, label: `${db}:` }))
 
+/** Parse "DB:accession" into { dbName, accession } */
+function parseReference(value: string | undefined): { dbName: string; accession: string } {
+  if (!value?.trim()) return { dbName: dbOptions[0].name, accession: '' }
+  const colonIdx = value.indexOf(':')
+  if (colonIdx === -1) return { dbName: dbOptions[0].name, accession: value.trim() }
+  const dbPart = value.slice(0, colonIdx).trim()
+  const accPart = value.slice(colonIdx + 1).trim()
+  const matched = dbOptions.find(d => d.name === dbPart)
+  return { dbName: matched ? dbPart : dbOptions[0].name, accession: accPart }
+}
+
 const ReferenceDropdown: React.FC<ReferenceDropdownProps> = ({
   anchorEl,
+  currentValue,
   onClose,
   onSave,
 }) => {
   const [db, setDb] = useState(dbOptions[0])
   const [accession, setAccession] = useState('')
+
+  // Pre-fill when popover opens
+  useEffect(() => {
+    if (anchorEl) {
+      const parsed = parseReference(currentValue)
+      const found = dbOptions.find(d => d.name === parsed.dbName) ?? dbOptions[0]
+      setDb(found)
+      setAccession(parsed.accession)
+    }
+  }, [anchorEl, currentValue])
 
   const handleSave = () => {
     const trimmed = accession.trim()

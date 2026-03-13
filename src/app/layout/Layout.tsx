@@ -44,14 +44,23 @@ const Layout: React.FC<LayoutProps> = ({ rightDrawerContent }) => {
   return (
     <Box className="flex h-screen w-full flex-col bg-gray-300">
       {isDev && (
-        <div className='h-[25px] py-2 flex justify-center items-center text-2xs uppercase font-bold bg-orange-300'>
+        <div className="flex h-[25px] items-center justify-center bg-orange-300 py-2 text-2xs font-bold uppercase">
           Testing Version. Visit{' '}
-          <a className="hover:underline" href="http://noctua.geneontology.org/" target="_blank" rel="noreferrer">
+          <a
+            className="hover:underline"
+            href="http://noctua.geneontology.org/"
+            target="_blank"
+            rel="noreferrer"
+          >
             Noctua
-          </a> {' '} for production version
+          </a>{' '}
+          for production version
         </div>
       )}
-      <div className="fixed left-0 z-50 h-[50px] w-full bg-white border-b-primary-500 border-b" style={{ top: isDev ? 25 : 0 }}>
+      <div
+        className={`fixed left-0 z-50 h-[50px] w-full border-b-2 border-b-primary-500 ${isDev ? 'bg-[#fad38a]' : 'bg-white'}`}
+        style={{ top: isDev ? 25 : 0 }}
+      >
         <Toolbar />
       </div>
       <div className="fixed flex w-full flex-1" style={{ top: isDev ? 75 : 50 }}>

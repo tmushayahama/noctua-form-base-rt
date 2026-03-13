@@ -2,7 +2,7 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 import { createSlice } from '@reduxjs/toolkit'
 import type { RootState } from '@/app/store/store'
 
-export type RightPanelTab = 'activityTable' | 'camErrors'
+export type RightPanelTab = 'activityTable' | 'connectorTable' | 'camErrors'
 
 interface DrawerState {
   leftDrawerOpen: boolean

@@ -427,6 +427,101 @@ export const buildDeleteActivityOperations = (
   return operations
 }
 
+/**
+ * Add a new child node with an edge to an existing parent node.
+ */
+export const buildAddNodeOperations = (
+  parentUid: string,
+  predicateId: string,
+  typeId: string,
+  modelId: string,
+  userContext?: UserContext
+): Operation[] => {
+  const varId = uuidv4()
+  const operations: Operation[] = [
+    {
+      entity: 'individual',
+      operation: 'add',
+      arguments: {
+        expressions: [{ type: 'class', id: typeId }],
+        'model-id': modelId,
+        'assign-to-variable': varId,
+      },
+    },
+    {
+      entity: 'edge',
+      operation: 'add',
+      arguments: {
+        subject: parentUid,
+        object: varId,
+        predicate: predicateId,
+        'model-id': modelId,
+      },
+    },
+  ]
+
+  if (userContext) {
+    operations.push({
+      entity: 'individual',
+      operation: 'add-annotation',
+      arguments: {
+        individual: varId,
+        values: [
+          { key: 'contributor', value: userContext.orcid },
+          { key: 'providedBy', value: userContext.groupUrl },
+        ],
+        'model-id': modelId,
+      },
+    })
+  }
+
+  operations.push({
+    entity: 'model',
+    operation: 'store',
+    arguments: { 'model-id': modelId },
+  })
+
+  return operations
+}
+
+/**
+ * Delete a node and all its edges.
+ */
+export const buildDeleteNodeOperations = (
+  nodeUid: string,
+  edges: { sourceId: string; targetId: string; predicateId: string }[],
+  modelId: string
+): Operation[] => {
+  const operations: Operation[] = []
+
+  for (const edge of edges) {
+    operations.push({
+      entity: 'edge',
+      operation: 'remove',
+      arguments: {
+        subject: edge.sourceId,
+        object: edge.targetId,
+        predicate: edge.predicateId,
+        'model-id': modelId,
+      },
+    })
+  }
+
+  operations.push({
+    entity: 'individual',
+    operation: 'remove',
+    arguments: { individual: nodeUid, 'model-id': modelId },
+  })
+
+  operations.push({
+    entity: 'model',
+    operation: 'store',
+    arguments: { 'model-id': modelId },
+  })
+
+  return operations
+}
+
 // ── Phase 3: Model Metadata Mutations ─────────────────────────────────
 
 /**

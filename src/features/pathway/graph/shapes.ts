@@ -65,12 +65,22 @@ const itemAttributes = {
       textWrap: { width: 140, maxLineCount: 2, ellipsis: true },
       x: 60,
     },
+    noEvidence: {
+      xlinkHref: './assets/icons/no-evidence.png',
+      ref: 'body',
+      x: 60,
+      y: -8,
+      height: 15,
+      cursor: 'pointer',
+      visibility: 'hidden',
+    },
   },
   size: { width: LIST_ITEM_WIDTH, height: LIST_ITEM_HEIGHT },
   markup: [
     { tagName: 'rect', selector: 'body' },
     { tagName: 'text', selector: 'relationship' },
     { tagName: 'text', selector: 'portLabel' },
+    { tagName: 'image', selector: 'noEvidence' },
   ],
 }
 
@@ -218,6 +228,17 @@ export class NodeCellList extends joint.dia.Element {
         x: hasEvidence ? 8 : 25,
         width: LIST_ITEM_WIDTH,
         textWrap: { width: LIST_ITEM_WIDTH - 16 },
+      }
+    }
+
+    if (!hasEvidence) {
+      attrs.noEvidence = { visibility: 'visible' }
+      attrs.portLabel = {
+        ...attrs.portLabel,
+        textWrap: { width: LIST_ITEM_WIDTH - 50 },
+      }
+      if (!relationship) {
+        attrs.noEvidence.x = 8
       }
     }
 

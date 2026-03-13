@@ -1,77 +1,87 @@
-import type React from 'react';
-import { useState } from 'react';
-import { Button, IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
+import type React from 'react'
+import { useMemo, useState } from 'react'
+import { Button, IconButton, Menu, MenuItem, Tooltip } from '@mui/material'
 import {
   FaCalendarDay,
   FaComment,
   FaClone,
-  FaDownload,
   FaPen,
   FaTasks,
-} from 'react-icons/fa';
-import { useAppSelector, useAppDispatch } from '@/app/hooks';
-import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice';
+} from 'react-icons/fa'
+import { IoChevronDown } from 'react-icons/io5'
+import { useAppSelector, useAppDispatch } from '@/app/hooks'
+import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
+import { ENVIRONMENT } from '@/@noctua.core/data/constants'
+
+/** Build workbench URLs for VIEW IN / EXPORT AS menus */
+function useModelUrls(modelId: string | undefined, baristaToken: string | null) {
+  return useMemo(() => {
+    if (!modelId) return null
+    const params = new URLSearchParams()
+    params.set('model_id', modelId)
+    if (baristaToken) params.set('barista_token', baristaToken)
+    const qs = params.toString()
+    return {
+      annotationPreview: `${ENVIRONMENT.workbenchUrl}annpreview?${qs}`,
+      pathwayViewer: `${ENVIRONMENT.workbenchUrl}noctua-alliance-pathway-preview?${qs}`,
+      graphEditor: `${ENVIRONMENT.noctuaUrl}/editor/graph/${modelId}?${qs}`,
+      gpad: `${ENVIRONMENT.noctuaUrl}/download/${modelId}/gpad`,
+      owl: `${ENVIRONMENT.noctuaUrl}/download/${modelId}/owl`,
+    }
+  }, [modelId, baristaToken])
+}
 
 const CamToolbar: React.FC = () => {
-  const dispatch = useAppDispatch();
-  const cam = useAppSelector(state => state.cam.model);
+  const dispatch = useAppDispatch()
+  const cam = useAppSelector(state => state.cam.model)
+  const baristaToken = useAppSelector(state => state.auth.baristaToken)
+  const urls = useModelUrls(cam?.id, baristaToken)
 
-  const [exportMenuAnchor, setExportMenuAnchor] = useState<null | HTMLElement>(null);
-  const [contributorsMenuAnchor, setContributorsMenuAnchor] = useState<null | HTMLElement>(null);
-
-  const handleExportMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setExportMenuAnchor(event.currentTarget);
-  };
-
-  const handleExportMenuClose = () => {
-    setExportMenuAnchor(null);
-  };
-
-  const handleContributorsMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setContributorsMenuAnchor(event.currentTarget);
-  };
-
-  const handleContributorsMenuClose = () => {
-    setContributorsMenuAnchor(null);
-  };
+  const [viewMenuAnchor, setViewMenuAnchor] = useState<null | HTMLElement>(null)
+  const [exportMenuAnchor, setExportMenuAnchor] = useState<null | HTMLElement>(null)
+  const [contributorsMenuAnchor, setContributorsMenuAnchor] =
+    useState<null | HTMLElement>(null)
 
   const openCamForm = () => {
-    dispatch(openDialog({
-      component: 'CamMetadataForm',
-      title: 'Edit Model',
-      size: 'sm',
-    }));
-  };
+    dispatch(
+      openDialog({
+        component: 'CamMetadataForm',
+        title: 'Edit Model',
+        size: 'sm',
+      })
+    )
+  }
 
   const getStateColor = (stateName?: string) => {
     switch (stateName) {
       case 'development':
-        return 'bg-amber-100 text-amber-800';
+        return 'bg-[#f4c89c] text-amber-900 border-[#e0a96a]'
       case 'production':
-        return 'bg-green-100 text-green-800';
+        return 'bg-[#b6f1cc] text-green-900 border-[#7dd8a0]'
       case 'review':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-[#d8f6a3] text-yellow-900 border-[#b8d87a]'
       case 'delete':
-        return 'bg-red-100 text-yellow-800';
+        return 'bg-red-100 text-red-800 border-red-300'
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-300'
     }
-  };
+  }
 
-  if (!cam) return null;
+  if (!cam) return null
 
-  const commentCount = cam.comments?.length || 0;
-  const contributors = cam.contributors || [];
-  const visibleContributors = contributors.slice(0, 2);
-  const hiddenContributors = contributors.slice(2);
+  const commentCount = cam.comments?.length || 0
+  const contributors = cam.contributors || []
+  const visibleContributors = contributors.slice(0, 2)
+  const hiddenContributors = contributors.slice(2)
 
   return (
-    <div className="flex items-center px-2 py-1 h-10 w-full bg-gradient-to-r from-blue-100 via-primary-100 to-blue-200 text-xs">
+    <div className="flex h-10 w-full items-center bg-white px-2 py-1 text-xs shadow">
       {/* Title */}
       {cam.title && (
-        <div className="flex items-center h-full px-2 max-w-[250px] border-r border-gray-500">
-          <span className="truncate pr-2 flex-grow">
-            <span className="font-bold mr-2">Title:</span>{cam.title}
+        <div className="flex h-full max-w-[250px] items-center border-r border-gray-300 px-2">
+          <span className="flex-grow truncate pr-2">
+            <span className="mr-2 font-bold">Title:</span>
+            {cam.title}
           </span>
           <button
             className="text-gray-500 hover:text-gray-700 focus:outline-none"
@@ -83,27 +93,39 @@ const CamToolbar: React.FC = () => {
       )}
 
       {/* Comments */}
-      <div className="px-1 h-full">
-        <Tooltip title={cam.comments.length > 0 ? cam.comments.join(', ') : 'No comments'} placement="top">
+      <div className="h-full px-1">
+        <Tooltip
+          title={
+            cam.comments.length > 0 ? cam.comments.join(', ') : 'No comments'
+          }
+          placement="top"
+        >
           <IconButton
             className="text-gray-600 hover:text-gray-800"
             onClick={openCamForm}
           >
             <FaComment size={16} />
-            <span className="absolute top-0 right-0 bg-green-800 text-white text-2xs px-1 py-[1px] rounded-md">{commentCount}</span>
+            <span className="text-2xs absolute right-0 top-0 rounded-md bg-green-800 px-1 py-[1px] text-white">
+              {commentCount}
+            </span>
           </IconButton>
         </Tooltip>
       </div>
 
-      <div className="px-1 border-r border-gray-500">
+      {/* Clone */}
+      <div className="border-r border-gray-300 px-1">
         <Tooltip title="Make a copy of this model" placement="top">
           <IconButton
-            className=" text-gray-600 hover:text-gray-800"
-            onClick={() => dispatch(openDialog({
-              component: 'CopyModelDialog',
-              title: 'Copy Model',
-              size: 'sm',
-            }))}
+            className="text-gray-600 hover:text-gray-800"
+            onClick={() =>
+              dispatch(
+                openDialog({
+                  component: 'CopyModelDialog',
+                  title: 'Copy Model',
+                  size: 'sm',
+                })
+              )
+            }
           >
             <FaClone size={16} />
           </IconButton>
@@ -112,8 +134,10 @@ const CamToolbar: React.FC = () => {
 
       {/* State */}
       {cam.state && (
-        <div className="flex items-center h-full px-2 max-w-[150px] border-r border-gray-500">
-          <div className={`flex items-center h-6 px-2 rounded-full border border-gray-400 ${getStateColor(cam.state)}`}>
+        <div className="flex h-full max-w-[150px] items-center border-r border-gray-300 px-2">
+          <div
+            className={`flex h-6 items-center rounded-full border px-2 ${getStateColor(cam.state)}`}
+          >
             <FaTasks size={12} className="mr-1" />
             <span>{cam.state}</span>
             <button
@@ -128,10 +152,13 @@ const CamToolbar: React.FC = () => {
 
       {/* Date */}
       {cam.date && (
-        <div className="flex items-center px-2 border-r border-gray-300">
-          <div className="flex items-center text-xs h-6 pr-2 rounded-full bg-primary-50 text-primary-600 cursor-pointer border border-primary-300" onClick={openCamForm}>
-            <div className="flex items-center justify-center h-full w-6 mr-1 rounded-full bg-primary-100 text-primary-600">
-              <FaCalendarDay size={12} className="" />
+        <div className="flex items-center border-r border-gray-300 px-2">
+          <div
+            className="flex h-6 cursor-pointer items-center rounded-full border border-[#7ec8d6] bg-[#aee9f5] pr-2 text-xs text-sky-800"
+            onClick={openCamForm}
+          >
+            <div className="mr-1 flex h-full w-6 items-center justify-center rounded-full bg-[#8dd4e2] text-sky-800">
+              <FaCalendarDay size={12} />
             </div>
             <span>{cam.date}</span>
           </div>
@@ -139,11 +166,14 @@ const CamToolbar: React.FC = () => {
       )}
 
       {/* Contributors */}
-      <div className="flex items-center flex-grow overflow-x-auto">
+      <div className="flex flex-grow items-center overflow-x-auto px-2">
         <div className="flex flex-nowrap">
-          {visibleContributors.map((contributor) => (
-            <div key={contributor.uri} className="flex items-center  max-w-[180px] mr-2 truncate text-xs h-6 pr-2 rounded-full bg-primary-50 text-primary-600 border border-primary-300">
-              <div className="flex items-center justify-center text-center text-2xs font-bold h-full min-w-6 mr-1 rounded-full bg-primary-100 text-primary-600">
+          {visibleContributors.map(contributor => (
+            <div
+              key={contributor.uri}
+              className="mr-2 flex h-6 max-w-[180px] items-center truncate rounded-full border border-[#a0b3b8] bg-[#bbc9cc] pr-2 text-xs text-gray-800"
+            >
+              <div className="text-2xs mr-1 flex h-full min-w-6 items-center justify-center rounded-full bg-[#a0b3b8] text-center font-bold text-gray-800">
                 {contributor.initials}
               </div>
               <span className="flex-grow truncate">{contributor.name}</span>
@@ -153,20 +183,23 @@ const CamToolbar: React.FC = () => {
           {hiddenContributors.length > 0 && (
             <>
               <button
-                className="flex items-center h-6 px-2 rounded-full bg-primary-50 text-primary-600  border border-primary-300 cursor-pointer"
-                onClick={handleContributorsMenuOpen}
+                className="flex h-6 cursor-pointer items-center rounded-full border border-[#a0b3b8] bg-[#bbc9cc] px-2 text-gray-800"
+                onClick={e => setContributorsMenuAnchor(e.currentTarget)}
               >
                 <span>...</span>
               </button>
               <Menu
                 anchorEl={contributorsMenuAnchor}
                 open={Boolean(contributorsMenuAnchor)}
-                onClose={handleContributorsMenuClose}
+                onClose={() => setContributorsMenuAnchor(null)}
               >
-                {hiddenContributors.map((contributor) => (
-                  <MenuItem key={contributor.uri} onClick={handleContributorsMenuClose}>
+                {hiddenContributors.map(contributor => (
+                  <MenuItem
+                    key={contributor.uri}
+                    onClick={() => setContributorsMenuAnchor(null)}
+                  >
                     <div className="flex items-center">
-                      <div className="flex items-center justify-center text-center text-2xs font-bold h-6 w-6 mr-1 rounded-full bg-primary-100 text-primary-600">
+                      <div className="text-2xs mr-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#a0b3b8] text-center font-bold text-gray-800">
                         {contributor.initials}
                       </div>
                       <span>{contributor.name}</span>
@@ -179,34 +212,96 @@ const CamToolbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Export Button */}
-      <div className="w-[115px] flex justify-end">
+      {/* Right-side action buttons */}
+      <div className="flex flex-shrink-0 items-center justify-end gap-2">
+        {/* VIEW IN */}
         <Button
-          variant="text"
-          className="min-w-0 p-0 text-gray-600 hover:text-gray-800"
-          onClick={handleExportMenuOpen}
+          variant="outlined"
+          size="small"
+          color="primary"
+          onClick={e => setViewMenuAnchor(e.currentTarget)}
+          endIcon={<IoChevronDown size={12} />}
+          className="!text-xs !normal-case"
         >
-          <FaDownload size={16} />
+          View In
+        </Button>
+        <Menu
+          anchorEl={viewMenuAnchor}
+          open={Boolean(viewMenuAnchor)}
+          onClose={() => setViewMenuAnchor(null)}
+        >
+          <MenuItem onClick={() => setViewMenuAnchor(null)}>
+            <a
+              href={urls?.annotationPreview}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full"
+            >
+              Annotation Preview
+            </a>
+          </MenuItem>
+          <MenuItem onClick={() => setViewMenuAnchor(null)}>
+            <a
+              href={urls?.pathwayViewer}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full"
+            >
+              Pathway Viewer
+            </a>
+          </MenuItem>
+          <MenuItem onClick={() => setViewMenuAnchor(null)}>
+            <a
+              href={urls?.graphEditor}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full"
+            >
+              Graph Editor
+            </a>
+          </MenuItem>
+        </Menu>
+
+        {/* EXPORT AS */}
+        <Button
+          variant="outlined"
+          size="small"
+          color="primary"
+          onClick={e => setExportMenuAnchor(e.currentTarget)}
+          endIcon={<IoChevronDown size={12} />}
+          className="!text-xs !normal-case"
+        >
+          Export As
         </Button>
         <Menu
           anchorEl={exportMenuAnchor}
           open={Boolean(exportMenuAnchor)}
-          onClose={handleExportMenuClose}
+          onClose={() => setExportMenuAnchor(null)}
         >
-          <MenuItem onClick={handleExportMenuClose}>
-            <a href={cam?.model?.modelInfo?.gpadUrl} target="_blank" rel="noopener noreferrer">
+          <MenuItem onClick={() => setExportMenuAnchor(null)}>
+            <a
+              href={urls?.gpad}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full"
+            >
               GPAD
             </a>
           </MenuItem>
-          <MenuItem onClick={handleExportMenuClose}>
-            <a href={cam?.model?.modelInfo?.owlUrl} target="_blank" rel="noopener noreferrer">
+          <MenuItem onClick={() => setExportMenuAnchor(null)}>
+            <a
+              href={urls?.owl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full"
+            >
               OWL
             </a>
           </MenuItem>
         </Menu>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default CamToolbar;
+export default CamToolbar
