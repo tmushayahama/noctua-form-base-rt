@@ -272,7 +272,7 @@ const RelationForm: React.FC<Props> = ({
             }))}
             onChange={onRadioChange('directionId')}
           />
-          <p className="mt-1 max-w-[300px] px-1 text-xs italic text-[#676767]">
+          <p className="mt-1 max-w-[300px] px-1 text-xs italic text-gray-500">
             The mechanism of regulation should be known to determine the direction.
           </p>
         </SectionRow>
@@ -460,7 +460,7 @@ const RadioPillGroup: React.FC<{
             {opt.label}
           </label>
           {opt.description && (
-            <span className="max-w-[300px] pt-0.5 text-xs italic text-[#676767]">
+            <span className="max-w-[300px] pt-0.5 text-xs italic text-gray-500">
               {opt.description}
             </span>
           )}

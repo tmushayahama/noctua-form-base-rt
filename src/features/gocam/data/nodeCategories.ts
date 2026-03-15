@@ -30,8 +30,8 @@ export const molecularFunction = {
   aspect: Aspect.MOLECULAR_FUNCTION as Aspect | null,
   searchClosureIds: [RootTypes.MOLECULAR_FUNCTION],
   enabledBy: rel(Relations.ENABLED_BY, [RootTypes.MOLECULAR_ENTITY, RootTypes.PROTEIN_CONTAINING_COMPLEX], { multivalued: true, excludeFromExtensions: true }),
-  partOf: rel(Relations.PART_OF, [RootTypes.BIOLOGICAL_PROCESS], { multivalued: true, excludeFromExtensions: true }),
-  occursIn: rel(Relations.OCCURS_IN, [RootTypes.CELLULAR_COMPONENT], { excludeFromExtensions: true }),
+  partOf: rel(Relations.PART_OF, [RootTypes.BIOLOGICAL_PROCESS], { multivalued: true }),
+  occursIn: rel(Relations.OCCURS_IN, [RootTypes.CELLULAR_COMPONENT]),
   hasInput: rel(Relations.HAS_INPUT, [RootTypes.MOLECULAR_ENTITY, RootTypes.PROTEIN_CONTAINING_COMPLEX], { multivalued: true }),
   happensDuring: rel(Relations.HAPPENS_DURING, [RootTypes.BIOLOGICAL_PHASE, RootTypes.UBERON_STAGE, RootTypes.PLANT_STAGE], { multivalued: true }),
 }

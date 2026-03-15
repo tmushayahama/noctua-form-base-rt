@@ -69,6 +69,9 @@ function buildDisplayTree(activity: Activity): {
         canDelete: true,
         aspect,
         floatingLabel: edge.label || edge.id,
+        showEvidence: true,
+        showMenu: true,
+        showAddButton: false,
       })
     }
 
@@ -88,12 +91,15 @@ function buildDisplayTree(activity: Activity): {
 
     gpTree.push({
       node: enabledByEdge.target,
-      edge: null,
+      edge: enabledByEdge,
       children: gpChildren,
       treeLevel: 1,
       canDelete: false,
       aspect: getAspectFromRootTypes(enabledByEdge.target.rootTypes),
       floatingLabel: enabledByEdge.label || 'enabled by',
+      showEvidence: false,
+      showMenu: false,
+      showAddButton: true,
     })
   }
 
@@ -114,6 +120,9 @@ function buildDisplayTree(activity: Activity): {
       canDelete: false,
       aspect: getAspectFromRootTypes(activity.rootNode.rootTypes),
       floatingLabel: activity.rootNode.label || 'molecular_function',
+      showEvidence: true,
+      showMenu: true,
+      showAddButton: false,
     },
   ]
 
@@ -200,11 +209,11 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
         {/* GP Section */}
         {gpTree.length > 0 && (
           <div>
-            <div className="noc-section-header px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <div className="noc-section-header h-[30px] bg-[rgba(121,143,184,0.3)] px-3 text-xs font-semibold uppercase leading-[30px] tracking-wide text-gray-600">
               {gpLabel}
             </div>
             {/* Angular: .noc-tree-container { position: relative; padding: 12px 8px 8px 8px } */}
-            <div className="relative px-[8px] pb-[8px] pt-[12px]">
+            <div className="relative px-2 pb-2 pt-3">
               {gpTree.map(treeNode => (
                 <ActivityTableNode
                   key={treeNode.node.uid}
@@ -220,10 +229,10 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
 
         {/* FD Section */}
         <div>
-          <div className="noc-section-header px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <div className="noc-section-header h-[30px] bg-[rgba(121,143,184,0.3)] px-3 text-xs font-semibold uppercase leading-[30px] tracking-wide text-gray-600">
             Function Description
           </div>
-          <div className="relative px-[8px] pb-[8px] pt-[12px]">
+          <div className="relative px-2 pb-2 pt-3">
             {fdTree.map(treeNode => (
               <ActivityTableNode
                 key={treeNode.node.uid}

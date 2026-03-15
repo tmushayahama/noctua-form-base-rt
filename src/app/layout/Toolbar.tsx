@@ -22,11 +22,11 @@ const Toolbar: React.FC = () => {
   }
 
   return (
-    <div className="relative flex h-full items-center py-0 pl-1 pr-[10px]">
+    <div className="relative flex h-full items-center py-0 pl-1 pr-3">
       {/* Logo / Branding — left side */}
       <div className="flex h-full flex-row items-center justify-start py-1">
         <a
-          className="mr-1 text-xl font-bold text-[#555] no-underline hover:text-black"
+          className="mr-1 text-xl font-bold text-gray-900 no-underline hover:text-black"
           href={noctuaUrl}
           target="_blank"
           rel="noreferrer"
@@ -34,7 +34,7 @@ const Toolbar: React.FC = () => {
           Noctua
         </a>
         <a
-          className="mr-1 text-xl text-[#555] no-underline hover:text-black"
+          className="mr-1 text-xl text-gray-900 no-underline hover:text-black"
           href="/"
           onClick={e => {
             e.preventDefault()
@@ -43,13 +43,13 @@ const Toolbar: React.FC = () => {
         >
           Pathway Editor
         </a>
-        {isDev && <small className="text-xs text-[#555]">(dev)</small>}
+        {isDev && <small className="text-xs text-gray-900">(dev)</small>}
       </div>
 
       {/* Right-aligned section */}
       <div className="flex flex-1 flex-row items-center justify-end">
         {/* GitHub */}
-        <div className="flex flex-row items-center border-r border-[#BBB] pr-3">
+        <div className="flex flex-row items-center border-r border-gray-300 pr-3">
           <IconButton
             href="https://github.com/geneontology/go-ontology/issues"
             target="_blank"
@@ -62,7 +62,7 @@ const Toolbar: React.FC = () => {
         </div>
 
         {/* Help */}
-        <div className="flex flex-row items-center border-r border-[#BBB] pl-3 pr-3">
+        <div className="flex flex-row items-center border-r border-gray-300 pl-3 pr-3">
           <Button onClick={e => setHelpMenuAnchor(e.currentTarget)}>Help</Button>
           <Menu
             anchorEl={helpMenuAnchor}
@@ -83,7 +83,7 @@ const Toolbar: React.FC = () => {
         </div>
 
         {/* User / Login */}
-        <div className="flex flex-row items-center border-r border-[#BBB] pr-3">
+        <div className="flex flex-row items-center border-r border-gray-300 pr-3">
           {isLoggedIn && user ? (
             <>
               <Button
@@ -91,9 +91,9 @@ const Toolbar: React.FC = () => {
                 onClick={e => setUserMenuAnchor(e.currentTarget)}
               >
                 <div className="flex flex-row items-center">
-                  <div className="mr-[5px] flex max-w-[150px] flex-col items-start overflow-hidden leading-5">
+                  <div className="mr-1.5 flex max-w-[150px] flex-col items-start overflow-hidden leading-5">
                     <div className="truncate">{user.name}</div>
-                    <div className="truncate text-[10px] text-[#888]">
+                    <div className="truncate text-[10px] text-gray-500">
                       {user.group?.label}
                     </div>
                   </div>
@@ -125,7 +125,7 @@ const Toolbar: React.FC = () => {
       </div>
 
       {/* GO Logo — right side */}
-      <div className="flex h-full w-[200px] flex-row items-center justify-start border-r border-[#BBB] py-1 pl-2">
+      <div className="flex h-full w-[200px] flex-row items-center justify-start border-r border-gray-300 py-1 pl-2">
         <a href="http://geneontology.org/" target="_blank" rel="noreferrer">
           <img
             src="assets/images/logos/go-logo.large.png"
@@ -136,7 +136,7 @@ const Toolbar: React.FC = () => {
       </div>
 
       {/* Alliance Logo — far right */}
-      <div className="border-l border-[#BBB] py-1">
+      <div className="border-l border-gray-300 py-1">
         <a href="https://www.alliancegenome.org" target="_blank" rel="noreferrer">
           <img
             src="assets/images/logos/alliance-logo.png"

@@ -105,7 +105,7 @@ const CamToolbar: React.FC = () => {
             onClick={openCamForm}
           >
             <FaComment size={16} />
-            <span className="text-2xs absolute right-0 top-0 rounded-md bg-green-800 px-1 py-[1px] text-white">
+            <span className="text-2xs absolute right-0 top-0 rounded-md bg-green-800 px-1 py-px text-white">
               {commentCount}
             </span>
           </IconButton>

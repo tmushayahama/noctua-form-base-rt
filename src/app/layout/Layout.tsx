@@ -58,7 +58,7 @@ const Layout: React.FC<LayoutProps> = ({ rightDrawerContent }) => {
         </div>
       )}
       <div
-        className={`fixed left-0 z-50 h-[50px] w-full border-b-2 border-b-primary-500 ${isDev ? 'bg-[#fad38a]' : 'bg-white'}`}
+        className={`fixed left-0 z-50 h-[50px] w-full border-b-2 border-b-primary-500 bg-white`}
         style={{ top: isDev ? 25 : 0 }}
       >
         <Toolbar />
