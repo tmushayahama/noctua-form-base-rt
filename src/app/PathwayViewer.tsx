@@ -367,7 +367,6 @@ const PathwayEditor: React.FC = () => {
       <ActivityDialog
         open={activityFormOpen}
         onClose={handleCloseActivityForm}
-        title="Add Activity"
       >
         <ActivityForm onSaved={handleCloseActivityForm} onCancel={handleCloseActivityForm} />
       </ActivityDialog>

@@ -3,8 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Button,
   IconButton,
-  ToggleButton,
-  ToggleButtonGroup,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -37,7 +35,6 @@ import {
   buildCreateActivityOperations,
   buildEditActivityOperations,
 } from '../../services/activityOperations'
-import type { ActivityFormType } from '../../models/formModels'
 import type { TermNode, RelationNode, ValidationError } from '../../models/formModels'
 import type { Evidence, UserContext } from '../../models/cam'
 import { referenceAllowedDBs, withFromAllowedDBs } from '../../data/allowedDatabases'
@@ -203,15 +200,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
     return { gpRows: gp, fdRows: fd }
   }, [root])
 
-  const handleTypeChange = useCallback(
-    (_: React.MouseEvent<HTMLElement>, newType: ActivityFormType | null) => {
-      if (newType) {
-        dispatch(initCreateForm(newType))
-      }
-    },
-    [dispatch]
-  )
-
   const handleSave = useCallback(async () => {
     if (!root || !model?.id || hasErrors) return
 
@@ -302,33 +290,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
     return <div className="p-4 text-gray-500">Loading form...</div>
   }
 
-  const activityTypeTitle =
-    activityType === 'molecule'
-      ? 'Chemical Form'
-      : activityType === 'proteinComplex'
-        ? 'Protein Complex Form'
-        : 'Activity Unit Form'
-
   return (
     <div className="flex h-full w-full flex-col items-stretch justify-start">
-      {/* Header */}
-      <div className="flex flex-row items-center justify-start border-b px-4 py-2">
-        <div className="text-sm font-semibold">{activityTypeTitle}</div>
-        <span className="grow" />
-        {mode === 'create' && (
-          <ToggleButtonGroup
-            value={activityType}
-            exclusive
-            onChange={handleTypeChange}
-            size="small"
-          >
-            <ToggleButton value="activity">Default</ToggleButton>
-            <ToggleButton value="molecule">Molecule</ToggleButton>
-            <ToggleButton value="proteinComplex">Protein Complex</ToggleButton>
-          </ToggleButtonGroup>
-        )}
-      </div>
-
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
         {/* GP Section */}

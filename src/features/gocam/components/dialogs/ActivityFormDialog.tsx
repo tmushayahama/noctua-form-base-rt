@@ -6,20 +6,38 @@ import {
   IconButton,
 } from '@mui/material'
 import { FiX } from 'react-icons/fi'
+import { useAppSelector } from '@/app/hooks'
+import { selectFormType, selectFormMode } from '../../slices/activityFormSlice'
 
 interface ActivityFormDialogProps {
   open: boolean
   onClose: () => void
-  title: string
   children: React.ReactNode
+}
+
+function getDialogTitle(
+  mode: 'create' | 'edit' | null,
+  activityType: string | null
+): string {
+  const typeLabel =
+    activityType === 'molecule'
+      ? 'Chemical'
+      : activityType === 'proteinComplex'
+        ? 'Protein Complex'
+        : 'Activity Unit'
+
+  return mode === 'edit' ? `Edit ${typeLabel}` : `${typeLabel} Form`
 }
 
 const ActivityFormDialog: React.FC<ActivityFormDialogProps> = ({
   open,
   onClose,
-  title,
   children,
 }) => {
+  const activityType = useAppSelector(selectFormType)
+  const mode = useAppSelector(selectFormMode)
+  const title = getDialogTitle(mode, activityType)
+
   return (
     <Dialog
       open={open}
