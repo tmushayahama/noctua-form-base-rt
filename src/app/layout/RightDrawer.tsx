@@ -33,34 +33,7 @@ const RightDrawerContent: React.FC = () => {
   }
 
   if (activeTab === 'camErrors' && model) {
-    return (
-      <div className="flex h-full flex-col">
-        <div className="flex items-center border-b border-gray-200 p-4">
-          <span className="text-lg font-medium">CAM Errors</span>
-          <div className="ml-auto flex gap-2">
-            {activity && (
-              <Button
-                variant="text"
-                size="small"
-                className="!text-xs !normal-case"
-                onClick={() => dispatch(setRightPanelTab('activityTable'))}
-              >
-                Activity
-              </Button>
-            )}
-            <Button
-              variant="outlined"
-              color="primary"
-              size="small"
-              onClick={handleClose}
-            >
-              Close
-            </Button>
-          </div>
-        </div>
-        <CamErrors model={model} />
-      </div>
-    )
+    return <CamErrors model={model} />
   }
 
   // Default: activity table

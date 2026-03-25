@@ -114,6 +114,30 @@ export interface ShExViolation {
   constraints: ShExConstraint[];
 }
 
+// ── Validation Error Types ──────────────────────────────────────────
+
+export enum ErrorType {
+  CARDINALITY = 'cardinality',
+  RELATION = 'relation',
+}
+
+export enum ErrorLevel {
+  ERROR = 'error',
+}
+
+export interface ErrorMeta {
+  subjectNode?: { label: string }
+  edge?: { label: string }
+  objectNode?: { label: string }
+}
+
+export interface CamError {
+  category: ErrorLevel
+  type: ErrorType
+  message: string
+  meta?: ErrorMeta
+}
+
 export interface GraphModel {
   id: string;
   nodes: GraphNode[];

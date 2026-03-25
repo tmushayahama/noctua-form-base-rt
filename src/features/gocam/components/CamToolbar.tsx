@@ -5,12 +5,18 @@ import {
   FaCalendarDay,
   FaComment,
   FaClone,
+  FaExclamationTriangle,
   FaPen,
   FaTasks,
 } from 'react-icons/fa'
 import { IoChevronDown } from 'react-icons/io5'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
 import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
+import {
+  setRightDrawerOpen,
+  setRightPanelTab,
+} from '@/@noctua.core/components/drawer/drawerSlice'
+import { processViolations, computeDiffs, computeTotalErrors } from '../services/violationService'
 import { ENVIRONMENT } from '@/@noctua.core/data/constants'
 
 /** Build workbench URLs for VIEW IN / EXPORT AS menus */
@@ -67,6 +73,18 @@ const CamToolbar: React.FC = () => {
     }
   }
 
+  const totalErrors = useMemo(() => {
+    if (!cam) return 0
+    const violations = processViolations(cam)
+    const { diffNodes, diffEdges } = computeDiffs(cam)
+    return computeTotalErrors(violations, diffNodes, diffEdges)
+  }, [cam])
+
+  const openCamErrors = () => {
+    dispatch(setRightPanelTab('camErrors'))
+    dispatch(setRightDrawerOpen(true))
+  }
+
   if (!cam) return null
 
   const commentCount = cam.comments?.length || 0
@@ -88,6 +106,19 @@ const CamToolbar: React.FC = () => {
             onClick={openCamForm}
           >
             <FaPen size={12} />
+          </button>
+        </div>
+      )}
+
+      {/* Error chip */}
+      {totalErrors > 0 && (
+        <div className="flex items-center px-2">
+          <button
+            onClick={openCamErrors}
+            className="flex h-[25px] items-center gap-1.5 rounded-full bg-red-100 px-2.5 text-xs font-medium text-red-700 hover:bg-red-200"
+          >
+            <FaExclamationTriangle size={12} />
+            <span>{totalErrors} Error(s) Found</span>
           </button>
         </div>
       )}

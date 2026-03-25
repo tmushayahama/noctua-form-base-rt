@@ -1,6 +1,6 @@
 # Task: CAM Validation Errors — ShEx Violations + Diff Errors
 
-**Status:** ACTIVE
+**Status:** COMPLETE
 **Branch:** dev
 
 ## Goal
@@ -53,12 +53,12 @@ Display server-side ShEx validation errors (cardinality + relation violations) a
 
 Add typed error model and violation-to-display-error conversion.
 
-- [ ] **1.1** Add error types to `cam.ts` (or a new `errors.ts` model file):
+- [x] **1.1** Add error types to `cam.ts` (or a new `errors.ts` model file):
   - `ErrorType` enum: `general`, `cardinality`, `relation`
   - `ErrorLevel` enum: `warning`, `error`
   - `CamError` interface: `{ category: ErrorLevel, type: ErrorType, message: string, meta?: ErrorMeta }`
   - `ErrorMeta` interface: `{ aspect?: string, subjectNode?: { label: string }, edge?: { label: string }, objectNode?: { label: string } }`
-- [ ] **1.2** Create violation processing utility (`src/features/gocam/services/violationService.ts`):
+- [x] **1.2** Create violation processing utility (`src/features/gocam/services/violationService.ts`):
   - `processViolations(model: GraphModel): CamError[]` — iterate `model.violations`, for each `ShExViolation` + constraint, resolve node UIDs to `GraphNode` labels, resolve property CURIEs to edge labels, produce `CamError` objects:
     - If constraint has `cardinality` → cardinality error: "Only one {predicate label} is allowed"
     - If constraint has `object` → relation error: "Incorrect relationship between {subject label} and {object label}"
@@ -69,18 +69,18 @@ Add typed error model and violation-to-display-error conversion.
 
 Compute orphaned nodes/edges not belonging to any activity.
 
-- [ ] **2.1** Add `computeDiffs(model: GraphModel): { diffNodes: GraphNode[], diffEdges: Edge[] }` to violation service:
+- [x] **2.1** Add `computeDiffs(model: GraphModel): { diffNodes: GraphNode[], diffEdges: Edge[] }` to violation service:
   - Collect all node UIDs across all activities → Set
   - Collect all edge UIDs across all activities + activityConnections → Set
   - `diffNodes` = `model.nodes` not in activity node set
   - `diffEdges` = `model.edges` not in activity edge set or connection set
-- [ ] **2.2** Add `computeTotalErrors(errors: CamError[], diffNodes: GraphNode[], diffEdges: Edge[]): number` — sum of all three arrays' lengths
+- [x] **2.2** Add `computeTotalErrors(errors: CamError[], diffNodes: GraphNode[], diffEdges: Edge[]): number` — sum of all three arrays' lengths
 
 ### Phase 3: Rewrite CamErrors Component
 
 Replace basic validation with full violation display.
 
-- [ ] **3.1** Rewrite `CamErrors.tsx` to accept and display:
+- [x] **3.1** Rewrite `CamErrors.tsx` to accept and display:
   - **Summary stats bar:** Total Errors | Node Errors | Relation Errors (counts)
   - **ShEx violation list:** Each error numbered, showing:
     - Error message with aspect prefix
@@ -89,23 +89,22 @@ Replace basic validation with full violation display.
   - **Orphaned nodes section:** Header "Nodes" with count badge, list of node ID + label
   - **Orphaned edges section:** Header "Edges" with count badge, list of subject → predicate → object
   - Keep existing model-level warnings (missing title, development state, missing GP/MF, missing evidence) as a separate "Warnings" section
-- [ ] **3.2** Wire in `processViolations()` and `computeDiffs()` — compute on render from model prop (memoized)
+- [x] **3.2** Wire in `processViolations()` and `computeDiffs()` — compute on render from model prop (memoized)
 
 ### Phase 4: Error Chip in GraphToolbar
 
 Add clickable error indicator to the graph toolbar.
 
-- [ ] **4.1** Pass `totalErrors` count + `onErrorClick` callback to `GraphToolbar`
-- [ ] **4.2** Render error chip (only when `totalErrors > 0`):
+- [x] **4.1** Pass `totalErrors` count + `onErrorClick` callback to `GraphToolbar`
+- [x] **4.2** Render error chip (only when `totalErrors > 0`):
   - Warning triangle icon + "{N} Error(s) Found" label
   - Styled as red/amber chip (Tailwind)
   - On click → dispatch `setRightPanelTab('camErrors')` + `setRightDrawerOpen(true)`
-- [ ] **4.3** Update `PathwayViewer.tsx` to compute total errors from model and pass to toolbar
+- [x] **4.3** Update `PathwayViewer.tsx` to compute total errors from model and pass to toolbar
 
 ## Recovery Checkpoint
 
-> **Last completed action:** Plan created
-> **Next immediate action:** Phase 1.1 — Add error types
+> TASK COMPLETE
 
 ## Failed Approaches
 
