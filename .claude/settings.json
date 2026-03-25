@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find C:workgonoctua-visual-pathway-editorsrc -name *color* -type f)"
+    ]
+  }
+}

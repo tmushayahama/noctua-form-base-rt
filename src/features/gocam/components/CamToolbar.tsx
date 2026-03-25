@@ -75,7 +75,7 @@ const CamToolbar: React.FC = () => {
   const hiddenContributors = contributors.slice(2)
 
   return (
-    <div className="flex h-10 w-full items-center bg-white px-2 py-1 text-xs shadow">
+    <div className="flex h-10 w-full items-center bg-white px-2 py-1 text-xs border-b border-gray-400">
       {/* Title */}
       {cam.title && (
         <div className="flex h-full max-w-[250px] items-center border-r border-gray-300 px-2">

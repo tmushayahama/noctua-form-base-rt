@@ -29,6 +29,8 @@ import {
 import TermAutocomplete from '@/features/search/components/Autocomplete2'
 import { AutocompleteType } from '@/features/search/models/search'
 import type { GOlrResponse } from '@/features/search/models/search'
+import ReferenceField from '@/features/gocam/components/forms/ReferenceField'
+import WithField from '@/features/gocam/components/forms/WithField'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import { FiX, FiPlus } from 'react-icons/fi'
@@ -335,23 +337,15 @@ const RelationForm: React.FC<Props> = ({
               />
             </div>
             <div className="w-[140px]">
-              <TermAutocomplete
-                label="Reference"
-                name={`conn-reference-${index}`}
-                autocompleteType={AutocompleteType.REFERENCE}
+              <ReferenceField
                 value={ev.reference || ''}
-                onChange={value => handleEvidenceFieldChange(index, 'reference', value as string)}
-                onOpenTermDetails={() => {}}
+                onChange={value => handleEvidenceFieldChange(index, 'reference', value)}
               />
             </div>
             <div className="w-[140px]">
-              <TermAutocomplete
-                label="With"
-                name={`conn-with-${index}`}
-                autocompleteType={AutocompleteType.WITH}
+              <WithField
                 value={ev.withFrom || ''}
-                onChange={value => handleEvidenceFieldChange(index, 'withFrom', value as string)}
-                onOpenTermDetails={() => {}}
+                onChange={value => handleEvidenceFieldChange(index, 'withFrom', value)}
               />
             </div>
             <IconButton

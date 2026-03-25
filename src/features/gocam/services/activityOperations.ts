@@ -522,8 +522,6 @@ export const buildDeleteNodeOperations = (
   return operations
 }
 
-// ── Phase 3: Model Metadata Mutations ─────────────────────────────────
-
 /**
  * Build operations to save model annotations (title, state, comments).
  * Strategy: remove all existing, add new, store.
@@ -608,8 +606,6 @@ export const buildSaveModelAnnotationsOperations = (
   return operations
 }
 
-// ── Phase 4: Granular Evidence & Node Operations ──────────────────────
-
 /**
  * Add evidence to an existing edge (fact).
  */
@@ -649,17 +645,17 @@ export const buildRemoveEvidenceOperations = (
   evidenceUid: string,
   modelId: string
 ): Operation[] => [
-  {
-    entity: 'individual',
-    operation: 'remove',
-    arguments: { individual: evidenceUid, 'model-id': modelId },
-  },
-  {
-    entity: 'model',
-    operation: 'store',
-    arguments: { 'model-id': modelId },
-  },
-]
+    {
+      entity: 'individual',
+      operation: 'remove',
+      arguments: { individual: evidenceUid, 'model-id': modelId },
+    },
+    {
+      entity: 'model',
+      operation: 'store',
+      arguments: { 'model-id': modelId },
+    },
+  ]
 
 /**
  * Edit an individual's ontology type in place (remove old type, add new).
@@ -670,30 +666,30 @@ export const buildEditIndividualTypeOperations = (
   newTypeId: string,
   modelId: string
 ): Operation[] => [
-  {
-    entity: 'individual',
-    operation: 'remove-type',
-    arguments: {
-      individual: individualUid,
-      expressions: [{ type: 'class', id: oldTypeId }],
-      'model-id': modelId,
+    {
+      entity: 'individual',
+      operation: 'remove-type',
+      arguments: {
+        individual: individualUid,
+        expressions: [{ type: 'class', id: oldTypeId }],
+        'model-id': modelId,
+      },
     },
-  },
-  {
-    entity: 'individual',
-    operation: 'add-type',
-    arguments: {
-      individual: individualUid,
-      expressions: [{ type: 'class', id: newTypeId }],
-      'model-id': modelId,
+    {
+      entity: 'individual',
+      operation: 'add-type',
+      arguments: {
+        individual: individualUid,
+        expressions: [{ type: 'class', id: newTypeId }],
+        'model-id': modelId,
+      },
     },
-  },
-  {
-    entity: 'model',
-    operation: 'store',
-    arguments: { 'model-id': modelId },
-  },
-]
+    {
+      entity: 'model',
+      operation: 'store',
+      arguments: { 'model-id': modelId },
+    },
+  ]
 
 /**
  * Edit an annotation on an evidence individual (source or with).

@@ -212,7 +212,6 @@ export class CamCanvas {
     this.graph.resetCells(cells)
     this._loading = false
 
-    // Try to restore saved positions (Phase 7.2)
     const savedPositions = this._loadPositions(model.id)
     let hasManualLayout = false
 
@@ -508,9 +507,7 @@ export class CamCanvas {
     }
 
     const color = getEdgeColor(conn.id ?? '')
-    link.attr('line/stroke', color)
-    link.attr('line/targetMarker/stroke', color)
-    link.attr('line/targetMarker/fill', color)
+    link.setColor(color)
 
     if (!conn.evidence?.length) {
       link.setNoEvidence(true)

@@ -26,8 +26,8 @@ import {
   getExtensionRelations,
   type RelationEntry,
 } from '../../data/nodeCategories'
-import ReferenceDropdown from './ReferenceDropdown'
-import WithDropdown from './WithDropdown'
+import ReferenceField from './ReferenceField'
+import WithField from './WithField'
 
 interface EntityRowProps {
   node: TermNode
@@ -57,16 +57,6 @@ const EntityRow: React.FC<EntityRowProps> = ({
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null)
   const [evidenceMenuAnchor, setEvidenceMenuAnchor] = useState<HTMLElement | null>(null)
 
-  // Dropdown state for reference/with per evidence row
-  const [refDropdown, setRefDropdown] = useState<{
-    anchorEl: HTMLElement | null
-    evidenceUid: string
-  }>({ anchorEl: null, evidenceUid: '' })
-  const [withDropdown, setWithDropdown] = useState<{
-    anchorEl: HTMLElement | null
-    evidenceUid: string
-  }>({ anchorEl: null, evidenceUid: '' })
-
   const evidence = relation?.evidence ?? []
 
   const handleTermChange = useCallback(
@@ -94,65 +84,21 @@ const EntityRow: React.FC<EntityRowProps> = ({
     [dispatch, relation]
   )
 
-  const handleReferenceChange = useCallback(
-    (ev: EvidenceForm) => (value: GOlrResponse | null | string) => {
+  const handleEvidenceFieldChange = useCallback(
+    (ev: EvidenceForm, field: 'reference' | 'withFrom', value: string) => {
       if (relation) {
         dispatch(
           updateEvidenceForm({
             relationUid: relation.uid,
             evidenceUid: ev.uid,
-            field: 'reference',
-            value: typeof value === 'string' ? value : '',
+            field,
+            value,
           })
         )
       }
     },
     [dispatch, relation]
   )
-
-  const handleWithChange = useCallback(
-    (ev: EvidenceForm) => (value: GOlrResponse | null | string) => {
-      if (relation) {
-        dispatch(
-          updateEvidenceForm({
-            relationUid: relation.uid,
-            evidenceUid: ev.uid,
-            field: 'withFrom',
-            value: typeof value === 'string' ? value : '',
-          })
-        )
-      }
-    },
-    [dispatch, relation]
-  )
-
-  // Save from reference dropdown → update evidence reference field
-  const handleRefDropdownSave = (value: string) => {
-    if (relation && refDropdown.evidenceUid) {
-      dispatch(
-        updateEvidenceForm({
-          relationUid: relation.uid,
-          evidenceUid: refDropdown.evidenceUid,
-          field: 'reference',
-          value,
-        })
-      )
-    }
-  }
-
-  // Save from with dropdown → update evidence withFrom field
-  const handleWithDropdownSave = (value: string) => {
-    if (relation && withDropdown.evidenceUid) {
-      dispatch(
-        updateEvidenceForm({
-          relationUid: relation.uid,
-          evidenceUid: withDropdown.evidenceUid,
-          field: 'withFrom',
-          value,
-        })
-      )
-    }
-  }
 
   const closeAllMenus = () => {
     setMenuAnchor(null)
@@ -314,29 +260,15 @@ const EntityRow: React.FC<EntityRowProps> = ({
                 />
               </div>
               <div className="w-1/4 p-4">
-                <TermAutocomplete
-                  label="Reference"
-                  name={`reference-${ev.uid}`}
-                  autocompleteType={AutocompleteType.REFERENCE}
+                <ReferenceField
                   value={ev.reference}
-                  onChange={handleReferenceChange(ev)}
-                  variant="outlined"
-                  onOpenReference={e =>
-                    setRefDropdown({ anchorEl: e.currentTarget as HTMLElement, evidenceUid: ev.uid })
-                  }
+                  onChange={value => handleEvidenceFieldChange(ev, 'reference', value)}
                 />
               </div>
               <div className="w-1/4 p-4">
-                <TermAutocomplete
-                  label="With"
-                  name={`with-${ev.uid}`}
-                  autocompleteType={AutocompleteType.WITH}
+                <WithField
                   value={ev.withFrom}
-                  onChange={handleWithChange(ev)}
-                  variant="outlined"
-                  onOpenReference={e =>
-                    setWithDropdown({ anchorEl: e.currentTarget as HTMLElement, evidenceUid: ev.uid })
-                  }
+                  onChange={value => handleEvidenceFieldChange(ev, 'withFrom', value)}
                 />
               </div>
             </div>
@@ -453,22 +385,6 @@ const EntityRow: React.FC<EntityRowProps> = ({
         )}
       </Menu>
 
-      {/* Reference dropdown */}
-      <ReferenceDropdown
-        anchorEl={refDropdown.anchorEl}
-        onClose={() => setRefDropdown({ anchorEl: null, evidenceUid: '' })}
-        onSave={handleRefDropdownSave}
-      />
-
-      {/* With dropdown */}
-      <WithDropdown
-        anchorEl={withDropdown.anchorEl}
-        currentValue={
-          evidence.find(e => e.uid === withDropdown.evidenceUid)?.withFrom ?? ''
-        }
-        onClose={() => setWithDropdown({ anchorEl: null, evidenceUid: '' })}
-        onSave={handleWithDropdownSave}
-      />
     </>
   )
 }
