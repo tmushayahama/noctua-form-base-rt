@@ -11,7 +11,7 @@ export type LayoutSpacing = 'compact' | 'relaxed'
 function activityColorKey(activity: Activity): string {
   switch (activity.type) {
     case ActivityType.MOLECULE:
-      return 'brown'
+      return 'teal'
     case ActivityType.PROTEIN_COMPLEX:
       return 'purple'
     default:

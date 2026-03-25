@@ -20,18 +20,31 @@ function getPropertyLabel(propertyId: string): string {
 /**
  * Convert ShExViolation[] on the model into typed CamError[] for display.
  *
- * Each ShExViolation has a `node` (the subject), a `shape`, and `constraints[]`.
- * Each constraint is either a cardinality violation or a relation violation.
+ * Matches Angular's generateViolation():
+ * - Skip if subject node is not found in any activity (nodeToActivityNode returns null)
+ * - Cardinality constraint → CardinalityViolation
+ * - Object constraint → RelationViolation
  */
 export function processViolations(model: GraphModel): CamError[] {
   const errors: CamError[] = []
 
+  // Build a set of node UIDs that belong to activities
+  const activityNodeUids = new Set<string>()
+  for (const activity of model.activities) {
+    for (const node of activity.nodes) {
+      activityNodeUids.add(node.uid)
+    }
+  }
+
   for (const violation of model.violations) {
+    // Angular: nodeToActivityNode returns null if node isn't in any activity → skip
     const subjectNode = findNode(model, violation.node)
-    const subjectLabel = subjectNode?.label || violation.node
+    if (!subjectNode || !activityNodeUids.has(subjectNode.uid)) continue
+
+    const subjectLabel = subjectNode.label
 
     for (const constraint of violation.constraints) {
-      if (constraint.cardinality != null) {
+      if (constraint.cardinality) {
         const edgeLabel = getPropertyLabel(constraint.property)
         errors.push({
           category: ErrorLevel.ERROR,
@@ -45,15 +58,14 @@ export function processViolations(model: GraphModel): CamError[] {
       } else if (constraint.object) {
         const edgeLabel = getPropertyLabel(constraint.property)
         const objectNode = findNode(model, constraint.object)
-        const objectLabel = objectNode?.label || constraint.object
         errors.push({
           category: ErrorLevel.ERROR,
           type: ErrorType.RELATION,
-          message: `Incorrect relationship between ${subjectLabel} and ${objectLabel}`,
+          message: `Incorrect relationship between ${subjectLabel} and ${objectNode?.label ?? constraint.object}`,
           meta: {
             subjectNode: { label: subjectLabel },
             edge: { label: edgeLabel },
-            objectNode: { label: objectLabel },
+            objectNode: { label: objectNode?.label ?? constraint.object },
           },
         })
       }

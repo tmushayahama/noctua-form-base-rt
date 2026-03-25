@@ -265,8 +265,8 @@ This follows the same Barista operation patterns used in `activityOperations.ts`
 
 ## Recovery Checkpoint
 
-> **Last completed action:** Plan created
-> **Next immediate action:** User review of plan before implementation
+> **Last completed action:** All phases implemented — type-check and lint pass
+> **Next immediate action:** Manual testing / user review
 
 ## Failed Approaches
 

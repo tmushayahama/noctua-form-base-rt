@@ -35,6 +35,7 @@ import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import { FiX, FiPlus } from 'react-icons/fi'
 import type { RootState } from '@/app/store/store'
+import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
 
 interface Props {
   sourceActivity: Activity
@@ -156,6 +157,24 @@ const RelationForm: React.FC<Props> = ({
   const shouldShowDirectness =
     connectorType === ConnectorType.ACTIVITY_ACTIVITY &&
     selected.relationshipId === ActivityRelationshipId.REGULATION
+
+  const shouldShowChemicalIntermediate =
+    connectorType === ConnectorType.ACTIVITY_ACTIVITY &&
+    selected.relationshipId === ActivityRelationshipId.PROVIDES_INPUT_FOR
+
+  const handleOpenChemicalConnector = useCallback(() => {
+    dispatch(
+      openDialog({
+        component: 'ChemicalConnectorForm',
+        title: 'Connect via Chemical Intermediate',
+        size: 'md',
+        customProps: {
+          sourceActivity,
+          targetActivity,
+        },
+      })
+    )
+  }, [dispatch, sourceActivity, targetActivity])
 
   const onRadioChange =
     (field: 'relationshipId' | 'directionId' | 'directnessId') => (value: string) => {
@@ -314,6 +333,26 @@ const RelationForm: React.FC<Props> = ({
           {resolvedLabel ?? 'No valid relation'}
         </span>
       </div>
+
+      {/* Chemical Intermediate section */}
+      {shouldShowChemicalIntermediate && (
+        <div
+          className="flex items-center gap-3 px-4 py-3"
+          style={{ borderBottom: `1px solid ${PRIMARY_BORDER}` }}
+        >
+          <span className="w-[100px] shrink-0 text-xs font-medium" style={{ color: PRIMARY }}>
+            Chemical Intermediate
+          </span>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleOpenChemicalConnector}
+            className="!normal-case"
+          >
+            Connect via Chemical Intermediate
+          </Button>
+        </div>
+      )}
 
       {/* Evidence section */}
       <div

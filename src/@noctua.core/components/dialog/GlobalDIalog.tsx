@@ -5,11 +5,13 @@ import SimpleDialog from './SimpleDialog'
 import SearchAnnotations from '@/features/gocam/components/forms/SearchAnnotations'
 import CamMetadataForm from '@/features/gocam/components/CamMetadataForm'
 import CopyModelDialog from '@/features/gocam/components/CopyModelDialog'
+import ChemicalConnectorForm from '@/features/relations/components/ChemicalConnectorForm'
 
 const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
   SearchAnnotations,
   CamMetadataForm,
   CopyModelDialog,
+  ChemicalConnectorForm,
 }
 
 const GlobalDialog: React.FC = () => {

@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
-import type { Activity, UserContext } from '@/features/gocam/models/cam'
+import type { Activity, GraphNode, UserContext } from '@/features/gocam/models/cam'
+import { Relations } from '@/@noctua.core/models/relations'
 import type { EvidenceForm } from '@/features/gocam/models/formModels'
 
 type Operation = {
@@ -99,6 +100,77 @@ export const buildConnectorOperations = (
     operation: 'store',
     arguments: { 'model-id': modelId },
   })
+
+  return operations
+}
+
+/**
+ * Build operations to remove an existing causal relation edge.
+ */
+/**
+ * Build Barista operations to create chemical intermediate connections.
+ * For each selected chemical, creates:
+ *   subjectMfNode --[has_output]--> chemicalNode
+ *   objectMfNode  --[has_input]-->  chemicalNode
+ *
+ * Matches Angular's saveChemicalParticipants in activity-connector.service.ts.
+ */
+export const buildChemicalParticipantOperations = (
+  subjectMfNode: GraphNode,
+  objectMfNode: GraphNode,
+  chemicals: Array<{ id: string; label: string }>,
+  modelId: string,
+  _userContext?: UserContext
+): Operation[] => {
+  const operations: Operation[] = []
+
+  for (const chemical of chemicals) {
+    const chemVarId = uuidv4()
+
+    // Create individual for the chemical node
+    operations.push({
+      entity: 'individual',
+      operation: 'add',
+      arguments: {
+        expressions: [{ type: 'class', id: chemical.id }],
+        'model-id': modelId,
+        'assign-to-variable': chemVarId,
+      },
+    })
+
+    // subjectMfNode --[has_output]--> chemicalNode
+    operations.push({
+      entity: 'edge',
+      operation: 'add',
+      arguments: {
+        subject: subjectMfNode.uid,
+        object: chemVarId,
+        predicate: Relations.HAS_OUTPUT,
+        'model-id': modelId,
+      },
+    })
+
+    // objectMfNode --[has_input]--> chemicalNode
+    operations.push({
+      entity: 'edge',
+      operation: 'add',
+      arguments: {
+        subject: objectMfNode.uid,
+        object: chemVarId,
+        predicate: Relations.HAS_INPUT,
+        'model-id': modelId,
+      },
+    })
+  }
+
+  // Store model
+  if (chemicals.length > 0) {
+    operations.push({
+      entity: 'model',
+      operation: 'store',
+      arguments: { 'model-id': modelId },
+    })
+  }
 
   return operations
 }

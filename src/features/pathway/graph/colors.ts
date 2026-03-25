@@ -68,6 +68,13 @@ const palettes: Record<string, Record<number, string>> = {
     600: '#6d4c41',
     800: '#4e342e',
   },
+  teal: {
+    100: '#b2dfdb',
+    200: '#80cbc4',
+    500: '#009688',
+    600: '#00897b',
+    800: '#00695c',
+  },
 }
 
 export function getColor(color: string, hue: number): string | null {

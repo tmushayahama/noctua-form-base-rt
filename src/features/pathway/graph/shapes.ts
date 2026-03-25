@@ -276,7 +276,7 @@ const NodeCellMoleculeDefaults = joint.dia.Element.define(
   'noctua.NodeCellMolecule',
   {
     attrs: {
-      wrapper: {
+      '.wrapper': {
         refCx: '50%',
         refCy: '50%',
         refR: '50%',
@@ -284,13 +284,13 @@ const NodeCellMoleculeDefaults = joint.dia.Element.define(
         fill: 'transparent',
         stroke: 'rgba(0,0,255,0.3)',
       },
-      circle: {
+      '.circle': {
         refCx: '50%',
         refCy: '50%',
         refR: '50%',
         strokeWidth: 2,
       },
-      label: {
+      '.label': {
         textVerticalAnchor: 'middle',
         textAnchor: 'middle',
         refX: '50%',
