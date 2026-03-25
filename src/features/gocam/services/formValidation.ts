@@ -25,7 +25,7 @@ export const isValidReference = (ref: string): boolean => {
  *   2. If a node has a term, evidence is checked:
  *      - Evidence code provided → reference is required
  *      - Reference must be in DB:accession format (contain colon)
- *   3. Activity must have at least 2 nodes with values
+ *   3. With/from field must be in DB:accession format
  */
 export const validateActivityForm = (
   state: ActivityFormState
@@ -36,10 +36,8 @@ export const validateActivityForm = (
   }
 
   const errors: ValidationError[] = []
-  let filledCount = 0
 
   function walkTerm(node: TermNode) {
-    if (node.term) filledCount++
 
     // Required node must have a term
     if (node.required && !node.term) {
@@ -99,14 +97,6 @@ export const validateActivityForm = (
   }
 
   walkTerm(root)
-
-  if (filledCount < 2) {
-    errors.push({
-      uid: root.uid,
-      field: 'activity',
-      message: 'Activity must have at least 2 nodes with values',
-    })
-  }
 
   return errors
 }
