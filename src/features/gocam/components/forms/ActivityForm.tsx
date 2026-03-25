@@ -4,7 +4,6 @@ import {
   Button,
   IconButton,
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   List,
@@ -65,15 +64,15 @@ function flattenNode(
   }
 }
 
-/** Get aspect border class for a node group */
+/** Get aspect border class for a node group — matches Angular palette */
 function getAspectBorderClass(node: TermNode): string {
   switch (node.aspect) {
     case 'F':
-      return 'border-l-4 border-l-blue-400'
+      return 'border-l-4 border-l-[#7cd488]'
     case 'P':
-      return 'border-l-4 border-l-green-400'
+      return 'border-l-4 border-l-[#f4c89c]'
     case 'C':
-      return 'border-l-4 border-l-orange-400'
+      return 'border-l-4 border-l-[#d3b5f5]'
     default:
       return ''
   }
@@ -296,17 +295,15 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
       <div className="flex-1 overflow-y-auto">
         {/* GP Section */}
         {gpRows.length > 0 && (
-          <div className="flex flex-col items-stretch justify-start p-2">
-            <div className="flex flex-row items-center justify-start py-2">
-              <div className="text-xs font-semibold uppercase text-gray-500">
-                Gene Product
-              </div>
+          <div className="flex flex-col items-stretch justify-start">
+            <div className="flex h-[30px] items-center bg-[rgba(121,143,184,0.3)] px-3">
+              <span className="text-xs text-gray-600">Gene Product</span>
             </div>
-            <div className="flex flex-col items-stretch justify-start">
+            <div className="flex flex-col items-stretch justify-start px-2 py-1">
               {gpRows.map(row => (
                 <div
                   key={row.termNode.uid}
-                  className={`mb-4 bg-white px-2 pt-4 shadow ${getAspectBorderClass(row.termNode)}`}
+                  className={`mb-1 bg-white ${getAspectBorderClass(row.termNode)}`}
                 >
                   <EntityRow
                     node={row.termNode}
@@ -324,49 +321,47 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
         )}
 
         {/* FD Section */}
-        <div className="flex flex-col items-stretch justify-start p-2">
-          <div className="flex flex-row items-center justify-start py-2">
-            <div className="text-xs font-semibold uppercase text-gray-500">
-              Function Description
-            </div>
-            <span className="grow" />
-            <div className="flex basis-[65%] flex-row items-center justify-end">
-              <div className="w-1/4">
+        <div className="flex flex-col items-stretch justify-start">
+          <div className="flex h-[30px] items-center bg-[rgba(121,143,184,0.3)] px-3">
+            <span className="flex-1 text-xs text-gray-600">Function Description</span>
+            <div className="flex basis-[65%] items-center">
+              <span className="w-1/2" />
+              <div className="flex w-1/4 justify-center">
                 <IconButton
                   size="small"
                   onClick={e => setRefInfoAnchor(e.currentTarget)}
                   title="Allowed reference databases"
                 >
-                  <FaInfoCircle size={14} className="text-gray-400" />
+                  <FaInfoCircle size={12} className="text-gray-500" />
                 </IconButton>
               </div>
-              <div className="w-1/4">
+              <div className="flex w-1/4 justify-center">
                 <IconButton
                   size="small"
                   onClick={e => setWithInfoAnchor(e.currentTarget)}
                   title="Allowed with/from databases"
                 >
-                  <FaInfoCircle size={14} className="text-gray-400" />
+                  <FaInfoCircle size={12} className="text-gray-500" />
                 </IconButton>
               </div>
-              <span className="w-10" />
             </div>
+            <span className="w-10 flex-shrink-0" />
           </div>
-          <div className="flex flex-col items-stretch justify-start">
+          <div className="flex flex-col items-stretch justify-start px-2 py-1">
             {fdRows.map(row => {
               const isNodeGroup = row.treeLevel <= 2
               if (isNodeGroup) {
                 return (
                   <div
                     key={row.termNode.uid}
-                    className={`mb-4 flex flex-row items-stretch justify-start bg-white shadow ${getAspectBorderClass(row.termNode)}`}
+                    className={`mb-1 flex flex-row items-stretch justify-start bg-white ${getAspectBorderClass(row.termNode)}`}
                   >
                     {row.termNode.isComplement && (
                       <div className="flex w-[50px] flex-col items-center justify-center bg-gray-300 text-center text-[10px]">
                         <div>IS NOT</div>
                       </div>
                     )}
-                    <div className="w-full px-2">
+                    <div className="w-full">
                       <EntityRow
                         node={row.termNode}
                         relation={row.relation}
@@ -395,7 +390,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
       </div>
 
       {/* Footer */}
-      <div className="flex flex-row items-center justify-start border-t px-4 py-3">
+      <div className="flex h-[50px] flex-shrink-0 flex-row items-center justify-start border-t border-gray-300 bg-gray-100 px-3">
         {hasErrors && (
           <Button
             variant="text"
@@ -430,8 +425,11 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
         onClose={() => setShowErrorsDialog(false)}
         maxWidth="sm"
         fullWidth
+        PaperProps={{ className: 'overflow-hidden rounded-lg' }}
       >
-        <DialogTitle>Validation Errors</DialogTitle>
+        <div className="flex h-10 flex-shrink-0 items-center border-b border-gray-200 bg-white px-3">
+          <span className="text-sm font-bold text-gray-800">Validation Errors</span>
+        </div>
         <DialogContent>
           <List dense>
             {errors.map((err, i) => (
@@ -505,14 +503,14 @@ function renderNestedNodeGroups(
           groups.push(
             <div
               key={row.termNode.uid}
-              className={`mb-4 flex flex-row items-stretch justify-start bg-white shadow ${getAspectBorderClass(row.termNode)}`}
+              className={`mb-1 flex flex-row items-stretch justify-start bg-white ${getAspectBorderClass(row.termNode)}`}
             >
               {row.termNode.isComplement && (
                 <div className="flex w-[50px] flex-col items-center justify-center bg-gray-300 text-center text-[10px]">
                   <div>IS NOT</div>
                 </div>
               )}
-              <div className="w-full px-2">
+              <div className="w-full">
                 <EntityRow
                   node={row.termNode}
                   relation={row.relation}

@@ -181,6 +181,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
           id={`textarea-${name}`}
           name={name}
           label={label}
+          size="small"
           variant={variant}
           disabled={disabled}
           value={typeof value === 'string' ? value : ''}
@@ -239,6 +240,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
             {...params}
             name={name}
             label={label}
+            size="small"
             variant={variant}
             onBlur={onBlur}
             onFocus={handleOnFocus}

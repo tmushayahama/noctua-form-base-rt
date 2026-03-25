@@ -1,11 +1,6 @@
 import type React from 'react'
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  IconButton,
-} from '@mui/material'
-import { FiX } from 'react-icons/fi'
+import { Dialog, DialogContent, IconButton } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
 import { useAppSelector } from '@/app/hooks'
 import { selectFormType, selectFormMode } from '../../slices/activityFormSlice'
 
@@ -29,11 +24,7 @@ function getDialogTitle(
   return mode === 'edit' ? `Edit ${typeLabel}` : `${typeLabel} Form`
 }
 
-const ActivityFormDialog: React.FC<ActivityFormDialogProps> = ({
-  open,
-  onClose,
-  children,
-}) => {
+const ActivityFormDialog: React.FC<ActivityFormDialogProps> = ({ open, onClose, children }) => {
   const activityType = useAppSelector(selectFormType)
   const mode = useAppSelector(selectFormMode)
   const title = getDialogTitle(mode, activityType)
@@ -44,15 +35,15 @@ const ActivityFormDialog: React.FC<ActivityFormDialogProps> = ({
       onClose={onClose}
       fullWidth
       maxWidth="lg"
-      PaperProps={{ className: 'rounded-lg' }}
+      PaperProps={{ className: 'overflow-hidden rounded-lg' }}
     >
-      <DialogTitle className="flex items-center justify-between border-b pb-2">
-        <span className="text-lg font-medium">{title}</span>
+      <div className="flex h-10 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-3">
+        <span className="text-sm font-bold text-gray-800">{title}</span>
         <IconButton size="small" onClick={onClose}>
-          <FiX />
+          <CloseIcon fontSize="small" />
         </IconButton>
-      </DialogTitle>
-      <DialogContent className="!p-4">{children}</DialogContent>
+      </div>
+      <DialogContent className="!p-0">{children}</DialogContent>
     </Dialog>
   )
 }

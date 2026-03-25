@@ -222,7 +222,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
         )}
 
         {/* Term field */}
-        <div className="min-w-0 flex-1 p-4">
+        <div className="min-w-0 flex-1 px-2 py-2">
           <TermAutocomplete
             label={node.label}
             name={`term-${node.uid}`}
@@ -241,7 +241,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
               key={ev.uid}
               className="flex w-full flex-row items-stretch justify-start"
             >
-              <div className="w-1/2 p-4">
+              <div className="w-1/2 px-2 py-2">
                 <TermAutocomplete
                   label="Evidence"
                   name={`evidence-${ev.uid}`}
@@ -259,13 +259,13 @@ const EntityRow: React.FC<EntityRowProps> = ({
                   variant="outlined"
                 />
               </div>
-              <div className="w-1/4 p-4">
+              <div className="w-1/4 px-2 py-2">
                 <ReferenceField
                   value={ev.reference}
                   onChange={value => handleEvidenceFieldChange(ev, 'reference', value)}
                 />
               </div>
-              <div className="w-1/4 p-4">
+              <div className="w-1/4 px-2 py-2">
                 <WithField
                   value={ev.withFrom}
                   onChange={value => handleEvidenceFieldChange(ev, 'withFrom', value)}
@@ -277,11 +277,10 @@ const EntityRow: React.FC<EntityRowProps> = ({
 
         {/* Menu button (ellipsis) */}
         {displayMenuButton && (
-          <div className="flex flex-shrink-0 items-center justify-center p-4">
+          <div className="flex flex-shrink-0 items-center justify-center px-2">
             <IconButton
               size="small"
               onClick={e => setMenuAnchor(e.currentTarget)}
-              className="shadow"
             >
               <FaEllipsisV size={14} />
             </IconButton>

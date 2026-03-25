@@ -131,6 +131,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
         id={`textarea-${name}`}
         name={name}
         label={label}
+        size="small"
         variant={variant}
         disabled={disabled}
         multiline
@@ -172,6 +173,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
           id={`autocomplete-${name}`}
           name={name}
           label={label}
+          size="small"
           value={inputValue}
           onChange={e => {
             setInputValue(e.target.value)
