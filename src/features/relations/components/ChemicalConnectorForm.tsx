@@ -4,6 +4,7 @@ import { FiPlus, FiX } from 'react-icons/fi'
 import { v4 as uuidv4 } from 'uuid'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice'
+import { showToast } from '@/@noctua.core/components/toast/toastSlice'
 import type { RootState } from '@/app/store/store'
 import type { Activity, GraphNode, UserContext } from '@/features/gocam/models/cam'
 import { RootTypes } from '@/features/gocam/models/cam'
@@ -23,7 +24,6 @@ import {
 } from '../services/chemicalConnectorUtils'
 
 const SECTION_BG = 'rgba(121,143,184,0.3)'
-const PRIMARY = '#3b5998'
 
 interface Props {
   sourceActivity: Activity
@@ -148,6 +148,7 @@ const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity
     )
 
     await updateGraphModel(ops).unwrap()
+    dispatch(showToast({ message: 'Chemical Reactions created.' }))
     dispatch(closeDialog())
   }, [
     model,
@@ -165,8 +166,8 @@ const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity
     return (
       <div className="flex w-full flex-col items-stretch justify-start">
         <div
-          className="flex items-center px-4 py-1.5 text-xs font-semibold uppercase tracking-wide"
-          style={{ backgroundColor: SECTION_BG, color: PRIMARY }}
+          className="flex items-center pl-3 text-xs leading-[30px]"
+          style={{ backgroundColor: SECTION_BG, color: '#555' }}
         >
           {title}
         </div>
@@ -213,7 +214,7 @@ const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity
       {/* Body */}
       <div className="flex flex-col items-stretch justify-start">
         {hasNoParticipants ? (
-          <div className="px-4 py-6 text-center text-sm text-gray-500">
+          <div className="px-[10px] py-[30px] text-center text-[30px] italic text-[#aaa]">
             No chemical participants found for these molecular functions.
           </div>
         ) : (
@@ -246,17 +247,17 @@ const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity
 
             {/* Evidence section */}
             <div
-              className="mt-2 flex items-center px-4 py-1.5 text-xs font-semibold uppercase tracking-wide"
-              style={{ backgroundColor: SECTION_BG, color: PRIMARY }}
+              className="mt-2 flex items-center pl-3 text-xs leading-[30px]"
+              style={{ backgroundColor: SECTION_BG, color: '#555' }}
             >
               Evidence
             </div>
             <div className="px-4 py-2">
               {evidences.map(ev => (
                 <div key={ev.uid} className="mb-2 flex items-center gap-2">
-                  <div className="w-[220px]">
+                  <div className="w-[55%] p-4">
                     <TermAutocomplete
-                      label="Evidence Code"
+                      label="Evidence"
                       name={`chem-ev-${ev.uid}`}
                       rootTypeIds={[RootTypes.EVIDENCE]}
                       autocompleteType={AutocompleteType.EVIDENCE_CODE}
@@ -265,13 +266,13 @@ const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity
                       onOpenTermDetails={() => {}}
                     />
                   </div>
-                  <div className="w-[140px]">
+                  <div className="w-1/4 p-4">
                     <ReferenceField
                       value={ev.reference}
                       onChange={value => updateEvidence(ev.uid, 'reference', value)}
                     />
                   </div>
-                  <div className="w-[140px]">
+                  <div className="w-[20%] p-4">
                     <WithField
                       value={ev.withFrom}
                       onChange={value => updateEvidence(ev.uid, 'withFrom', value)}

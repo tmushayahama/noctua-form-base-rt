@@ -154,6 +154,17 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
 
   const hasErrors = errors.length > 0
 
+  const sectionTitles = useMemo(() => {
+    switch (activityType) {
+      case 'molecule':
+        return { gp: 'Chemical', fd: 'Location (optional)' }
+      case 'proteinComplex':
+        return { gp: 'Gene Product', fd: 'Function Description' }
+      default:
+        return { gp: 'Gene Product', fd: 'Function Description' }
+    }
+  }, [activityType])
+
   // Separate GP (enabled_by) and FD (everything else) sections
   const { gpRows, fdRows } = useMemo(() => {
     if (!root) return { gpRows: [] as FlatRow[], fdRows: [] as FlatRow[] }
@@ -181,13 +192,15 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
       }
     }
 
-    // FD section
-    fd.push({
-      termNode: root,
-      relation: enabledByRelation,
-      parentTermUid: null,
-      treeLevel: 1,
-    })
+    // FD section — skip hidden nodes (e.g. MF root in Protein Complex)
+    if (root.visible !== false) {
+      fd.push({
+        termNode: root,
+        relation: enabledByRelation,
+        parentTermUid: null,
+        treeLevel: 1,
+      })
+    }
     for (const rel of root.relations) {
       if (rel.predicate.id !== Relations.ENABLED_BY) {
         const rows: FlatRow[] = []
@@ -293,11 +306,17 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
     <div className="flex h-full w-full flex-col items-stretch justify-start">
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
+        {activityType === 'proteinComplex' && (
+          <div className="mx-3 mt-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs italic text-amber-800">
+            Note that this should be used rarely, and only in the case where the activity cannot be
+            ascribed to a single subunit of a complex
+          </div>
+        )}
         {/* GP Section */}
         {gpRows.length > 0 && (
           <div className="flex flex-col items-stretch justify-start">
             <div className="flex h-[30px] items-center bg-[rgba(121,143,184,0.3)] px-3">
-              <span className="text-xs text-gray-600">Gene Product</span>
+              <span className="text-xs text-gray-600">{sectionTitles.gp}</span>
             </div>
             <div className="flex flex-col items-stretch justify-start px-2 py-1">
               {gpRows.map(row => (
@@ -323,7 +342,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
         {/* FD Section */}
         <div className="flex flex-col items-stretch justify-start">
           <div className="flex h-[30px] items-center bg-[rgba(121,143,184,0.3)] px-3">
-            <span className="flex-1 text-xs text-gray-600">Function Description</span>
+            <span className="flex-1 text-xs text-gray-600">{sectionTitles.fd}</span>
             <div className="flex basis-[65%] items-center">
               <span className="w-1/2" />
               <div className="flex w-1/4 justify-center">

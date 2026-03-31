@@ -25,8 +25,12 @@ interface NodeCategory {
 
 interface TermDescriptor {
   category: NodeCategory
+  label?: string
   required?: boolean
   canDelete?: boolean
+  visible?: boolean
+  skipEvidenceCheck?: boolean
+  showEvidence?: boolean
   relations?: RelationDescriptor[]
 }
 
@@ -41,36 +45,58 @@ const defaultActivity: TermDescriptor = {
   category: mfCat,
   required: true,
   relations: [
-    { predicateId: Relations.ENABLED_BY, target: { category: gpCat, required: true } },
-    { predicateId: Relations.PART_OF, target: { category: bpCat } },
-    { predicateId: Relations.OCCURS_IN, target: { category: ccCat } },
+    {
+      predicateId: Relations.ENABLED_BY,
+      target: { category: gpCat, label: 'enabled by (GP)', required: true, skipEvidenceCheck: true },
+    },
+    {
+      predicateId: Relations.PART_OF,
+      target: { category: bpCat, label: '(MF) part of (BP)' },
+    },
+    {
+      predicateId: Relations.OCCURS_IN,
+      target: { category: ccCat, label: '(MF) occurs in (CC)' },
+    },
   ],
 }
 
 const moleculeActivity: TermDescriptor = {
   category: chemCat,
   required: true,
+  skipEvidenceCheck: true,
+  showEvidence: false,
   relations: [
-    { predicateId: Relations.LOCATED_IN, target: { category: ccCat } },
+    {
+      predicateId: Relations.LOCATED_IN,
+      target: { category: ccCat, label: '(Chemical) located in (CC)' },
+    },
   ],
 }
 
 const proteinComplexActivity: TermDescriptor = {
   category: mfCat,
   required: true,
+  visible: false,
   relations: [
     {
       predicateId: Relations.ENABLED_BY,
       target: {
         category: complexCat,
         required: true,
+        skipEvidenceCheck: true,
         relations: [
           { predicateId: Relations.HAS_PART, target: { category: gpCat, canDelete: true } },
         ],
       },
     },
-    { predicateId: Relations.PART_OF, target: { category: bpCat } },
-    { predicateId: Relations.OCCURS_IN, target: { category: ccCat } },
+    {
+      predicateId: Relations.PART_OF,
+      target: { category: bpCat, label: '(MF) part of (BP)' },
+    },
+    {
+      predicateId: Relations.OCCURS_IN,
+      target: { category: ccCat, label: '(MF) occurs in (CC)' },
+    },
   ],
 }
 
@@ -80,13 +106,16 @@ function hydrateTemplate(desc: TermDescriptor): TermNode {
   return {
     uid: uuidv4(),
     category: desc.category.id,
-    label: desc.category.label,
+    label: desc.label ?? desc.category.label,
     term: null,
     aspect: desc.category.aspect,
     rootTypes: desc.category.searchClosureIds,
     isComplement: false,
+    visible: desc.visible ?? true,
     canDelete: desc.canDelete ?? false,
     required: desc.required ?? false,
+    skipEvidenceCheck: desc.skipEvidenceCheck ?? false,
+    showEvidence: desc.showEvidence ?? true,
     relations: (desc.relations ?? []).map(rel => ({
       uid: uuidv4(),
       predicate: predicate(rel.predicateId),

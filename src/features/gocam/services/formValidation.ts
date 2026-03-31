@@ -49,8 +49,8 @@ export const validateActivityForm = (
     }
 
     for (const rel of node.relations) {
-      // If the target has a value, validate evidence
-      if (rel.target.term) {
+      // If the target has a value, validate evidence (skip if target has skipEvidenceCheck)
+      if (rel.target.term && !rel.target.skipEvidenceCheck) {
         if (rel.evidence.length === 0) {
           errors.push({
             uid: rel.uid,

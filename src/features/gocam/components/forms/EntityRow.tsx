@@ -235,6 +235,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
         </div>
 
         {/* Evidence columns */}
+        {node.showEvidence !== false && (
         <div className="flex min-w-0 basis-[65%] flex-col items-stretch justify-start">
           {evidence.map(ev => (
             <div
@@ -274,6 +275,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
             </div>
           ))}
         </div>
+        )}
 
         {/* Menu button (ellipsis) */}
         {displayMenuButton && (

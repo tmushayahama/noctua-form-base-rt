@@ -199,7 +199,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
         placement="bottom-start"
         style={{ width: Math.max(anchorRef.current?.clientWidth || 0, 400), zIndex: 1300 }}
       >
-        <Paper className="mt-1 max-h-60 overflow-y-auto !bg-amber-100" ref={listRef}>
+        <Paper className="mt-1 max-h-60 max-w-[600px] overflow-y-auto" style={{ backgroundColor: '#fbf9de' }} ref={listRef}>
           {options.length === 0 && (
             <div className="p-4 text-center text-gray-500">
               {inputValue.length < 3 ? 'Type at least 3 characters to search' : 'No results found'}
@@ -209,15 +209,16 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
           {options.map((option, index) => (
             <div
               key={option.id}
-              className={`flex cursor-pointer items-center justify-between gap-4 p-3 text-xs ${option.isObsolete ? 'pointer-events-none line-through opacity-40' : ''} ${index === highlightedIndex ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
+              className={`flex min-h-[40px] cursor-pointer items-center justify-between gap-4 border-b px-4 py-2 text-xs ${option.isObsolete ? 'pointer-events-none line-through opacity-40' : ''} ${index === highlightedIndex ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
+              style={{ borderColor: 'rgba(59,89,152,0.3)' }}
               onClick={() => !option.isObsolete && handleOptionSelect(option)}
               onMouseEnter={() => setHighlightedIndex(index)}
             >
-              <div className="line-clamp-2 flex-grow font-normal">{option.label}</div>
+              <div className="min-w-0 flex-grow font-normal">{option.label}</div>
               {autocompleteType === AutocompleteType.EVIDENCE_CODE && option.xref && (
-                <div className="mr-2 font-bold">{option.xref}</div>
+                <div className="mr-2">{option.xref}</div>
               )}
-              <div className="shrink-0 text-gray-500">
+              <div className="shrink-0 text-[10px]" style={{ color: 'rgba(0,0,0,0.6)' }}>
                 {option.link ? (
                   <a
                     href={option.link}

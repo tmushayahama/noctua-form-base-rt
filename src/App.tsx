@@ -9,6 +9,7 @@ import SplashScreen from './features/users/components/SplashScreen'
 import { AuthProvider } from './features/auth/authProvider'
 import RightDrawerContent from './app/layout/RightDrawer'
 import GlobalDialog from './@noctua.core/components/dialog/GlobalDIalog'
+import GlobalToast from './@noctua.core/components/toast/GlobalToast'
 
 const routes = [
   {
@@ -31,6 +32,7 @@ const App: React.FC = () => {
           <SplashScreen>
             <RouterProvider router={router} />
             <GlobalDialog />
+            <GlobalToast />
           </SplashScreen>
         </AuthProvider>
       </ThemeProvider>

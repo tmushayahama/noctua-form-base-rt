@@ -10,6 +10,7 @@ import { metadataSlice } from '@/features/users/slices/metadataSlice'
 import { authSlice } from '@/features/auth/slices/authSlice'
 import { relationSlice } from '@/features/relations/slices/relationSlice'
 import { dialogSlice } from '@/@noctua.core/components/dialog/dialogSlice'
+import { toastSlice } from '@/@noctua.core/components/toast/toastSlice'
 
 const rootReducer = combineSlices({
   auth: authSlice.reducer,
@@ -20,6 +21,7 @@ const rootReducer = combineSlices({
   search: searchSlice.reducer,
   drawer: drawerSlice.reducer,
   dialog: dialogSlice.reducer,
+  toast: toastSlice.reducer,
   [apiService.reducerPath]: apiService.reducer,
 })
 

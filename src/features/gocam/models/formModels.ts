@@ -16,6 +16,9 @@ export interface TermNode {
   isComplement: boolean
   canDelete: boolean
   required: boolean
+  visible?: boolean
+  skipEvidenceCheck?: boolean
+  showEvidence?: boolean
   relations: RelationNode[]
 }
 

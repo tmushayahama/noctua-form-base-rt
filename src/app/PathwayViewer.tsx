@@ -340,7 +340,7 @@ const PathwayEditor: React.FC = () => {
         PaperProps={{ className: 'rounded-lg' }}
       >
         <DialogTitle className="flex items-center justify-between border-b pb-2">
-          <span className="text-lg font-medium">Causal Relation</span>
+          <span className="text-lg font-medium">Causal Relation Form</span>
           <IconButton
             edge="end"
             color="inherit"

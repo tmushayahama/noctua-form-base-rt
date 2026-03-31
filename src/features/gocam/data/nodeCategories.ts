@@ -34,6 +34,12 @@ export const molecularFunction = {
   occursIn: rel(Relations.OCCURS_IN, [RootTypes.CELLULAR_COMPONENT]),
   hasInput: rel(Relations.HAS_INPUT, [RootTypes.MOLECULAR_ENTITY, RootTypes.PROTEIN_CONTAINING_COMPLEX], { multivalued: true }),
   happensDuring: rel(Relations.HAPPENS_DURING, [RootTypes.BIOLOGICAL_PHASE, RootTypes.UBERON_STAGE, RootTypes.PLANT_STAGE], { multivalued: true }),
+  causallyUpstreamOfOrWithin: rel(Relations.CAUSALLY_UPSTREAM_OF_OR_WITHIN, [RootTypes.BIOLOGICAL_PROCESS], { multivalued: true }),
+  causallyUpstreamOf: rel(Relations.CAUSALLY_UPSTREAM_OF, [RootTypes.BIOLOGICAL_PROCESS], { multivalued: true }),
+  causallyUpstreamOfPositiveEffect: rel(Relations.CAUSALLY_UPSTREAM_OF_POSITIVE_EFFECT, [RootTypes.BIOLOGICAL_PROCESS], { multivalued: true }),
+  causallyUpstreamOfNegativeEffect: rel(Relations.CAUSALLY_UPSTREAM_OF_NEGATIVE_EFFECT, [RootTypes.BIOLOGICAL_PROCESS], { multivalued: true }),
+  causallyUpstreamOfOrWithinPositiveEffect: rel(Relations.CAUSALLY_UPSTREAM_OF_OR_WITHIN_POSITIVE_EFFECT, [RootTypes.BIOLOGICAL_PROCESS], { multivalued: true }),
+  causallyUpstreamOfOrWithinNegativeEffect: rel(Relations.CAUSALLY_UPSTREAM_OF_OR_WITHIN_NEGATIVE_EFFECT, [RootTypes.BIOLOGICAL_PROCESS], { multivalued: true }),
 }
 
 export const biologicalProcess = {
@@ -57,6 +63,7 @@ export const molecularEntity = {
   label: 'Gene Product',
   aspect: null as Aspect | null,
   searchClosureIds: [RootTypes.MOLECULAR_ENTITY],
+  partOf: rel(Relations.PART_OF, [RootTypes.PROTEIN_CONTAINING_COMPLEX], { multivalued: true }),
 }
 
 export const chemicalEntity = {

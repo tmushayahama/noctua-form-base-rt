@@ -36,6 +36,7 @@ import IconButton from '@mui/material/IconButton'
 import { FiX, FiPlus } from 'react-icons/fi'
 import type { RootState } from '@/app/store/store'
 import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
+import { showToast } from '@/@noctua.core/components/toast/toastSlice'
 
 interface Props {
   sourceActivity: Activity
@@ -209,6 +210,7 @@ const RelationForm: React.FC<Props> = ({
     )
 
     await updateGraphModel(ops).unwrap()
+    dispatch(showToast({ message: 'Causal relation successfully created.' }))
     onSaved?.()
     onClose?.()
   }, [
@@ -224,6 +226,7 @@ const RelationForm: React.FC<Props> = ({
     userContext,
     onSaved,
     onClose,
+    dispatch,
   ])
 
   const handleDelete = useCallback(async () => {
@@ -283,19 +286,22 @@ const RelationForm: React.FC<Props> = ({
 
       {/* Effect Direction */}
       {shouldShowDirection && (
-        <SectionRow label="Effect/Direction">
-          <RadioPillGroup
-            name="effectDirection"
-            value={selected.directionId || ''}
-            options={Object.values(EffectDirectionId).map(dir => ({
-              value: dir,
-              label: definitions.effectDirection[dir].label,
-            }))}
-            onChange={onRadioChange('directionId')}
-          />
-          <p className="mt-1 max-w-[300px] px-1 text-xs italic text-gray-500">
-            The mechanism of regulation should be known to determine the direction.
-          </p>
+        <SectionRow label="Effect Direction">
+          <div className="flex items-start gap-3">
+            <RadioPillGroup
+              name="effectDirection"
+              value={selected.directionId || ''}
+              options={Object.values(EffectDirectionId).map(dir => ({
+                value: dir,
+                label: definitions.effectDirection[dir].label,
+              }))}
+              onChange={onRadioChange('directionId')}
+            />
+            <p className="max-w-[260px] grow text-xs italic" style={{ color: '#676767' }}>
+              The mechanism regulation should be known, so it should be possible to pick the
+              direction of the regulation.
+            </p>
+          </div>
         </SectionRow>
       )}
 
@@ -317,19 +323,13 @@ const RelationForm: React.FC<Props> = ({
 
       {/* Suggested Causal Relation */}
       <div
-        className="mt-2 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide"
-        style={{ backgroundColor: SECTION_BG, color: PRIMARY }}
+        className="mt-2 border-t border-[#BBB] pl-3 text-xs leading-[30px]"
+        style={{ backgroundColor: SECTION_BG, color: '#555' }}
       >
         Suggested Causal Relation
       </div>
-      <div
-        className="flex items-center gap-3 px-4 py-3"
-        style={{ borderBottom: `1px solid ${PRIMARY_BORDER}` }}
-      >
-        <span className="w-[100px] shrink-0 text-xs font-medium" style={{ color: PRIMARY }}>
-          Relation
-        </span>
-        <span className="text-sm font-medium text-blue-700">
+      <div className="mb-4 py-5">
+        <span className="pl-[10px] text-xs">
           {resolvedLabel ?? 'No valid relation'}
         </span>
       </div>
@@ -345,9 +345,9 @@ const RelationForm: React.FC<Props> = ({
           </span>
           <Button
             variant="contained"
-            size="small"
             onClick={handleOpenChemicalConnector}
             className="!normal-case"
+            sx={{ backgroundColor: '#337d33', '&:hover': { backgroundColor: '#2a6629' } }}
           >
             Connect via Chemical Intermediate
           </Button>
@@ -356,17 +356,17 @@ const RelationForm: React.FC<Props> = ({
 
       {/* Evidence section */}
       <div
-        className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wide"
-        style={{ backgroundColor: SECTION_BG, color: PRIMARY }}
+        className="pl-3 text-xs leading-[30px]"
+        style={{ backgroundColor: SECTION_BG, color: '#555' }}
       >
         Evidence
       </div>
       <div className="px-4 py-2">
         {connectorEvidences.map((ev, index) => (
           <div key={ev.uid} className="mb-2 flex items-center gap-2">
-            <div className="w-[220px]">
+            <div className="w-[55%] p-4">
               <TermAutocomplete
-                label="Evidence Code"
+                label="Evidence"
                 name={`conn-evidence-${index}`}
                 rootTypeIds={[RootTypes.EVIDENCE]}
                 autocompleteType={AutocompleteType.EVIDENCE_CODE}
@@ -375,13 +375,13 @@ const RelationForm: React.FC<Props> = ({
                 onOpenTermDetails={() => {}}
               />
             </div>
-            <div className="w-[140px]">
+            <div className="w-1/4 p-4">
               <ReferenceField
                 value={ev.reference || ''}
                 onChange={value => handleEvidenceFieldChange(index, 'reference', value)}
               />
             </div>
-            <div className="w-[140px]">
+            <div className="w-[20%] p-4">
               <WithField
                 value={ev.withFrom || ''}
                 onChange={value => handleEvidenceFieldChange(index, 'withFrom', value)}
@@ -407,8 +407,16 @@ const RelationForm: React.FC<Props> = ({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between gap-2 border-t border-gray-200 bg-gray-100 px-4 py-3">
+      <div
+        className="flex items-center justify-between gap-2 border-t border-gray-200 bg-gray-100 px-4 py-3"
+        style={{ boxShadow: '2px -5px 2px 0px rgba(0, 0, 0, 0.26)' }}
+      >
         <div>
+          {!relation && (
+            <Button variant="text" color="warning" size="small">
+              Why is the &quot;Save&quot; button disabled?
+            </Button>
+          )}
           {existingEdgeId && (
             <Button
               variant="outlined"
@@ -469,19 +477,30 @@ const RadioPillGroup: React.FC<{
   options: PillOption[]
   onChange: (value: string) => void
 }> = ({ name, value, options, onChange }) => (
-  <div className="flex flex-col gap-1 py-1">
-    {options.map(opt => {
+  <div className="flex flex-col py-1">
+    {options.map((opt, index) => {
       const isSelected = value === opt.value
       return (
-        <div key={opt.value} className="flex items-start gap-2">
-          <label
-            className="flex w-[170px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors"
-            style={{
-              borderColor: PRIMARY_BORDER,
-              backgroundColor: isSelected ? PRIMARY : 'transparent',
-              color: isSelected ? '#fff' : '#333',
-            }}
-          >
+        <div
+          key={opt.value}
+          className="flex w-full items-center py-[5px]"
+          style={{
+            borderBottom:
+              index < options.length - 1 ? '1px solid rgba(59,89,152,0.6)' : 'none',
+          }}
+        >
+          <label className="flex w-[170px] shrink-0 cursor-pointer items-center gap-2 text-xs">
+            <span
+              className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2"
+              style={{ borderColor: isSelected ? PRIMARY : '#999' }}
+            >
+              {isSelected && (
+                <span
+                  className="block h-[10px] w-[10px] rounded-full"
+                  style={{ backgroundColor: PRIMARY }}
+                />
+              )}
+            </span>
             <input
               type="radio"
               name={name}
@@ -490,10 +509,13 @@ const RadioPillGroup: React.FC<{
               onChange={() => onChange(opt.value)}
               className="sr-only"
             />
-            {opt.label}
+            <span style={{ color: '#333' }}>{opt.label}</span>
           </label>
           {opt.description && (
-            <span className="max-w-[300px] pt-0.5 text-xs italic text-gray-500">
+            <span
+              className="ml-3 max-w-[300px] grow text-xs italic"
+              style={{ color: '#676767' }}
+            >
               {opt.description}
             </span>
           )}
