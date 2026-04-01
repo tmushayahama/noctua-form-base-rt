@@ -7,6 +7,7 @@ import ZoomOutIcon from '@mui/icons-material/ZoomOut'
 import YoutubeSearchedForIcon from '@mui/icons-material/YoutubeSearchedFor'
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
 import type { LayoutDetail, LayoutSpacing } from '../graph/camCanvas'
+import { layoutDetailOptions, spacingOptions } from '../data/toolbarOptions'
 
 interface GraphToolbarProps {
   layoutDetail: LayoutDetail
@@ -18,17 +19,6 @@ interface GraphToolbarProps {
   onZoomOut: () => void
   onZoomReset: () => void
 }
-
-const layoutDetailOptions: { id: LayoutDetail; label: string }[] = [
-  { id: 'detailed', label: 'Detailed' },
-  { id: 'activity', label: 'Activity' },
-  { id: 'simple', label: 'Simple' },
-]
-
-const spacingOptions: { id: LayoutSpacing; label: string }[] = [
-  { id: 'compact', label: 'Compact' },
-  { id: 'relaxed', label: 'Loose' },
-]
 
 export default function GraphToolbar({
   layoutDetail,

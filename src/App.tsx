@@ -8,7 +8,7 @@ import PathwayEditor from './app/PathwayViewer'
 import SplashScreen from './features/users/components/SplashScreen'
 import { AuthProvider } from './features/auth/authProvider'
 import RightDrawerContent from './app/layout/RightDrawer'
-import GlobalDialog from './@noctua.core/components/dialog/GlobalDIalog'
+import GlobalDialog from './@noctua.core/components/dialog/GlobalDialog'
 import GlobalToast from './@noctua.core/components/toast/GlobalToast'
 
 const routes = [

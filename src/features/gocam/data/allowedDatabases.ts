@@ -1,3 +1,6 @@
+/** Placeholder DB prefix for "no database selected" */
+export const DB_NONE = 'None'
+
 /** Allowed reference database prefixes for evidence */
 export const referenceAllowedDBs = ['PMID', 'DOI', 'GO_REF'] as const
 

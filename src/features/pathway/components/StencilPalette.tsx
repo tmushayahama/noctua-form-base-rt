@@ -11,7 +11,7 @@ export default function StencilPalette() {
   }
 
   return (
-    <div className="flex h-full w-[100px] shrink-0 flex-col border-r border-[#002255] bg-white">
+    <div className="flex h-full w-[100px] shrink-0 flex-col border-r border-blue-950 bg-white">
       <div className="flex items-center border-b border-gray-300 bg-gray-100 px-2 py-2">
         <span className="text-2xs font-bold uppercase tracking-wide text-gray-600">Toolbox</span>
       </div>

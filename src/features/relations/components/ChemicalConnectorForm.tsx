@@ -22,8 +22,7 @@ import {
   type ChemicalParticipant,
   type CategorizedParticipants,
 } from '../services/chemicalConnectorUtils'
-
-const SECTION_BG = 'rgba(121,143,184,0.3)'
+import { SECTION_BG } from '@/@noctua.core/data/colors'
 
 interface Props {
   sourceActivity: Activity

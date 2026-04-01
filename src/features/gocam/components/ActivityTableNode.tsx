@@ -2,7 +2,7 @@ import type React from 'react'
 import { useState, useCallback, useMemo, useRef } from 'react'
 import { IconButton, Menu, MenuItem } from '@mui/material'
 import { FaEllipsisV, FaPencilAlt, FaPlus, FaTrash } from 'react-icons/fa'
-import type { GraphNode, Edge, Evidence, UserContext } from '../models/cam'
+import type { GraphNode, Edge, Evidence, UserContext, DisplayTreeNode } from '../models/cam'
 import { RootTypes } from '../models/cam'
 import { EditorCategory } from '../models/editorCategory'
 import { useAppSelector } from '@/app/hooks'
@@ -20,21 +20,6 @@ import { getNodeCategory, getExtensionRelations } from '../data/nodeCategories'
 import { createEvidenceForm } from '../models/formModels'
 import EditorDropdown from './forms/EditorDropdown'
 import type { EditorDropdownValues } from './forms/EditorDropdown'
-
-// ── Types ────────────────────────────────────────────────────────────
-
-export interface DisplayTreeNode {
-  node: GraphNode
-  edge: Edge | null
-  children: DisplayTreeNode[]
-  treeLevel: number
-  canDelete: boolean
-  aspect: string | null
-  floatingLabel: string
-  showEvidence: boolean
-  showMenu: boolean
-  showAddButton: boolean
-}
 
 interface ActivityTableNodeProps {
   treeNode: DisplayTreeNode
@@ -560,7 +545,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
         onClose={() => setAddMenuAnchor(null)}
         slotProps={{
           paper: {
-            className: '!bg-[#d2e8f8]',
+            className: '!bg-blue-100',
             sx: { maxWidth: 'none' },
           },
         }}

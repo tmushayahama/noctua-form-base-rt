@@ -8,6 +8,8 @@ import { ActivityType } from '@/features/gocam/models/cam'
 export type LayoutDetail = 'detailed' | 'activity' | 'simple'
 export type LayoutSpacing = 'compact' | 'relaxed'
 
+const GRID_COLOR = '#DDDDDD'
+
 function activityColorKey(activity: Activity): string {
   switch (activity.type) {
     case ActivityType.MOLECULE:
@@ -73,8 +75,8 @@ export class CamCanvas {
       drawGrid: {
         name: 'doubleMesh',
         args: [
-          { color: '#DDDDDD', thickness: 1 },
-          { color: '#DDDDDD', scaleFactor: 5, thickness: 4 },
+          { color: GRID_COLOR, thickness: 1 },
+          { color: GRID_COLOR, scaleFactor: 5, thickness: 4 },
         ],
       },
       sorting: joint.dia.Paper.sorting.APPROX,

@@ -61,11 +61,11 @@ const CamToolbar: React.FC = () => {
   const getStateColor = (stateName?: string) => {
     switch (stateName) {
       case 'development':
-        return 'bg-[#f4c89c] text-amber-900 border-[#e0a96a]'
+        return 'bg-orange-300 text-amber-900 border-orange-400'
       case 'production':
-        return 'bg-[#b6f1cc] text-green-900 border-[#7dd8a0]'
+        return 'bg-green-200 text-green-900 border-green-400'
       case 'review':
-        return 'bg-[#d8f6a3] text-yellow-900 border-[#b8d87a]'
+        return 'bg-lime-200 text-yellow-900 border-lime-400'
       case 'delete':
         return 'bg-red-100 text-red-800 border-red-300'
       default:
@@ -185,10 +185,10 @@ const CamToolbar: React.FC = () => {
       {cam.date && (
         <div className="flex items-center border-r border-gray-300 px-2">
           <div
-            className="flex h-6 cursor-pointer items-center rounded-full border border-[#7ec8d6] bg-[#aee9f5] pr-2 text-xs text-sky-800"
+            className="flex h-6 cursor-pointer items-center rounded-full border border-sky-400 bg-sky-200 pr-2 text-xs text-sky-800"
             onClick={openCamForm}
           >
-            <div className="mr-1 flex h-full w-6 items-center justify-center rounded-full bg-[#8dd4e2] text-sky-800">
+            <div className="mr-1 flex h-full w-6 items-center justify-center rounded-full bg-sky-300 text-sky-800">
               <FaCalendarDay size={12} />
             </div>
             <span>{cam.date}</span>
@@ -202,9 +202,9 @@ const CamToolbar: React.FC = () => {
           {visibleContributors.map(contributor => (
             <div
               key={contributor.uri}
-              className="mr-2 flex h-6 max-w-[180px] items-center truncate rounded-full border border-[#a0b3b8] bg-[#bbc9cc] pr-2 text-xs text-gray-800"
+              className="mr-2 flex h-6 max-w-[180px] items-center truncate rounded-full border border-slate-400 bg-slate-300 pr-2 text-xs text-gray-800"
             >
-              <div className="text-2xs mr-1 flex h-full min-w-6 items-center justify-center rounded-full bg-[#a0b3b8] text-center font-bold text-gray-800">
+              <div className="text-2xs mr-1 flex h-full min-w-6 items-center justify-center rounded-full bg-slate-400 text-center font-bold text-gray-800">
                 {contributor.initials}
               </div>
               <span className="flex-grow truncate">{contributor.name}</span>
@@ -214,7 +214,7 @@ const CamToolbar: React.FC = () => {
           {hiddenContributors.length > 0 && (
             <>
               <button
-                className="flex h-6 cursor-pointer items-center rounded-full border border-[#a0b3b8] bg-[#bbc9cc] px-2 text-gray-800"
+                className="flex h-6 cursor-pointer items-center rounded-full border border-slate-400 bg-slate-300 px-2 text-gray-800"
                 onClick={e => setContributorsMenuAnchor(e.currentTarget)}
               >
                 <span>...</span>
@@ -230,7 +230,7 @@ const CamToolbar: React.FC = () => {
                     onClick={() => setContributorsMenuAnchor(null)}
                   >
                     <div className="flex items-center">
-                      <div className="text-2xs mr-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#a0b3b8] text-center font-bold text-gray-800">
+                      <div className="text-2xs mr-1 flex h-6 w-6 items-center justify-center rounded-full bg-slate-400 text-center font-bold text-gray-800">
                         {contributor.initials}
                       </div>
                       <span>{contributor.name}</span>

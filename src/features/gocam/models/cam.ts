@@ -164,3 +164,18 @@ export interface UserContext {
   orcid: string;
   groupUrl: string;
 }
+
+// ── Display tree (used by ActivityTable / ActivityTableNode) ────────
+
+export interface DisplayTreeNode {
+  node: GraphNode
+  edge: Edge | null
+  children: DisplayTreeNode[]
+  treeLevel: number
+  canDelete: boolean
+  aspect: string | null
+  floatingLabel: string
+  showEvidence: boolean
+  showMenu: boolean
+  showAddButton: boolean
+}

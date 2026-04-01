@@ -140,7 +140,7 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
         onClose={handleClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        PaperProps={{ className: '!bg-[#fbf9de] !shadow-lg' }}
+        PaperProps={{ className: '!bg-yellow-50 !shadow-lg' }}
       >
         <div className="flex w-full flex-row items-center justify-start px-1 pb-1 pt-2">
           {/* ── Term section (250px) ── */}

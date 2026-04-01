@@ -1,6 +1,13 @@
 import * as joint from 'jointjs'
 import { getColor } from './colors'
 
+// ── Colors ────────────────────────────────────────────────────────
+
+const WRAPPER_STROKE = 'rgba(0,0,255,0.3)'
+const LABEL_TEXT_FILL = '#333333'
+const LINK_LABEL_COLOR = '#7c68fc'
+const LINK_LINE_STROKE = '#005580'
+
 // ── Constants ──────────────────────────────────────────────────────
 
 const GRID_SIZE = 8
@@ -282,7 +289,7 @@ const NodeCellMoleculeDefaults = joint.dia.Element.define(
         refR: '50%',
         magnet: true,
         fill: 'transparent',
-        stroke: 'rgba(0,0,255,0.3)',
+        stroke: WRAPPER_STROKE,
       },
       '.circle': {
         refCx: '50%',
@@ -296,7 +303,7 @@ const NodeCellMoleculeDefaults = joint.dia.Element.define(
         refX: '50%',
         refY: '50%',
         fontSize: 12,
-        fill: '#333333',
+        fill: LABEL_TEXT_FILL,
         textWrap: { ellipsis: false, width: '95%' },
       },
       '.edit': {
@@ -378,7 +385,7 @@ export class NodeLink extends joint.shapes.standard.Link {
           ],
           attrs: {
             labelText: {
-              fill: '#7c68fc',
+              fill: LINK_LABEL_COLOR,
               fontSize: 8,
               fontFamily: 'sans-serif',
               textAnchor: 'middle',
@@ -392,7 +399,7 @@ export class NodeLink extends joint.shapes.standard.Link {
               refHeight: '100%',
               refWidth2: 10,
               refHeight2: 10,
-              stroke: '#7c68fc',
+              stroke: LINK_LABEL_COLOR,
               fill: 'white',
               strokeWidth: 1,
               rx: 5,
@@ -419,7 +426,7 @@ export class NodeLink extends joint.shapes.standard.Link {
 
     link.attr({
       line: {
-        stroke: '#005580',
+        stroke: LINK_LINE_STROKE,
         strokeWidth: 1,
         strokeLinejoin: 'round',
         targetMarker: {

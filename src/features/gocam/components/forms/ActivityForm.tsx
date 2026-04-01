@@ -34,7 +34,7 @@ import {
   buildCreateActivityOperations,
   buildEditActivityOperations,
 } from '../../services/activityOperations'
-import type { TermNode, RelationNode, ValidationError } from '../../models/formModels'
+import type { TermNode, RelationNode, ValidationError, FlatRow } from '../../models/formModels'
 import type { Evidence, UserContext } from '../../models/cam'
 import { referenceAllowedDBs, withFromAllowedDBs } from '../../data/allowedDatabases'
 import EntityRow from './EntityRow'
@@ -43,13 +43,6 @@ import AllowedDatabasesPopover from './AllowedDatabasesPopover'
 import { v4 as uuidv4 } from 'uuid'
 
 // ── Flatten tree into renderable rows ────────────────────────────────
-
-interface FlatRow {
-  termNode: TermNode
-  relation: RelationNode | null
-  parentTermUid: string | null
-  treeLevel: number
-}
 
 function flattenNode(
   node: TermNode,
@@ -68,11 +61,11 @@ function flattenNode(
 function getAspectBorderClass(node: TermNode): string {
   switch (node.aspect) {
     case 'F':
-      return 'border-l-4 border-l-[#7cd488]'
+      return 'border-l-4 border-l-green-400'
     case 'P':
-      return 'border-l-4 border-l-[#f4c89c]'
+      return 'border-l-4 border-l-orange-300'
     case 'C':
-      return 'border-l-4 border-l-[#d3b5f5]'
+      return 'border-l-4 border-l-purple-300'
     default:
       return ''
   }

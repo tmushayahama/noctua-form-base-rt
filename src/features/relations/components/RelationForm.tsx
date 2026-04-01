@@ -37,6 +37,7 @@ import { FiX, FiPlus } from 'react-icons/fi'
 import type { RootState } from '@/app/store/store'
 import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
 import { showToast } from '@/@noctua.core/components/toast/toastSlice'
+import { PRIMARY, PRIMARY_BORDER, SECTION_BG } from '@/@noctua.core/data/colors'
 
 interface Props {
   sourceActivity: Activity
@@ -52,10 +53,6 @@ const relationLabelMap = new Map<string, string>()
 globalKnownRelations.forEach(r => {
   relationLabelMap.set(r.id, r.label)
 })
-
-const PRIMARY = '#3b5998'
-const PRIMARY_BORDER = 'rgba(59,89,152,0.7)'
-const SECTION_BG = 'rgba(121,143,184,0.3)'
 
 const RelationForm: React.FC<Props> = ({
   sourceActivity,
@@ -297,7 +294,7 @@ const RelationForm: React.FC<Props> = ({
               }))}
               onChange={onRadioChange('directionId')}
             />
-            <p className="max-w-[260px] grow text-xs italic" style={{ color: '#676767' }}>
+            <p className="max-w-[260px] grow text-xs italic text-neutral-500">
               The mechanism regulation should be known, so it should be possible to pick the
               direction of the regulation.
             </p>
@@ -347,7 +344,7 @@ const RelationForm: React.FC<Props> = ({
             variant="contained"
             onClick={handleOpenChemicalConnector}
             className="!normal-case"
-            sx={{ backgroundColor: '#337d33', '&:hover': { backgroundColor: '#2a6629' } }}
+            sx={{ backgroundColor: '#15803d', '&:hover': { backgroundColor: '#166534' } }}
           >
             Connect via Chemical Intermediate
           </Button>
@@ -513,8 +510,7 @@ const RadioPillGroup: React.FC<{
           </label>
           {opt.description && (
             <span
-              className="ml-3 max-w-[300px] grow text-xs italic"
-              style={{ color: '#676767' }}
+              className="ml-3 max-w-[300px] grow text-xs italic text-neutral-500"
             >
               {opt.description}
             </span>

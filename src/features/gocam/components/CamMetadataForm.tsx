@@ -12,8 +12,7 @@ import type { RootState } from '@/app/store/store'
 import { useUpdateGraphModelMutation } from '../slices/camApiSlice'
 import { buildSaveModelAnnotationsOperations } from '../services/activityOperations'
 import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice'
-
-const MODEL_STATES = ['development', 'production', 'review', 'closed', 'delete']
+import { MODEL_STATES } from '../data/camConstants'
 
 const CamMetadataForm: React.FC = () => {
   const dispatch = useAppDispatch()

@@ -1,8 +1,33 @@
 import { v4 as uuidv4 } from 'uuid'
-import type { Entity, Aspect } from './cam'
+import type { Aspect, Entity } from './cam'
 import type { GOlrResponse } from '@/features/search/models/search'
 
 export type ActivityFormType = 'activity' | 'molecule' | 'proteinComplex'
+
+// ── Template descriptors (used by activityTemplates.ts) ─────────────
+
+export interface NodeCategory {
+  id: string
+  label: string
+  aspect: Aspect | null
+  searchClosureIds: string[]
+}
+
+export interface TermDescriptor {
+  category: NodeCategory
+  label?: string
+  required?: boolean
+  canDelete?: boolean
+  visible?: boolean
+  skipEvidenceCheck?: boolean
+  showEvidence?: boolean
+  relations?: RelationDescriptor[]
+}
+
+export interface RelationDescriptor {
+  predicateId: string
+  target: TermDescriptor
+}
 
 // ── Recursive tree ──────────────────────────────────────────────────
 
@@ -49,6 +74,26 @@ export interface ActivityFormState {
   root: TermNode | null
   isDirty: boolean
   errors: ValidationError[]
+}
+
+// ── Flattened tree row (used by ActivityForm) ───────────────────────
+
+export interface FlatRow {
+  termNode: TermNode
+  relation: RelationNode | null
+  parentTermUid: string | null
+  treeLevel: number
+}
+
+// ── With/From field types (used by WithDropdown) ────────────────────
+
+export interface WithEntity {
+  db: string
+  accession: string
+}
+
+export interface WithGroup {
+  entities: WithEntity[]
 }
 
 // ── Factory ─────────────────────────────────────────────────────────

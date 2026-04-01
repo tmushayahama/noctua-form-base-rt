@@ -25,7 +25,7 @@ const ConnectorForm: React.FC<ConnectorFormProps> = ({
     <div className="flex flex-col">
       <div className="border-b border-[rgba(59,89,152,0.3)] bg-gray-50 px-4 py-2 text-xs">
         <div className="flex gap-1">
-          <span className="w-[60px] font-medium text-[#3b5998]">Subject:</span>
+          <span className="w-[60px] font-medium text-blue-700">Subject:</span>
           <span>
             {sourceActivity.enabledBy?.label ??
               sourceActivity.rootNode?.label ??
@@ -33,7 +33,7 @@ const ConnectorForm: React.FC<ConnectorFormProps> = ({
           </span>
         </div>
         <div className="flex gap-1">
-          <span className="w-[60px] font-medium text-[#3b5998]">Object:</span>
+          <span className="w-[60px] font-medium text-blue-700">Object:</span>
           <span>
             {targetActivity.enabledBy?.label ??
               targetActivity.rootNode?.label ??

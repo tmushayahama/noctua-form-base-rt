@@ -1,7 +1,14 @@
 import { v4 as uuidv4 } from 'uuid'
 import { Relations } from '@/@noctua.core/models/relations'
 import type { Activity, Edge, GraphNode, Aspect } from '../models/cam'
-import type { ActivityFormType, TermNode, EvidenceForm } from '../models/formModels'
+import type {
+  ActivityFormType,
+  TermNode,
+  EvidenceForm,
+  NodeCategory,
+  TermDescriptor,
+  RelationDescriptor,
+} from '../models/formModels'
 import { createEvidenceForm } from '../models/formModels'
 import { predicate } from './shapeTerms'
 import { getNodeCategory } from './nodeCategories'
@@ -13,31 +20,6 @@ import {
   chemicalEntity as chemCat,
   proteinContainingComplex as complexCat,
 } from './nodeCategories'
-
-// ── Descriptors (pure data, no UIDs) ────────────────────────────────
-
-interface NodeCategory {
-  id: string
-  label: string
-  aspect: Aspect | null
-  searchClosureIds: string[]
-}
-
-interface TermDescriptor {
-  category: NodeCategory
-  label?: string
-  required?: boolean
-  canDelete?: boolean
-  visible?: boolean
-  skipEvidenceCheck?: boolean
-  showEvidence?: boolean
-  relations?: RelationDescriptor[]
-}
-
-interface RelationDescriptor {
-  predicateId: string
-  target: TermDescriptor
-}
 
 // ── Templates ───────────────────────────────────────────────────────
 

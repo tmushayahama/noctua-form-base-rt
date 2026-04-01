@@ -14,7 +14,7 @@ import { FaEllipsisV } from 'react-icons/fa'
 import { FiX } from 'react-icons/fi'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import type { RootState } from '@/app/store/store'
-import type { Activity, Edge, UserContext } from '../models/cam'
+import type { Activity, Edge, UserContext, DisplayTreeNode } from '../models/cam'
 import { Relations } from '@/@noctua.core/models/relations'
 import { setSelectedActivity } from '../slices/camSlice'
 import { setRightDrawerOpen } from '@/@noctua.core/components/drawer/drawerSlice'
@@ -23,7 +23,6 @@ import { useUpdateGraphModelMutation } from '../slices/camApiSlice'
 import { buildDeleteActivityOperations } from '../services/activityOperations'
 import ActivityForm from './forms/ActivityForm'
 import ActivityTableNode, {
-  type DisplayTreeNode,
   getAspectFromRootTypes,
 } from './ActivityTableNode'
 

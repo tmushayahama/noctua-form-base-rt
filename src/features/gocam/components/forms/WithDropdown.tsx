@@ -10,7 +10,8 @@ import {
   type SelectChangeEvent,
 } from '@mui/material'
 import { FaPlus, FaRegTrashAlt } from 'react-icons/fa'
-import { withFromAllowedDBs } from '../../data/allowedDatabases'
+import { withFromAllowedDBs, DB_NONE } from '../../data/allowedDatabases'
+import type { WithEntity, WithGroup } from '../../models/formModels'
 
 interface WithDropdownProps {
   anchorEl: HTMLElement | null
@@ -18,17 +19,6 @@ interface WithDropdownProps {
   onClose: () => void
   onSave: (value: string) => void
 }
-
-interface WithEntity {
-  db: string
-  accession: string
-}
-
-interface WithGroup {
-  entities: WithEntity[]
-}
-
-const DB_NONE = 'None'
 const dbOptions = [DB_NONE, ...withFromAllowedDBs.slice().sort()]
 
 /** Parse existing with/from value into groups */
@@ -138,7 +128,7 @@ const WithDropdown: React.FC<WithDropdownProps> = ({
       onClose={onClose}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      PaperProps={{ className: '!bg-[#fbf9de] !shadow-lg' }}
+      PaperProps={{ className: '!bg-yellow-50 !shadow-lg' }}
     >
       <div
         className="flex w-full flex-col items-stretch justify-start px-2 py-2"
