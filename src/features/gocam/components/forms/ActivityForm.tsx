@@ -57,7 +57,6 @@ function flattenNode(
   }
 }
 
-/** Get aspect border class for a node group — matches Angular palette */
 function getAspectBorderClass(node: TermNode): string {
   switch (node.aspect) {
     case 'F':

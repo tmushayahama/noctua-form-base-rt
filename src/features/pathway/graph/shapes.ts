@@ -172,7 +172,6 @@ const headerAttributes = {
 
 // ── NodeCellList ──────────────────────────────────────────────────
 // Port-based list element: header + dynamic entity rows.
-// Mirrors Angular `@noctua.graph/models/shapes/list.ts`.
 
 export class NodeCellList extends joint.dia.Element {
   override defaults() {
@@ -204,8 +203,8 @@ export class NodeCellList extends joint.dia.Element {
     this.prop(
       ['size', 'height'],
       HEADER_HEIGHT +
-        (LIST_ITEM_HEIGHT + LIST_ITEM_GAP) * length +
-        PADDING_L
+      (LIST_ITEM_HEIGHT + LIST_ITEM_GAP) * length +
+      PADDING_L
     )
   }
 

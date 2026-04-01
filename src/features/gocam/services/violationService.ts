@@ -20,7 +20,6 @@ function getPropertyLabel(propertyId: string): string {
 /**
  * Convert ShExViolation[] on the model into typed CamError[] for display.
  *
- * Matches Angular's generateViolation():
  * - Skip if subject node is not found in any activity (nodeToActivityNode returns null)
  * - Cardinality constraint → CardinalityViolation
  * - Object constraint → RelationViolation
@@ -37,7 +36,6 @@ export function processViolations(model: GraphModel): CamError[] {
   }
 
   for (const violation of model.violations) {
-    // Angular: nodeToActivityNode returns null if node isn't in any activity → skip
     const subjectNode = findNode(model, violation.node)
     if (!subjectNode || !activityNodeUids.has(subjectNode.uid)) continue
 

@@ -16,7 +16,6 @@ export interface CategorizedParticipants {
  * - subjectOnly: present only in subject (upstream)
  * - objectOnly: present only in object (downstream)
  *
- * Common items are pre-selected by default (matching Angular behavior).
  */
 export function categorizeParticipants(
   subjectParticipants: Array<{ id: string; label: string }>,

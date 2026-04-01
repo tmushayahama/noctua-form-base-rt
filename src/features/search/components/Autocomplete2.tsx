@@ -7,7 +7,6 @@ import { useSearchTermsQuery } from '../slices/lookupApiSlice'
 import type { GOlrResponse } from '../models/search'
 import { AutocompleteType } from '../models/search'
 import { TextField, Popper, Paper, CircularProgress } from '@mui/material'
-import { DROPDOWN_BG } from '@/@noctua.core/data/colors'
 
 interface TermAutocompleteProps {
   label: string
@@ -200,7 +199,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
         placement="bottom-start"
         style={{ width: Math.max(anchorRef.current?.clientWidth || 0, 400), zIndex: 1300 }}
       >
-        <Paper className="mt-1 max-h-60 max-w-[600px] overflow-y-auto" style={{ backgroundColor: DROPDOWN_BG }} ref={listRef}>
+        <Paper className="!bg-yellow-50 mt-1 max-h-60 max-w-[600px] overflow-y-auto" ref={listRef}>
           {options.length === 0 && (
             <div className="p-4 text-center text-gray-500">
               {inputValue.length < 3 ? 'Type at least 3 characters to search' : 'No results found'}

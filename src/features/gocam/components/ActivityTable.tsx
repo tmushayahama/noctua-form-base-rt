@@ -211,7 +211,6 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
             <div className="noc-section-header h-[30px] bg-[rgba(121,143,184,0.3)] px-3 text-xs font-semibold uppercase leading-[30px] tracking-wide text-gray-600">
               {gpLabel}
             </div>
-            {/* Angular: .noc-tree-container { position: relative; padding: 12px 8px 8px 8px } */}
             <div className="relative px-2 pb-2 pt-3">
               {gpTree.map(treeNode => (
                 <ActivityTableNode

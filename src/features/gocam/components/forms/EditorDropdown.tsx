@@ -37,8 +37,6 @@ export interface EditorDropdownProps {
   initialWith?: string
 }
 
-// ── Display sections logic (matches Angular _displaySection) ─────────
-
 function getDisplaySections(category: EditorCategory) {
   const sections = {
     term: false,

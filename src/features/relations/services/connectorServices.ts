@@ -113,7 +113,6 @@ export const buildConnectorOperations = (
  *   subjectMfNode --[has_output]--> chemicalNode
  *   objectMfNode  --[has_input]-->  chemicalNode
  *
- * Matches Angular's saveChemicalParticipants in activity-connector.service.ts.
  */
 export const buildChemicalParticipantOperations = (
   subjectMfNode: GraphNode,

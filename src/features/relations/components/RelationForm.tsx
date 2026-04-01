@@ -37,7 +37,6 @@ import { FiX, FiPlus } from 'react-icons/fi'
 import type { RootState } from '@/app/store/store'
 import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
 import { showToast } from '@/@noctua.core/components/toast/toastSlice'
-import { PRIMARY, PRIMARY_BORDER, SECTION_BG } from '@/@noctua.core/data/colors'
 
 interface Props {
   sourceActivity: Activity
@@ -320,8 +319,7 @@ const RelationForm: React.FC<Props> = ({
 
       {/* Suggested Causal Relation */}
       <div
-        className="mt-2 border-t border-[#BBB] pl-3 text-xs leading-[30px]"
-        style={{ backgroundColor: SECTION_BG, color: '#555' }}
+        className="mt-2 border-t border-gray-400 bg-slate-400/30 pl-3 text-xs leading-[30px] text-neutral-600"
       >
         Suggested Causal Relation
       </div>
@@ -334,10 +332,9 @@ const RelationForm: React.FC<Props> = ({
       {/* Chemical Intermediate section */}
       {shouldShowChemicalIntermediate && (
         <div
-          className="flex items-center gap-3 px-4 py-3"
-          style={{ borderBottom: `1px solid ${PRIMARY_BORDER}` }}
+          className="flex items-center gap-3 border-b border-blue-800/70 px-4 py-3"
         >
-          <span className="w-[100px] shrink-0 text-xs font-medium" style={{ color: PRIMARY }}>
+          <span className="w-[100px] shrink-0 text-xs font-medium text-blue-800">
             Chemical Intermediate
           </span>
           <Button
@@ -353,8 +350,7 @@ const RelationForm: React.FC<Props> = ({
 
       {/* Evidence section */}
       <div
-        className="pl-3 text-xs leading-[30px]"
-        style={{ backgroundColor: SECTION_BG, color: '#555' }}
+        className="bg-slate-400/30 pl-3 text-xs leading-[30px] text-neutral-600"
       >
         Evidence
       </div>
@@ -452,9 +448,9 @@ const SectionRow: React.FC<{ label: string; children: React.ReactNode }> = ({
   label,
   children,
 }) => (
-  <div style={{ borderBottom: `1px solid ${PRIMARY_BORDER}` }}>
+  <div className="border-b border-blue-800/70">
     <div className="flex items-start gap-3 px-4 py-2">
-      <span className="w-[100px] shrink-0 pt-1.5 text-xs font-medium" style={{ color: PRIMARY }}>
+      <span className="w-[100px] shrink-0 pt-1.5 text-xs font-medium text-blue-800">
         {label}
       </span>
       <div className="flex-1">{children}</div>
@@ -488,13 +484,11 @@ const RadioPillGroup: React.FC<{
         >
           <label className="flex w-[170px] shrink-0 cursor-pointer items-center gap-2 text-xs">
             <span
-              className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2"
-              style={{ borderColor: isSelected ? PRIMARY : '#999' }}
+              className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 ${isSelected ? 'border-blue-800' : 'border-gray-400'}`}
             >
               {isSelected && (
                 <span
-                  className="block h-[10px] w-[10px] rounded-full"
-                  style={{ backgroundColor: PRIMARY }}
+                  className="block h-[10px] w-[10px] rounded-full bg-blue-800"
                 />
               )}
             </span>

@@ -20,7 +20,6 @@ export const isValidReference = (ref: string): boolean => {
 
 /**
  * Validate the activity form by walking the tree.
- * Matches Angular validation:
  *   1. Required nodes must have a term
  *   2. If a node has a term, evidence is checked:
  *      - Evidence code provided → reference is required

@@ -38,7 +38,6 @@ function getAspectFromRootTypes(rootTypes: string[]): string | null {
   return null
 }
 
-// ── Shared cell styling (matching Angular .noc-entity-cell / .noc-box-cell) ──
 
 const cellBase =
   'group/cell relative break-words border border-[#aaa] px-[5px] py-2 text-xs text-black hover:border-primary-500'
@@ -292,7 +291,6 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
   )
   const extensionRelations = category ? getExtensionRelations(category) : []
 
-  // Angular: relationWidth = 250 - (entity.treeLevel * 16) + 'px'
   const termWidth = Math.max(250 - treeLevel * 16, 100)
 
   // ── Editor open helpers ──
@@ -512,7 +510,6 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
         />
       ))}
 
-      {/* ── Entity menu (Angular: Add, Evidence > Add Evidence, Delete) ── */}
       <Menu
         anchorEl={menuAnchor}
         open={Boolean(menuAnchor)}
@@ -538,7 +535,6 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
         )}
       </Menu>
 
-      {/* ── Add child submenu (Angular: noc-extensions-menu-panel) ── */}
       <Menu
         anchorEl={addMenuAnchor}
         open={Boolean(addMenuAnchor)}

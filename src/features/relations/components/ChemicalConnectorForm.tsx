@@ -22,7 +22,6 @@ import {
   type ChemicalParticipant,
   type CategorizedParticipants,
 } from '../services/chemicalConnectorUtils'
-import { SECTION_BG } from '@/@noctua.core/data/colors'
 
 interface Props {
   sourceActivity: Activity
@@ -165,8 +164,7 @@ const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity
     return (
       <div className="flex w-full flex-col items-stretch justify-start">
         <div
-          className="flex items-center pl-3 text-xs leading-[30px]"
-          style={{ backgroundColor: SECTION_BG, color: '#555' }}
+          className="flex items-center bg-slate-400/30 pl-3 text-xs leading-[30px] text-neutral-600"
         >
           {title}
         </div>
@@ -246,8 +244,7 @@ const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity
 
             {/* Evidence section */}
             <div
-              className="mt-2 flex items-center pl-3 text-xs leading-[30px]"
-              style={{ backgroundColor: SECTION_BG, color: '#555' }}
+              className="mt-2 flex items-center bg-slate-400/30 pl-3 text-xs leading-[30px] text-neutral-600"
             >
               Evidence
             </div>

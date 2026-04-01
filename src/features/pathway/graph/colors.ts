@@ -1,6 +1,3 @@
-// Material Design color palettes used by the Angular project via MatColors.
-// Only the colors/hues actually used by shapes are included.
-
 const palettes: Record<string, Record<number, string>> = {
   green: {
     50: '#e8f5e9',

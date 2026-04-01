@@ -51,7 +51,6 @@ export const useAuthSetup = () => {
     }
   }, [userInfo, isError, dispatch])
 
-  // Re-validate token when the window regains focus (matches Angular behavior)
   const handleFocus = useCallback(() => {
     if (baristaToken && isInitialized) {
       refetch()

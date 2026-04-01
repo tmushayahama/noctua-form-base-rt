@@ -9,11 +9,19 @@ import { store } from "@/app/store/store";
 export function extractActivities(nodes: GraphNode[], edges: Edge[]): Activity[] {
   const activities: Activity[] = [];
 
-  // Pre-compute all enabledBy nodes for faster lookup
   const enabledBySourceIds = new Set(
     edges.filter(edge => edge.id === Relations.ENABLED_BY)
       .map(edge => edge.sourceId)
   );
+
+  const chemicalEntityIds = new Set(
+    nodes.filter(node =>
+      node.rootTypes?.includes(RootTypes.CHEMICAL_ENTITY) &&
+      !node.rootTypes?.includes(RootTypes.MOLECULAR_ENTITY)
+    ).map(node => node.uid)
+  );
+
+  const activityBoundary = new Set([...enabledBySourceIds, ...chemicalEntityIds]);
 
   const enabledByEdges = edges.filter(edge => edge.id === Relations.ENABLED_BY);
 
@@ -27,8 +35,6 @@ export function extractActivities(nodes: GraphNode[], edges: Edge[]): Activity[]
     const activityEdges: Edge[] = [];
     const visited = new Set<string>();
 
-    activityEdges.push(enabledByEdge);
-
     exploreSubgraph(
       molecularFunction,
       nodes,
@@ -36,7 +42,7 @@ export function extractActivities(nodes: GraphNode[], edges: Edge[]): Activity[]
       activityNodes,
       activityEdges,
       visited,
-      enabledBySourceIds
+      activityBoundary
     );
 
     const dates = [
@@ -66,31 +72,25 @@ export function extractActivities(nodes: GraphNode[], edges: Edge[]): Activity[]
 export function extractMolecules(nodes: GraphNode[], edges: Edge[], activities: Activity[]): Activity[] {
   const molecules: Activity[] = [];
 
-  // Find all chemical nodes that are not molecular entities
   const chemicalNodes = nodes.filter(node =>
     node.rootTypes?.includes(RootTypes.CHEMICAL_ENTITY) &&
     !node.rootTypes?.includes(RootTypes.MOLECULAR_ENTITY)
   );
 
-  // Create a set of nodes already in activities to avoid duplication
-  const activityNodeIds = new Set(
-    activities.map(activity => activity.rootNode.uid)
-  );
+  const activityNodeIds = new Set<string>();
+  for (const activity of activities) {
+    for (const node of activity.nodes) {
+      activityNodeIds.add(node.uid);
+    }
+  }
 
-  // Track visited nodes to prevent infinite recursion
-  const visited = new Set<string>();
-
-  // Process each chemical node that isn't already in an activity
   chemicalNodes.forEach(chemicalNode => {
     if (activityNodeIds.has(chemicalNode.uid)) return;
 
-    // Reset visited set for each molecule
-    visited.clear();
-
     const moleculeNodes: GraphNode[] = [];
     const moleculeEdges: Edge[] = [];
+    const visited = new Set<string>();
 
-    // Recursively explore the subgraph
     exploreSubgraph(
       chemicalNode,
       nodes,
@@ -101,10 +101,8 @@ export function extractMolecules(nodes: GraphNode[], edges: Edge[], activities: 
       activityNodeIds
     );
 
-    // Skip if no nodes or edges were found
     if (moleculeNodes.length === 0) return;
 
-    // Find latest date across all nodes and edges
     const dates = [
       ...moleculeNodes.map(node => node.date).filter(Boolean),
       ...moleculeEdges.map(edge => edge.date).filter(Boolean)
@@ -188,39 +186,36 @@ function exploreSubgraph(
   currentNode: GraphNode,
   allNodes: GraphNode[],
   allEdges: Edge[],
-  moleculeNodes: GraphNode[],
-  moleculeEdges: Edge[],
+  collectedNodes: GraphNode[],
+  collectedEdges: Edge[],
   visited: Set<string>,
-  activityNodeIds: Set<string>
+  boundaryNodeIds: Set<string>
 ): void {
-
   visited.add(currentNode.uid);
-  moleculeNodes.push(currentNode);
+  collectedNodes.push(currentNode);
 
-  const connectedEdges = allEdges.filter(edge =>
-    edge.sourceId === currentNode.uid || edge.targetId === currentNode.uid
-  );
+  const outgoingEdges = allEdges.filter(edge => edge.sourceId === currentNode.uid);
 
-  for (const edge of connectedEdges) {
-    if (moleculeEdges.some(e => e.id === edge.id)) continue;
+  for (const edge of outgoingEdges) {
+    if (collectedEdges.some(e => e.uid === edge.uid)) continue;
 
-    const connectedNodeId = edge.sourceId === currentNode.uid ? edge.targetId : edge.sourceId;
+    const targetNodeId = edge.targetId;
 
-    if (visited.has(connectedNodeId) || activityNodeIds.has(connectedNodeId)) continue;
+    if (visited.has(targetNodeId) || boundaryNodeIds.has(targetNodeId)) continue;
 
-    moleculeEdges.push(edge);
+    collectedEdges.push(edge);
 
-    const connectedNode = allNodes.find(node => node.uid === connectedNodeId);
-    if (!connectedNode) continue;
+    const targetNode = allNodes.find(node => node.uid === targetNodeId);
+    if (!targetNode) continue;
 
     exploreSubgraph(
-      connectedNode,
+      targetNode,
       allNodes,
       allEdges,
-      moleculeNodes,
-      moleculeEdges,
+      collectedNodes,
+      collectedEdges,
       visited,
-      activityNodeIds
+      boundaryNodeIds
     );
   }
 }
