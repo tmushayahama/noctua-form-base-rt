@@ -230,6 +230,32 @@ const lookupApi = apiService
           }
         },
       }),
+
+      getPubmedInfo: builder.query<
+        { title: string; authors: string; date: string } | null,
+        string
+      >({
+        queryFn: async pmid => {
+          try {
+            const url = `https://api.ncbi.nlm.nih.gov/lit/ctxp/v1/pubmed/?format=csl&id=${encodeURIComponent(pmid)}`
+            const res = await fetch(url)
+            if (!res.ok) return { data: null }
+            const data = await res.json()
+            const title = data.title || ''
+            const authors =
+              data.author
+                ?.map((a: { family?: string; given?: string }) =>
+                  [a.given, a.family].filter(Boolean).join(' ')
+                )
+                .join(', ') || ''
+            const issued = data.issued?.['date-parts']?.[0]
+            const date = issued ? issued.join('-') : ''
+            return { data: { title, authors, date } }
+          } catch {
+            return { data: null }
+          }
+        },
+      }),
     }),
   })
 
@@ -237,4 +263,5 @@ export const {
   useSearchTermsQuery,
   useSearchAnnotationsQuery,
   useLazyGetChemicalParticipantsQuery,
+  useLazyGetPubmedInfoQuery,
 } = lookupApi

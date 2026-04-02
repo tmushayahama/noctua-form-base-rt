@@ -755,3 +755,61 @@ export const buildEditEvidenceAnnotationOperations = (
 
   return operations
 }
+
+/**
+ * Clear an annotation field (source or with) from an evidence individual
+ * without adding a replacement value.
+ */
+export const buildClearEvidenceAnnotationOperations = (
+  evidenceUid: string,
+  key: 'source' | 'with',
+  oldValue: string,
+  modelId: string,
+  userContext?: UserContext
+): Operation[] => {
+  if (!oldValue) return []
+
+  const operations: Operation[] = [
+    {
+      entity: 'individual',
+      operation: 'remove-annotation',
+      arguments: {
+        individual: evidenceUid,
+        values: [{ key, value: oldValue }],
+        'model-id': modelId,
+      },
+    },
+  ]
+
+  if (userContext) {
+    operations.push({
+      entity: 'individual',
+      operation: 'remove-annotation',
+      arguments: {
+        individual: evidenceUid,
+        values: [{ key: 'contributor', value: userContext.orcid }],
+        'model-id': modelId,
+      },
+    })
+    operations.push({
+      entity: 'individual',
+      operation: 'add-annotation',
+      arguments: {
+        individual: evidenceUid,
+        values: [
+          { key: 'contributor', value: userContext.orcid },
+          { key: 'providedBy', value: userContext.groupUrl },
+        ],
+        'model-id': modelId,
+      },
+    })
+  }
+
+  operations.push({
+    entity: 'model',
+    operation: 'store',
+    arguments: { 'model-id': modelId },
+  })
+
+  return operations
+}

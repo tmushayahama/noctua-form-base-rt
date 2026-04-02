@@ -2,7 +2,7 @@ import type React from 'react'
 import { useState, useCallback, useMemo, useRef } from 'react'
 import { IconButton, Menu, MenuItem } from '@mui/material'
 import { FaEllipsisV, FaPencilAlt, FaPlus, FaTrash } from 'react-icons/fa'
-import type { GraphNode, Edge, Evidence, UserContext, DisplayTreeNode } from '../models/cam'
+import type { Edge, Evidence, UserContext, DisplayTreeNode } from '../models/cam'
 import { RootTypes } from '../models/cam'
 import { EditorCategory } from '../models/editorCategory'
 import { useAppSelector } from '@/app/hooks'
@@ -13,10 +13,12 @@ import {
   buildEditEvidenceAnnotationOperations,
   buildAddEvidenceToEdgeOperations,
   buildRemoveEvidenceOperations,
+  buildClearEvidenceAnnotationOperations,
   buildDeleteNodeOperations,
   buildAddNodeOperations,
 } from '../services/activityOperations'
-import { getNodeCategory, getExtensionRelations } from '../data/nodeCategories'
+import { getInsertMenuItems } from '../data/insertMenuConfig'
+import type { InsertMenuItem } from '../data/insertMenuConfig'
 import { createEvidenceForm } from '../models/formModels'
 import EditorDropdown from './forms/EditorDropdown'
 import type { EditorDropdownValues } from './forms/EditorDropdown'
@@ -29,8 +31,6 @@ interface ActivityTableNodeProps {
   onNodeDeleted?: () => void
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────
-
 function getAspectFromRootTypes(rootTypes: string[]): string | null {
   if (rootTypes.includes(RootTypes.MOLECULAR_FUNCTION)) return 'F'
   if (rootTypes.includes(RootTypes.BIOLOGICAL_PROCESS)) return 'P'
@@ -38,38 +38,40 @@ function getAspectFromRootTypes(rootTypes: string[]): string | null {
   return null
 }
 
-
 const cellBase =
   'group/cell relative break-words border border-[#aaa] px-[5px] py-2 text-xs text-black hover:border-primary-500'
 
-const floatingLabelClasses =
+const floatingLabel =
   'absolute left-1 -top-1.5 h-3 max-w-[80%] truncate bg-white px-1 text-[8px] leading-3 text-gray-500 group-hover/cell:text-primary-500'
+
+const deleteBtn =
+  'absolute right-0 top-0 hidden h-5 w-5 items-center justify-center text-red-400 hover:bg-red-400 hover:text-white group-hover/cell:flex'
+
+const editBtn =
+  'absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center text-gray-500 opacity-0 hover:bg-gray-200 group-hover/cell:opacity-100'
 
 // ── Evidence row ────────────────────────────────────────────────────
 
 interface EvidenceRowProps {
   ev: Evidence
-  edge: Edge
   modelId: string
   userContext?: UserContext
   onRemoveEvidence: (ev: Evidence) => void
+  onClearField: (ev: Evidence, key: 'source' | 'with') => void
 }
 
 const EvidenceRowComponent: React.FC<EvidenceRowProps> = ({
   ev,
-  edge: _edge,
   modelId,
   userContext,
   onRemoveEvidence,
+  onClearField,
 }) => {
   const [updateGraphModel] = useUpdateGraphModelMutation()
-
-  // Cell refs for stable popover anchoring
   const evCellRef = useRef<HTMLDivElement>(null)
   const refCellRef = useRef<HTMLDivElement>(null)
   const withCellRef = useRef<HTMLDivElement>(null)
 
-  // Which editor is open (only one at a time per evidence row)
   const [editorAnchor, setEditorAnchor] = useState<HTMLElement | null>(null)
   const [editorCategory, setEditorCategory] = useState<EditorCategory>(EditorCategory.evidence)
 
@@ -78,62 +80,45 @@ const EvidenceRowComponent: React.FC<EvidenceRowProps> = ({
     setEditorAnchor(ref.current)
   }
 
-  const closeEditor = () => setEditorAnchor(null)
-
   const handleEditorSave = useCallback(
     async (values: EditorDropdownValues) => {
       switch (editorCategory) {
         case EditorCategory.evidence: {
           if (!values.evidence || !ev.evidenceCode?.id) break
-          const ops = buildEditIndividualTypeOperations(
-            ev.uid,
-            ev.evidenceCode.id,
-            values.evidence.id,
-            modelId
+          await updateGraphModel(
+            buildEditIndividualTypeOperations(ev.uid, ev.evidenceCode.id, values.evidence.id, modelId)
           )
-          await updateGraphModel(ops)
           break
         }
         case EditorCategory.reference: {
           if (values.reference === undefined) break
-          const ops = buildEditEvidenceAnnotationOperations(
-            ev.uid,
-            'source',
-            ev.reference || '',
-            values.reference,
-            modelId,
-            userContext
+          await updateGraphModel(
+            buildEditEvidenceAnnotationOperations(
+              ev.uid, 'source', ev.reference || '', values.reference, modelId, userContext
+            )
           )
-          await updateGraphModel(ops)
           break
         }
         case EditorCategory.with: {
           if (values.with === undefined) break
-          const ops = buildEditEvidenceAnnotationOperations(
-            ev.uid,
-            'with',
-            ev.with || '',
-            values.with,
-            modelId,
-            userContext
+          await updateGraphModel(
+            buildEditEvidenceAnnotationOperations(
+              ev.uid, 'with', ev.with || '', values.with, modelId, userContext
+            )
           )
-          await updateGraphModel(ops)
           break
         }
       }
-      closeEditor()
+      setEditorAnchor(null)
     },
     [editorCategory, ev, modelId, userContext, updateGraphModel]
   )
 
   return (
     <div className="mb-2 flex h-full flex-row items-stretch last:mb-0">
-      {/* Evidence code cell — grows */}
-      <div
-        ref={evCellRef}
-        className={`${cellBase} ml-1 flex grow flex-col items-stretch rounded-lg`}
-      >
-        <div className={floatingLabelClasses}>Evidence</div>
+      {/* Evidence code cell */}
+      <div ref={evCellRef} className={`${cellBase} ml-1 flex grow flex-col items-stretch rounded-lg`}>
+        <div className={floatingLabel}>Evidence</div>
         <span>
           {ev.evidenceCode?.label || '—'}
           {ev.evidenceCode?.id && (
@@ -150,78 +135,52 @@ const EvidenceRowComponent: React.FC<EvidenceRowProps> = ({
             </>
           )}
         </span>
-        <button
-          onClick={() => onRemoveEvidence(ev)}
-          className="absolute right-0 top-0 hidden h-5 w-5 items-center justify-center text-red-400 hover:bg-red-400 hover:text-white group-hover/cell:flex"
-        >
+        <button onClick={() => onRemoveEvidence(ev)} className={deleteBtn}>
           <FaTrash size={10} />
         </button>
-        <button
-          onClick={() => openEditor(evCellRef, EditorCategory.evidence)}
-          className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center text-gray-500 opacity-0 hover:bg-gray-200 group-hover/cell:opacity-100"
-        >
+        <button onClick={() => openEditor(evCellRef, EditorCategory.evidence)} className={editBtn}>
           <FaPencilAlt size={9} />
         </button>
       </div>
 
-      {/* Reference cell — 100px */}
-      <div
-        ref={refCellRef}
-        className={`${cellBase} ml-1 flex w-[100px] shrink-0 flex-col items-stretch rounded-lg`}
-      >
-        <div className={floatingLabelClasses}>Reference</div>
+      {/* Reference cell */}
+      <div ref={refCellRef} className={`${cellBase} ml-1 flex w-[100px] shrink-0 flex-col items-stretch rounded-lg`}>
+        <div className={floatingLabel}>Reference</div>
         {ev.referenceUrl ? (
-          <a
-            href={ev.referenceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
+          <a href={ev.referenceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
             {ev.reference}
           </a>
         ) : (
           <span>{ev.reference || '—'}</span>
         )}
-        <button
-          onClick={() => onRemoveEvidence(ev)}
-          className="absolute right-0 top-0 hidden h-5 w-5 items-center justify-center text-red-400 hover:bg-red-400 hover:text-white group-hover/cell:flex"
-        >
-          <FaTrash size={10} />
-        </button>
-        <button
-          onClick={() => openEditor(refCellRef, EditorCategory.reference)}
-          className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center text-gray-500 opacity-0 hover:bg-gray-200 group-hover/cell:opacity-100"
-        >
+        {ev.reference && (
+          <button onClick={() => onClearField(ev, 'source')} className={deleteBtn}>
+            <FaTrash size={10} />
+          </button>
+        )}
+        <button onClick={() => openEditor(refCellRef, EditorCategory.reference)} className={editBtn}>
           <FaPencilAlt size={9} />
         </button>
       </div>
 
-      {/* With cell — 100px */}
-      <div
-        ref={withCellRef}
-        className={`${cellBase} ml-1 flex w-[100px] shrink-0 flex-col items-stretch rounded-lg`}
-      >
-        <div className={floatingLabelClasses}>With</div>
+      {/* With cell */}
+      <div ref={withCellRef} className={`${cellBase} ml-1 flex w-[100px] shrink-0 flex-col items-stretch rounded-lg`}>
+        <div className={floatingLabel}>With</div>
         <span>{ev.with || '—'}</span>
-        <button
-          onClick={() => onRemoveEvidence(ev)}
-          className="absolute right-0 top-0 hidden h-5 w-5 items-center justify-center text-red-400 hover:bg-red-400 hover:text-white group-hover/cell:flex"
-        >
-          <FaTrash size={10} />
-        </button>
-        <button
-          onClick={() => openEditor(withCellRef, EditorCategory.with)}
-          className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center text-gray-500 opacity-0 hover:bg-gray-200 group-hover/cell:opacity-100"
-        >
+        {ev.with && (
+          <button onClick={() => onClearField(ev, 'with')} className={deleteBtn}>
+            <FaTrash size={10} />
+          </button>
+        )}
+        <button onClick={() => openEditor(withCellRef, EditorCategory.with)} className={editBtn}>
           <FaPencilAlt size={9} />
         </button>
       </div>
 
-      {/* Single EditorDropdown for all evidence cell editing */}
       <EditorDropdown
         anchorEl={editorAnchor}
         category={editorCategory}
-        onClose={closeEditor}
+        onClose={() => setEditorAnchor(null)}
         onSave={handleEditorSave}
         initialEvidence={ev.evidenceCode?.id ? ev.evidenceCode : null}
         initialReference={ev.reference || ''}
@@ -240,31 +199,16 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
   allEdges,
   onNodeDeleted,
 }) => {
-  const {
-    node,
-    edge,
-    children,
-    treeLevel,
-    canDelete,
-    floatingLabel,
-    showEvidence,
-    showMenu,
-    showAddButton,
-  } = treeNode
+  const { node, edge, children, treeLevel, canDelete, showEvidence, showMenu, showAddButton } =
+    treeNode
   const evidence = edge?.evidence ?? []
 
   const termCellRef = useRef<HTMLDivElement>(null)
   const actionCellRef = useRef<HTMLDivElement>(null)
-
-  // Entity menu
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
-  // Add child submenu
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null)
-
-  // EditorDropdown state (single instance for this node)
   const [editorAnchor, setEditorAnchor] = useState<HTMLElement | null>(null)
   const [editorCategory, setEditorCategory] = useState<EditorCategory>(EditorCategory.term)
-
   const [updateGraphModel] = useUpdateGraphModelMutation()
   const authUser = useAppSelector((state: RootState) => state.auth.user)
 
@@ -274,54 +218,17 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
     return { orcid: authUser.uri, groupUrl: authUser.group.id }
   }, [userContext, authUser])
 
-  const category = getNodeCategory(
-    node.rootTypes.find(
-      rt =>
-        rt === RootTypes.MOLECULAR_FUNCTION ||
-        rt === RootTypes.BIOLOGICAL_PROCESS ||
-        rt === RootTypes.CELLULAR_COMPONENT ||
-        rt === RootTypes.MOLECULAR_ENTITY ||
-        rt === RootTypes.CHEMICAL_ENTITY ||
-        rt === RootTypes.PROTEIN_CONTAINING_COMPLEX ||
-        rt === RootTypes.ANATOMICAL_ENTITY ||
-        rt === RootTypes.CELL_TYPE ||
-        rt === RootTypes.ORGANISM ||
-        rt === RootTypes.BIOLOGICAL_PHASE
-    ) ?? ''
-  )
-  const extensionRelations = category ? getExtensionRelations(category) : []
-
+  const insertMenuItems = getInsertMenuItems(node.rootTypes[0] ?? '')
   const termWidth = Math.max(250 - treeLevel * 16, 100)
-
-  // ── Editor open helpers ──
-
-  const openTermEditor = () => {
-    setEditorCategory(EditorCategory.term)
-    setEditorAnchor(termCellRef.current)
-  }
-
-  const openAddEvidenceEditor = () => {
-    setEditorCategory(EditorCategory.evidenceAll)
-    setEditorAnchor(actionCellRef.current)
-    setMenuAnchor(null)
-  }
-
-  const closeEditor = () => setEditorAnchor(null)
-
-  // ── Editor save handler (dispatches based on category) ──
 
   const handleEditorSave = useCallback(
     async (values: EditorDropdownValues) => {
       switch (editorCategory) {
         case EditorCategory.term: {
           if (!values.term) break
-          const ops = buildEditIndividualTypeOperations(
-            node.uid,
-            node.id,
-            values.term.id,
-            modelId
+          await updateGraphModel(
+            buildEditIndividualTypeOperations(node.uid, node.id, values.term.id, modelId)
           )
-          await updateGraphModel(ops)
           break
         }
         case EditorCategory.evidenceAll: {
@@ -332,53 +239,50 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
             reference: values.reference || '',
             withFrom: values.with || '',
           }
-          const ops = buildAddEvidenceToEdgeOperations(
-            edge.sourceId,
-            edge.targetId,
-            edge.id,
-            ev,
-            modelId,
-            resolvedUserContext
+          await updateGraphModel(
+            buildAddEvidenceToEdgeOperations(
+              edge.sourceId, edge.targetId, edge.id, ev, modelId, resolvedUserContext
+            )
           )
-          await updateGraphModel(ops)
           break
         }
       }
-      closeEditor()
+      setEditorAnchor(null)
     },
     [editorCategory, node.uid, node.id, edge, modelId, resolvedUserContext, updateGraphModel]
   )
 
-  // ── Other handlers ──
-
   const handleRemoveEvidence = useCallback(
     async (ev: Evidence) => {
-      const ops = buildRemoveEvidenceOperations(ev.uid, modelId)
-      await updateGraphModel(ops)
+      await updateGraphModel(buildRemoveEvidenceOperations(ev.uid, modelId))
     },
     [modelId, updateGraphModel]
+  )
+
+  const handleClearField = useCallback(
+    async (ev: Evidence, key: 'source' | 'with') => {
+      const oldValue = key === 'source' ? ev.reference : ev.with
+      if (!oldValue) return
+      const ops = buildClearEvidenceAnnotationOperations(ev.uid, key, oldValue, modelId, resolvedUserContext)
+      if (ops.length > 0) await updateGraphModel(ops)
+    },
+    [modelId, resolvedUserContext, updateGraphModel]
   )
 
   const handleDeleteNode = useCallback(async () => {
     const nodeEdges = allEdges
       .filter(e => e.sourceId === node.uid || e.targetId === node.uid)
       .map(e => ({ sourceId: e.sourceId, targetId: e.targetId, predicateId: e.id }))
-    const ops = buildDeleteNodeOperations(node.uid, nodeEdges, modelId)
-    await updateGraphModel(ops)
+    await updateGraphModel(buildDeleteNodeOperations(node.uid, nodeEdges, modelId))
     setMenuAnchor(null)
     onNodeDeleted?.()
   }, [node.uid, allEdges, modelId, updateGraphModel, onNodeDeleted])
 
   const handleInsertNode = useCallback(
-    async (predicateId: string, typeId: string) => {
-      const ops = buildAddNodeOperations(
-        node.uid,
-        predicateId,
-        typeId,
-        modelId,
-        resolvedUserContext
+    async (item: InsertMenuItem) => {
+      await updateGraphModel(
+        buildAddNodeOperations(node.uid, item.predicate.id, item.targetType, modelId, resolvedUserContext)
       )
-      await updateGraphModel(ops)
       setAddMenuAnchor(null)
       setMenuAnchor(null)
     },
@@ -387,16 +291,14 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
 
   return (
     <>
-      {/* Row: [term cell] [evidence cells] [action cell (40px)] */}
       <div className="mb-2 flex w-full flex-row items-stretch justify-start">
-        {/* ── Term cell ── */}
+        {/* Term cell */}
         <div
           ref={termCellRef}
           className={`${cellBase} shrink-0 rounded-md`}
           style={{ flexBasis: termWidth, minWidth: termWidth }}
         >
-          <div className={floatingLabelClasses}>{floatingLabel}</div>
-
+          <div className={floatingLabel}>{treeNode.floatingLabel}</div>
           {node.label ? (
             <span>
               {node.label}
@@ -413,25 +315,23 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
           ) : (
             <span className="italic text-gray-400">—</span>
           )}
-
           {canDelete && (
-            <button
-              onClick={handleDeleteNode}
-              className="absolute right-0 top-0 hidden h-5 w-5 items-center justify-center text-red-400 hover:bg-red-400 hover:text-white group-hover/cell:flex"
-            >
+            <button onClick={handleDeleteNode} className={deleteBtn}>
               <FaTrash size={10} />
             </button>
           )}
-
           <button
-            onClick={openTermEditor}
-            className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center text-gray-500 opacity-0 hover:bg-gray-200 group-hover/cell:opacity-100"
+            onClick={() => {
+              setEditorCategory(EditorCategory.term)
+              setEditorAnchor(termCellRef.current)
+            }}
+            className={editBtn}
           >
             <FaPencilAlt size={9} />
           </button>
         </div>
 
-        {/* ── Evidence cells — only when showEvidence ── */}
+        {/* Evidence cells */}
         {showEvidence && (
           <div className="flex min-w-0 flex-1 flex-col items-stretch p-0">
             {evidence.length > 0 ? (
@@ -440,10 +340,10 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
                   <EvidenceRowComponent
                     key={ev.uid}
                     ev={ev}
-                    edge={edge}
                     modelId={modelId}
                     userContext={resolvedUserContext}
                     onRemoveEvidence={handleRemoveEvidence}
+                    onClearField={handleClearField}
                   />
                 ) : null
               )
@@ -455,42 +355,29 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
           </div>
         )}
 
-        {/* Spacer when evidence hidden */}
         {!showEvidence && <span className="grow" />}
 
-        {/* ── Action cell (40px) ── */}
-        <div
-          ref={actionCellRef}
-          className="flex w-10 shrink-0 flex-col items-center justify-center p-0"
-        >
+        {/* Action cell */}
+        <div ref={actionCellRef} className="flex w-10 shrink-0 flex-col items-center justify-center p-0">
           {showMenu && (
-            <IconButton
-              size="small"
-              onClick={e => setMenuAnchor(e.currentTarget)}
-              className="!h-10 !w-10 !shadow-md"
-            >
+            <IconButton size="small" onClick={e => setMenuAnchor(e.currentTarget)} className="!h-10 !w-10 !shadow-md">
               <FaEllipsisV size={12} />
             </IconButton>
           )}
-          {showAddButton && extensionRelations.length > 0 && (
-            <IconButton
-              size="small"
-              onClick={() => setAddMenuAnchor(actionCellRef.current)}
-              className="!h-10 !w-10 !shadow-md"
-            >
+          {showAddButton && insertMenuItems.length > 0 && (
+            <IconButton size="small" onClick={() => setAddMenuAnchor(actionCellRef.current)} className="!h-10 !w-10 !shadow-md">
               <FaPlus size={12} />
             </IconButton>
           )}
         </div>
       </div>
 
-      {/* ── Single EditorDropdown for this node ── */}
       <EditorDropdown
         anchorEl={editorAnchor}
         category={editorCategory}
-        onClose={closeEditor}
+        onClose={() => setEditorAnchor(null)}
         onSave={handleEditorSave}
-        termLabel={floatingLabel}
+        termLabel={treeNode.floatingLabel}
         termRootTypes={node.rootTypes}
         initialTerm={node.id ? { id: node.id, label: node.label } : null}
         initialEvidence={null}
@@ -498,7 +385,6 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
         initialWith=""
       />
 
-      {/* Children — always expanded */}
       {children.map(child => (
         <ActivityTableNode
           key={child.node.uid}
@@ -510,28 +396,19 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
         />
       ))}
 
-      <Menu
-        anchorEl={menuAnchor}
-        open={Boolean(menuAnchor)}
-        onClose={() => setMenuAnchor(null)}
-      >
-        {extensionRelations.length > 0 && (
-          <MenuItem
-            onClick={() => {
-              setAddMenuAnchor(actionCellRef.current)
-              setMenuAnchor(null)
-            }}
-          >
+      <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
+        {insertMenuItems.length > 0 && (
+          <MenuItem onClick={() => { setAddMenuAnchor(actionCellRef.current); setMenuAnchor(null) }}>
             Add
           </MenuItem>
         )}
         {edge && (
-          <MenuItem onClick={openAddEvidenceEditor}>Add Evidence</MenuItem>
+          <MenuItem onClick={() => { setEditorCategory(EditorCategory.evidenceAll); setEditorAnchor(actionCellRef.current); setMenuAnchor(null) }}>
+            Add Evidence
+          </MenuItem>
         )}
         {canDelete && (
-          <MenuItem onClick={handleDeleteNode} className="!text-red-600">
-            Delete
-          </MenuItem>
+          <MenuItem onClick={handleDeleteNode} className="!text-red-600">Delete</MenuItem>
         )}
       </Menu>
 
@@ -539,32 +416,20 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
         anchorEl={addMenuAnchor}
         open={Boolean(addMenuAnchor)}
         onClose={() => setAddMenuAnchor(null)}
-        slotProps={{
-          paper: {
-            className: '!bg-blue-100',
-            sx: { maxWidth: 'none' },
-          },
-        }}
+        slotProps={{ paper: { className: '!bg-blue-100', sx: { maxWidth: 'none' } } }}
       >
-        {extensionRelations.flatMap(entry =>
-          entry.constraint.range.map(typeId => {
-            const targetCategory = getNodeCategory(typeId)
-            return (
-              <MenuItem
-                key={`${entry.constraint.predicate.id}-${typeId}`}
-                onClick={() => handleInsertNode(entry.constraint.predicate.id, typeId)}
-                className="!border-b !border-[rgba(59,89,152,0.6)] !py-1 !text-[10px] !leading-3"
-              >
-                <div className="flex w-full flex-col items-start justify-start">
-                  <span>{entry.constraint.predicate.label}</span>
-                  <span className="font-bold capitalize">
-                    {targetCategory?.label ?? typeId}
-                  </span>
-                </div>
-              </MenuItem>
-            )
-          })
-        )}
+        {insertMenuItems.map(item => (
+          <MenuItem
+            key={`${item.predicate.id}-${item.targetType}`}
+            onClick={() => handleInsertNode(item)}
+            className="!border-b !border-[rgba(59,89,152,0.6)] !py-1 !text-[10px] !leading-3"
+          >
+            <div className="flex w-full flex-col items-start justify-start">
+              <span>{item.label}</span>
+              <span className="text-xs text-gray-500">{item.rangeLabel}</span>
+            </div>
+          </MenuItem>
+        ))}
       </Menu>
     </>
   )

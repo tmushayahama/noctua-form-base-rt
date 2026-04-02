@@ -1,24 +1,25 @@
-import type React from 'react';
-import { useState, useEffect } from 'react';
-import { TextField, Autocomplete, Paper, Button, CircularProgress } from '@mui/material';
-import { FiChevronRight, FiFile } from 'react-icons/fi';
-import { FaFileMedical } from 'react-icons/fa';
-import { useSearchTermsQuery } from '../slices/lookupApiSlice';
-import type { GOlrResponse } from '../models/search';
-import { AutocompleteType } from '../models/search';
+import type React from 'react'
+import type { KeyboardEvent } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { FiFile } from 'react-icons/fi'
+import { useSearchTermsQuery } from '../slices/lookupApiSlice'
+import type { GOlrResponse } from '../models/search'
+import { AutocompleteType } from '../models/search'
+import { TextField, Popper, Paper, CircularProgress } from '@mui/material'
 
 interface TermAutocompleteProps {
-  label: string;
-  name: string;
-  rootTypeIds?: string[];
-  autocompleteType?: AutocompleteType;
-  value: GOlrResponse | null | string;
-  onChange: (value: GOlrResponse | null | string) => void;
-  onBlur?: () => void;
-  disabled?: boolean;
-  variant?: 'standard' | 'outlined' | 'filled';
-  onOpenReference?: (event: React.MouseEvent) => void;
-  onOpenTermDetails?: (event: React.MouseEvent, item: GOlrResponse) => void;
+  label: string
+  name: string
+  rootTypeIds?: string[]
+  autocompleteType?: AutocompleteType
+  value: GOlrResponse | null | string
+  onChange: (value: GOlrResponse | null | string) => void
+  onBlur?: () => void
+  disabled?: boolean
+  variant?: 'standard' | 'outlined' | 'filled'
+  onOpenTermDetails?: (event: React.MouseEvent, item: GOlrResponse) => void
+  /** Pre-populated options shown on focus before the user types (e.g. terms already used in the model) */
+  initialOptions?: GOlrResponse[]
 }
 
 const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
@@ -30,20 +31,22 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
   onChange,
   onBlur,
   disabled = false,
-  variant = 'filled',
-  onOpenReference,
-  onOpenTermDetails
+  variant = 'outlined',
+  onOpenTermDetails,
+  initialOptions = [],
 }) => {
-  const [inputValue, setInputValue] = useState<string>('');
-  const [open, setOpen] = useState<boolean>(false);
-  const [options, setOptions] = useState<GOlrResponse[]>([]);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>('');
+  const [inputValue, setInputValue] = useState<string>('')
+  const [open, setOpen] = useState<boolean>(false)
+  const [options, setOptions] = useState<GOlrResponse[]>([])
+  const [highlightedIndex, setHighlightedIndex] = useState<number>(-1)
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>('')
+  const anchorRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
 
-  // Determine if we should use autocomplete or regular textarea
-  const useAutocomplete = autocompleteType === AutocompleteType.TERM ||
-    autocompleteType === AutocompleteType.EVIDENCE_CODE;
+  const useAutocomplete =
+    autocompleteType === AutocompleteType.TERM ||
+    autocompleteType === AutocompleteType.EVIDENCE_CODE
 
-  // Use RTK Query hook only when using autocomplete
   const { data, isLoading, isFetching } = useSearchTermsQuery(
     { searchText: debouncedSearchTerm, closureIds: rootTypeIds },
     {
@@ -51,225 +54,184 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
       selectFromResult: ({ data, isLoading, isFetching }) => ({
         data: data || [],
         isLoading,
-        isFetching
-      })
+        isFetching,
+      }),
     }
-  );
+  )
 
-  // Update options when data changes
+  const searching = isLoading || isFetching
+
   useEffect(() => {
     if (useAutocomplete && data && data.length > 0) {
-      setOptions(data);
+      setOptions(data)
+      setHighlightedIndex(-1)
     }
-  }, [data, useAutocomplete]);
+  }, [data, useAutocomplete])
 
-  // Handle debounced search with native setTimeout
+  // Show initialOptions on focus when no search is active
+  const showInitial = open && inputValue.length < 3 && options.length === 0 && !searching
+  const displayOptions = showInitial ? initialOptions : options
+
   useEffect(() => {
-    if (!useAutocomplete) return;
+    if (!useAutocomplete) return
 
     const handler = setTimeout(() => {
-      setDebouncedSearchTerm(inputValue);
-    }, 300);
+      setDebouncedSearchTerm(inputValue)
+    }, 300)
 
     return () => {
-      clearTimeout(handler);
-    };
-  }, [inputValue, useAutocomplete]);
+      clearTimeout(handler)
+    }
+  }, [inputValue, useAutocomplete])
 
-  // When the autocomplete opens, initialize with empty search
+  // Sync inputValue with external value prop (e.g., when Redux state changes)
+  useEffect(() => {
+    if (value && typeof value === 'object' && 'label' in value && value.label) {
+      setInputValue(value.id ? `${value.label} (${value.id})` : value.label)
+    } else if (value === null) {
+      setInputValue('')
+    }
+  }, [value])
+
   useEffect(() => {
     if (!open) {
-      setOptions([]);
+      setOptions([])
+      setHighlightedIndex(-1)
     }
-  }, [open]);
+  }, [open])
 
-  // Get the display value for different types
-  const getOptionLabel = (option: GOlrResponse | string | null): string => {
-    if (!option) return '';
-    if (typeof option === 'string') {
-      return option;
-    } else if (option && 'label' in option) {
-      return option.label;
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!open) return
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault()
+        setHighlightedIndex(prev => (prev < options.length - 1 ? prev + 1 : 0))
+        break
+      case 'ArrowUp':
+        event.preventDefault()
+        setHighlightedIndex(prev => (prev > 0 ? prev - 1 : options.length - 1))
+        break
+      case 'Enter':
+        event.preventDefault()
+        if (highlightedIndex >= 0 && highlightedIndex < options.length) {
+          handleOptionSelect(options[highlightedIndex])
+        }
+        break
+      case 'Escape':
+        setOpen(false)
+        break
     }
-    return '';
-  };
+  }
 
-  // Render option based on autocomplete type
-  const renderOption = (props: React.HTMLAttributes<HTMLLIElement>, option: GOlrResponse) => {
-    if (autocompleteType === AutocompleteType.TERM ||
-      autocompleteType === AutocompleteType.EVIDENCE_CODE) {
-      const item = option;
-
-      return (
-        <li {...props} key={item.id} className={`${!item.notAnnotatable ? 'opacity-50 pointer-events-none' : ''}`}>
-          <div className="flex w-full items-center p-2">
-            <div className="flex-grow font-normal truncate max-w-[200px]">
-              {item.label}
-            </div>
-
-            {autocompleteType === AutocompleteType.EVIDENCE_CODE && (
-              <div className="font-bold mr-2">
-                {item.xref}
-              </div>
-            )}
-
-            <div className="text-sm text-gray-600 flex items-center">
-              {item.link ? (
-                <a
-                  href={item.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex items-center"
-                >
-                  <span>{item.id}</span>
-                  <FiFile className="ml-1" fontSize="small" />
-                </a>
-              ) : (
-                <span>{item.id}</span>
-              )}
-            </div>
-
-            {onOpenTermDetails && (
-              <Button
-                variant="outlined"
-                size="small"
-                className="ml-2 min-w-[36px] rounded-full"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenTermDetails(e, item);
-                }}
-              >
-                <FiChevronRight fontSize="small" />
-              </Button>
-            )}
-          </div>
-        </li>
-      );
-    } else {
-      return (
-        <li {...props}>
-          <div className="flex w-full items-center py-2">
-            <div className="flex-grow">{getOptionLabel(option)}</div>
-          </div>
-        </li>
-      );
+  useEffect(() => {
+    if (highlightedIndex >= 0 && listRef.current) {
+      const element = listRef.current.children[highlightedIndex] as HTMLElement
+      element?.scrollIntoView({ block: 'nearest' })
     }
-  };
+  }, [highlightedIndex])
 
-  const handleOnFocus = () => {
-    if (useAutocomplete && !inputValue) {
-      setOpen(true);
-    }
-  };
+  const handleOptionSelect = (option: GOlrResponse) => {
+    onChange(option)
+    setInputValue(option.id ? `${option.label} (${option.id})` : option.label)
+    setOpen(false)
+    setHighlightedIndex(-1)
+  }
 
-  // Handle change for autocomplete
-  const handleAutocompleteChange = (_: React.SyntheticEvent, newValue: GOlrResponse | null) => {
-    onChange(newValue || null);
-  };
-
-  // Handle change for regular textarea
-  const handleTextareaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
-  };
-
-  // If not using autocomplete, render a regular TextField
-  if (!useAutocomplete) {
-    return (
-      <div className="w-full">
+  return (
+    <div className="w-full">
+      <div ref={anchorRef} onKeyDown={handleKeyDown}>
         <TextField
-          id={`textarea-${name}`}
+          id={`autocomplete-${name}`}
           name={name}
           label={label}
           size="small"
-          variant={variant}
+          value={inputValue}
+          onChange={e => {
+            setInputValue(e.target.value)
+            if (!open) setOpen(true)
+          }}
+          onFocus={() => useAutocomplete && !inputValue && setOpen(true)}
+          onBlur={() => {
+            setTimeout(() => setOpen(false), 200)
+            onBlur?.()
+          }}
           disabled={disabled}
-          value={typeof value === 'string' ? value : ''}
-          onChange={handleTextareaChange}
-          onBlur={onBlur}
+          variant={variant}
           multiline
           rows={2}
           fullWidth
           InputProps={{
-            className: "bg-white rounded",
-            endAdornment: (autocompleteType === AutocompleteType.REFERENCE ||
-              autocompleteType === AutocompleteType.WITH) &&
-              onOpenReference ? (
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenReference(e);
-                  }}
-                  className="min-w-0 p-1 self-end"
-                  style={{ position: 'absolute', right: 4, bottom: 4 }}
-                >
-                  <FaFileMedical />
-                </Button>
-              ) : undefined,
-            style: { position: 'relative' },
+            className: 'bg-white rounded',
+            endAdornment: searching && <CircularProgress size={20} />,
           }}
         />
       </div>
-    );
-  }
 
-  // Otherwise render the autocomplete component
-  return (
-    <div className="w-full">
-      <Autocomplete
-        id={`autocomplete-${name}`}
-        freeSolo
+      <Popper
         open={open}
-        onOpen={() => setOpen(true)}
-        onClose={() => setOpen(false)}
-        options={options}
-        loading={isLoading || isFetching}
-        value={typeof value === 'object' ? value : null}
-        onChange={handleAutocompleteChange}
-        onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
-        getOptionLabel={getOptionLabel as (option: any) => string}
-        isOptionEqualToValue={(option, value) => {
-          if (!option || !value) return false;
-          return option.id === value.id;
-        }}
-        disabled={disabled}
-        renderOption={renderOption as any}
-        filterOptions={(x) => x} // Disable built-in filtering as we're using server-side filtering
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            name={name}
-            label={label}
-            size="small"
-            variant={variant}
-            onBlur={onBlur}
-            onFocus={handleOnFocus}
-            multiline
-            rows={2}
-            InputProps={{
-              ...params.InputProps,
-              className: "bg-white rounded",
-              endAdornment: (
-                <>
-                  {isLoading || isFetching ? (
-                    <CircularProgress color="inherit" size={20} />
-                  ) : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
-          />
-        )}
-        PaperComponent={(props) => (
-          <Paper {...props} elevation={8} className="max-w-md shadow-lg" />
-        )}
-        noOptionsText={inputValue.length < 3 ? "Type at least 3 characters to search" : "No results found"}
-        ListboxProps={{
-          className: "max-h-60 overflow-y-auto"
-        }}
-      />
-    </div>
-  );
-};
+        anchorEl={anchorRef.current}
+        placement="bottom-start"
+        style={{ zIndex: 1300 }}
+      >
+        <Paper
+          className="!bg-accent-50 mt-1 max-h-60 w-[400px] overflow-y-auto shadow-lg"
+          ref={listRef}
+        >
+          {!searching && displayOptions.length === 0 && (
+            <div className="p-4 text-center text-xs text-gray-500">
+              {inputValue.length < 3
+                ? 'Type at least 3 characters to search'
+                : 'No results found'}
+            </div>
+          )}
 
-export default TermAutocomplete;
+          {displayOptions.map((option, index) => (
+            <div
+              key={option.id}
+              className={`flex min-h-[40px] cursor-pointer items-center border-b px-4 py-2 text-xs ${option.isObsolete ? 'pointer-events-none line-through opacity-40' : ''} ${index === highlightedIndex ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
+              style={{ borderColor: 'rgba(59,89,152,0.3)' }}
+              onClick={() => !option.isObsolete && handleOptionSelect(option)}
+              onMouseEnter={() => setHighlightedIndex(index)}
+            >
+              <div className="min-w-0 shrink font-normal">{option.label}</div>
+              <span className="grow" />
+              {autocompleteType === AutocompleteType.EVIDENCE_CODE && option.xref && (
+                <div className="ml-2 shrink-0 font-bold">{option.xref}</div>
+              )}
+              <div className="ml-2 shrink-0 text-[10px]" style={{ color: 'rgba(0,0,0,0.6)' }}>
+                {option.link ? (
+                  <a
+                    href={option.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    className="flex items-center hover:text-blue-500"
+                  >
+                    {option.id}
+                  </a>
+                ) : (
+                  <span>{option.id}</span>
+                )}
+              </div>
+
+              {onOpenTermDetails && (
+                <button
+                  className="ml-2 shrink-0 rounded-full border p-1 hover:bg-gray-200"
+                  onClick={e => {
+                    e.stopPropagation()
+                    onOpenTermDetails(e, option)
+                  }}
+                >
+                  <FiFile className="ml-1" />
+                </button>
+              )}
+            </div>
+          ))}
+        </Paper>
+      </Popper>
+    </div>
+  )
+}
+
+export default TermAutocomplete

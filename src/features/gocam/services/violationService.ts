@@ -1,5 +1,5 @@
 import type { GraphModel, GraphNode, Edge, CamError } from '../models/cam'
-import { ErrorType, ErrorLevel } from '../models/cam'
+import { ErrorType, ErrorLevel, RootTypes } from '../models/cam'
 import { SHAPE_TERM_LABELS } from '../data/shapeTerms'
 
 /**
@@ -98,7 +98,10 @@ export function computeDiffs(model: GraphModel): {
     activityEdgeUids.add(conn.uid)
   }
 
-  const diffNodes = model.nodes.filter(n => !activityNodeUids.has(n.uid))
+  const diffNodes = model.nodes.filter(n =>
+    !activityNodeUids.has(n.uid) &&
+    !n.rootTypes?.includes(RootTypes.EVIDENCE_NODE)
+  )
   const diffEdges = model.edges.filter(e => !activityEdgeUids.has(e.uid))
 
   return { diffNodes, diffEdges }

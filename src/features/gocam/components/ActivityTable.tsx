@@ -18,10 +18,8 @@ import type { Activity, Edge, UserContext, DisplayTreeNode } from '../models/cam
 import { Relations } from '@/@noctua.core/models/relations'
 import { setSelectedActivity } from '../slices/camSlice'
 import { setRightDrawerOpen } from '@/@noctua.core/components/drawer/drawerSlice'
-import { loadActivity, resetForm } from '../slices/activityFormSlice'
 import { useUpdateGraphModelMutation } from '../slices/camApiSlice'
 import { buildDeleteActivityOperations } from '../services/activityOperations'
-import ActivityForm from './forms/ActivityForm'
 import ActivityTableNode, {
   getAspectFromRootTypes,
 } from './ActivityTableNode'
@@ -142,7 +140,6 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
 
   const [headerMenuAnchor, setHeaderMenuAnchor] = useState<HTMLElement | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   const userContext: UserContext | undefined = useMemo(() => {
     if (!authUser?.uri || !authUser?.group?.id) return undefined
@@ -166,16 +163,6 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
     dispatch(setRightDrawerOpen(false))
   }, [activity, modelId, updateGraphModel, dispatch])
 
-  const handleEdit = useCallback(() => {
-    dispatch(resetForm())
-    dispatch(loadActivity(activity))
-    setEditDialogOpen(true)
-    setHeaderMenuAnchor(null)
-  }, [dispatch, activity])
-
-  const handleEditSaved = useCallback(() => {
-    setEditDialogOpen(false)
-  }, [])
 
   const gpLabel = activity.type === 'molecule' ? 'Chemical' : 'Gene Product'
 
@@ -250,7 +237,6 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
         open={Boolean(headerMenuAnchor)}
         onClose={() => setHeaderMenuAnchor(null)}
       >
-        <MenuItem onClick={handleEdit}>Edit Activity</MenuItem>
         <MenuItem
           onClick={() => {
             setConfirmDelete(true)
@@ -276,24 +262,6 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
         </DialogActions>
       </Dialog>
 
-      {/* ── Edit dialog ── */}
-      <Dialog
-        open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
-        fullWidth
-        maxWidth="lg"
-        PaperProps={{ className: 'rounded-lg' }}
-      >
-        <DialogTitle className="flex items-center justify-between border-b pb-2">
-          <span className="text-lg font-medium">Edit Activity</span>
-          <IconButton size="small" onClick={() => setEditDialogOpen(false)}>
-            <FiX />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent className="!p-4">
-          <ActivityForm onSaved={handleEditSaved} />
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

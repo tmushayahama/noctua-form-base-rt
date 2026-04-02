@@ -1,8 +1,8 @@
 import type React from 'react'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { IconButton, Menu, MenuItem } from '@mui/material'
 import { FaEllipsisV, FaPlus } from 'react-icons/fa'
-import { useAppDispatch } from '@/app/hooks'
+import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import TermAutocomplete from '@/features/search/components/Autocomplete'
 import { AutocompleteType } from '@/features/search/models/search'
 import type { GOlrResponse } from '@/features/search/models/search'
@@ -21,11 +21,10 @@ import {
   clearNodeValues,
   fillRootTerm,
 } from '../../slices/activityFormSlice'
-import {
-  getNodeCategory,
-  getExtensionRelations,
-  type RelationEntry,
-} from '../../data/nodeCategories'
+import { selectCamModel, getModelTerms, getModelEvidence } from '../../slices/camSlice'
+import { getNodeCategory } from '../../data/nodeCategories'
+import { getInsertMenuItems } from '../../data/insertMenuConfig'
+import type { InsertMenuItem } from '../../data/insertMenuConfig'
 import ReferenceField from './ReferenceField'
 import WithField from './WithField'
 
@@ -46,18 +45,25 @@ const EntityRow: React.FC<EntityRowProps> = ({
   relation,
   parentTermUid,
   treeLevel,
-  errors,
+  errors: _errors,
   displayMenuButton = true,
   displayAddButton = false,
   onSearchAnnotations,
   onCloneEvidence,
 }) => {
   const dispatch = useAppDispatch()
+  const model = useAppSelector(selectCamModel)
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null)
   const [evidenceMenuAnchor, setEvidenceMenuAnchor] = useState<HTMLElement | null>(null)
 
   const evidence = relation?.evidence ?? []
+
+  const termInitialOptions = useMemo(
+    () => getModelTerms(model, node.rootTypes),
+    [model, node.rootTypes]
+  )
+  const evidenceInitialOptions = useMemo(() => getModelEvidence(model), [model])
 
   const handleTermChange = useCallback(
     (value: GOlrResponse | null | string) => {
@@ -172,19 +178,17 @@ const EntityRow: React.FC<EntityRowProps> = ({
     closeAllMenus()
   }
 
-  const category = getNodeCategory(node.category)
-  const extensionRelations = category ? getExtensionRelations(category) : []
+  const insertMenuItems = getInsertMenuItems(node.category)
 
-  const handleInsertNode = (entry: RelationEntry) => {
-    const targetTypeId = entry.constraint.range[0]
-    const targetCategory = getNodeCategory(targetTypeId)
+  const handleInsertNode = (item: InsertMenuItem) => {
+    const targetCategory = getNodeCategory(item.targetType)
     dispatch(
       addRelationForm({
         parentTermUid: node.uid,
-        predicate: entry.constraint.predicate,
-        nodeType: targetTypeId,
-        label: targetCategory?.label ?? targetTypeId,
-        rootTypes: targetCategory?.searchClosureIds ?? [targetTypeId],
+        predicate: item.predicate,
+        nodeType: item.targetType,
+        label: targetCategory?.label ?? item.targetType,
+        rootTypes: targetCategory?.searchClosureIds ?? [item.targetType],
         aspect: targetCategory?.aspect ?? null,
       })
     )
@@ -231,6 +235,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
             value={node.term}
             onChange={handleTermChange}
             variant="outlined"
+            initialOptions={termInitialOptions}
           />
         </div>
 
@@ -258,6 +263,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
                   }
                   onChange={handleEvidenceCodeChange(ev)}
                   variant="outlined"
+                  initialOptions={evidenceInitialOptions}
                 />
               </div>
               <div className="w-1/4 px-2 py-2">
@@ -291,7 +297,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
       </div>
 
       {/* Add button (shown below row, for GP section) */}
-      {displayAddButton && extensionRelations.length > 0 && (
+      {displayAddButton && insertMenuItems.length > 0 && (
         <IconButton
           size="small"
           onClick={e => setAddMenuAnchor(e.currentTarget)}
@@ -313,7 +319,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
           </MenuItem>
         )}
         <MenuItem onClick={handleToggleComplement}>NOT Qualifier</MenuItem>
-        {extensionRelations.length > 0 && (
+        {insertMenuItems.length > 0 && (
           <MenuItem
             onClick={e => {
               setAddMenuAnchor(e.currentTarget)
@@ -351,22 +357,17 @@ const EntityRow: React.FC<EntityRowProps> = ({
         open={Boolean(addMenuAnchor)}
         onClose={() => setAddMenuAnchor(null)}
       >
-        {extensionRelations.map(entry => {
-          const rangeLabels = entry.constraint.range
-            .map(id => getNodeCategory(id)?.label ?? id)
-            .join(' / ')
-          return (
-            <MenuItem
-              key={`${entry.constraint.predicate.id}-${entry.key}`}
-              onClick={() => handleInsertNode(entry)}
-            >
-              <div className="flex w-full flex-col items-start">
-                <span>{entry.constraint.predicate.label}</span>
-                <span className="text-xs text-gray-500">{rangeLabels}</span>
-              </div>
-            </MenuItem>
-          )
-        })}
+        {insertMenuItems.map(item => (
+          <MenuItem
+            key={`${item.predicate.id}-${item.targetType}`}
+            onClick={() => handleInsertNode(item)}
+          >
+            <div className="flex w-full flex-col items-start">
+              <span>{item.label}</span>
+              <span className="text-xs text-gray-500">{item.rangeLabel}</span>
+            </div>
+          </MenuItem>
+        ))}
       </Menu>
 
       {/* Evidence submenu */}

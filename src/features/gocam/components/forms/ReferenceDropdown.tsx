@@ -1,6 +1,7 @@
 import type React from 'react'
 import { useState, useEffect } from 'react'
 import {
+  CircularProgress,
   Popover,
   TextField,
   IconButton,
@@ -8,8 +9,9 @@ import {
   Select,
   type SelectChangeEvent,
 } from '@mui/material'
-import { FaRegTimesCircle, FaRegCheckCircle } from 'react-icons/fa'
+import { FaRegTimesCircle, FaRegCheckCircle, FaUser, FaCalendarAlt } from 'react-icons/fa'
 import { referenceAllowedDBs } from '../../data/allowedDatabases'
+import { useLazyGetPubmedInfoQuery } from '@/features/search/slices/lookupApiSlice'
 
 interface ReferenceDropdownProps {
   anchorEl: HTMLElement | null
@@ -39,6 +41,8 @@ const ReferenceDropdown: React.FC<ReferenceDropdownProps> = ({
 }) => {
   const [db, setDb] = useState(dbOptions[0])
   const [accession, setAccession] = useState('')
+  const [triggerPubmed, { data: pubmedInfo, isFetching: pubmedLoading }] =
+    useLazyGetPubmedInfoQuery()
 
   // Pre-fill when popover opens
   useEffect(() => {
@@ -49,6 +53,14 @@ const ReferenceDropdown: React.FC<ReferenceDropdownProps> = ({
       setAccession(parsed.accession)
     }
   }, [anchorEl, currentValue])
+
+  // Fetch PubMed info when PMID accession changes
+  useEffect(() => {
+    if (db.name === 'PMID' && accession.trim().length >= 4) {
+      const timer = setTimeout(() => triggerPubmed(accession.trim()), 500)
+      return () => clearTimeout(timer)
+    }
+  }, [db.name, accession, triggerPubmed])
 
   const handleSave = () => {
     const trimmed = accession.trim()
@@ -72,9 +84,12 @@ const ReferenceDropdown: React.FC<ReferenceDropdownProps> = ({
       onClose={onClose}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      PaperProps={{ className: '!bg-yellow-50 !shadow-lg' }}
+      PaperProps={{ className: '!bg-accent-50 !shadow-lg' }}
     >
-      <div className="flex w-full flex-col items-stretch justify-start px-2 py-2">
+      <div
+        className="flex w-full flex-col items-stretch justify-start px-2 py-2"
+        style={{ minWidth: 400 }}
+      >
         <div className="flex w-full flex-row items-center justify-start">
           <Select
             size="small"
@@ -109,6 +124,37 @@ const ReferenceDropdown: React.FC<ReferenceDropdownProps> = ({
             <FaRegCheckCircle />
           </IconButton>
         </div>
+
+        {/* PubMed article preview */}
+        {db.name === 'PMID' && accession.trim() && (
+          <div className="mt-2 border-t border-gray-300 pt-2 text-xs">
+            {pubmedLoading && <CircularProgress size={14} />}
+            {!pubmedLoading && pubmedInfo && (
+              <div className="flex flex-col gap-1">
+                <a
+                  href={`https://pubmed.ncbi.nlm.nih.gov/${accession.trim()}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="line-clamp-2 font-medium text-blue-700 hover:underline"
+                >
+                  {pubmedInfo.title}
+                </a>
+                {pubmedInfo.authors && (
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <FaUser size={9} />
+                    <span className="line-clamp-1">{pubmedInfo.authors}</span>
+                  </div>
+                )}
+                {pubmedInfo.date && (
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <FaCalendarAlt size={9} />
+                    <span>{pubmedInfo.date}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </Popover>
   )

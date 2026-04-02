@@ -1,10 +1,12 @@
 import type React from 'react'
-import { useState, useEffect, useCallback } from 'react'
-import { IconButton, InputAdornment, Popover, TextField } from '@mui/material'
-import { FaPlusSquare } from 'react-icons/fa'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { IconButton, InputAdornment, Menu, MenuItem, Popover, TextField } from '@mui/material'
+import { FaEllipsisV, FaPlusSquare } from 'react-icons/fa'
 import { FaRegCircleXmark, FaRegCircleCheck } from 'react-icons/fa6'
+import { useAppSelector } from '@/app/hooks'
 import { EditorCategory } from '../../models/editorCategory'
 import { RootTypes } from '../../models/cam'
+import { selectCamModel, getModelTerms, getModelEvidence } from '../../slices/camSlice'
 import TermAutocomplete from '@/features/search/components/Autocomplete'
 import { AutocompleteType } from '@/features/search/models/search'
 import type { GOlrResponse } from '@/features/search/models/search'
@@ -35,6 +37,12 @@ export interface EditorDropdownProps {
   initialEvidence?: { id: string; label: string } | null
   initialReference?: string
   initialWith?: string
+
+  // Optional action menu callbacks (shown when category is all/evidenceAll)
+  onSearchAnnotations?: () => void
+  onFillRootTerm?: () => void
+  /** Whether the node has an aspect (needed for Search Annotations) */
+  hasAspect?: boolean
 }
 
 function getDisplaySections(category: EditorCategory) {
@@ -85,9 +93,19 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
   initialEvidence = null,
   initialReference = '',
   initialWith = '',
+  onSearchAnnotations,
+  onFillRootTerm,
+  hasAspect = false,
 }) => {
   const open = Boolean(anchorEl)
   const sections = getDisplaySections(category)
+  const model = useAppSelector(selectCamModel)
+
+  const termInitialOptions = useMemo(
+    () => getModelTerms(model, termRootTypes ?? []),
+    [model, termRootTypes]
+  )
+  const evidenceInitialOptions = useMemo(() => getModelEvidence(model), [model])
 
   // Field state
   const [term, setTerm] = useState<GOlrResponse | null>(null)
@@ -98,6 +116,8 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
   // Sub-dropdown anchors for Reference/With DB pickers
   const [refDbAnchor, setRefDbAnchor] = useState<HTMLElement | null>(null)
   const [withDbAnchor, setWithDbAnchor] = useState<HTMLElement | null>(null)
+  // Action menu anchor
+  const [actionMenuAnchor, setActionMenuAnchor] = useState<HTMLElement | null>(null)
 
   // Reset fields when popover opens
   useEffect(() => {
@@ -112,14 +132,15 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
       setWithVal(initialWith)
       setRefDbAnchor(null)
       setWithDbAnchor(null)
+      setActionMenuAnchor(null)
     }
   }, [open, initialTerm, initialEvidence, initialReference, initialWith])
 
   const handleClose = useCallback(() => {
-    if (!refDbAnchor && !withDbAnchor) {
+    if (!refDbAnchor && !withDbAnchor && !actionMenuAnchor) {
       onClose()
     }
-  }, [refDbAnchor, withDbAnchor, onClose])
+  }, [refDbAnchor, withDbAnchor, actionMenuAnchor, onClose])
 
   const handleSave = useCallback(() => {
     onSave({
@@ -138,7 +159,7 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
         onClose={handleClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        PaperProps={{ className: '!bg-yellow-50 !shadow-lg' }}
+        PaperProps={{ className: '!bg-accent-50 !shadow-lg' }}
       >
         <div className="flex w-full flex-row items-center justify-start px-1 pb-1 pt-2">
           {/* ── Term section (250px) ── */}
@@ -154,6 +175,7 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
                   if (val && typeof val === 'object') setTerm(val)
                 }}
                 variant="outlined"
+                initialOptions={termInitialOptions}
               />
             </div>
           )}
@@ -171,6 +193,7 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
                   if (val && typeof val === 'object') setEvidence(val)
                 }}
                 variant="outlined"
+                initialOptions={evidenceInitialOptions}
               />
             </div>
           )}
@@ -185,6 +208,8 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
                 placeholder="PMID:12345"
                 value={reference}
                 onChange={e => setReference(e.target.value)}
+                multiline
+                rows={2}
                 fullWidth
                 slotProps={{
                   input: {
@@ -215,6 +240,8 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
                 placeholder="UniProtKB:P12345"
                 value={withVal}
                 onChange={e => setWithVal(e.target.value)}
+                multiline
+                rows={2}
                 fullWidth
                 slotProps={{
                   input: {
@@ -234,6 +261,46 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
               />
             </div>
           )}
+
+          {/* ── Action menu (all / evidenceAll categories only) ── */}
+          {(category === EditorCategory.all || category === EditorCategory.evidenceAll) &&
+            (onSearchAnnotations || onFillRootTerm) && (
+              <>
+                <IconButton
+                  size="small"
+                  onClick={e => setActionMenuAnchor(e.currentTarget)}
+                  className="!h-10 !w-10"
+                >
+                  <FaEllipsisV size={12} />
+                </IconButton>
+                <Menu
+                  anchorEl={actionMenuAnchor}
+                  open={Boolean(actionMenuAnchor)}
+                  onClose={() => setActionMenuAnchor(null)}
+                >
+                  {hasAspect && onSearchAnnotations && (
+                    <MenuItem
+                      onClick={() => {
+                        setActionMenuAnchor(null)
+                        onSearchAnnotations()
+                      }}
+                    >
+                      Search Annotations
+                    </MenuItem>
+                  )}
+                  {hasAspect && onFillRootTerm && (
+                    <MenuItem
+                      onClick={() => {
+                        setActionMenuAnchor(null)
+                        onFillRootTerm()
+                      }}
+                    >
+                      Fill with root term
+                    </MenuItem>
+                  )}
+                </Menu>
+              </>
+            )}
 
           {/* ── Cancel / Save buttons ── */}
           <IconButton size="small" onClick={onClose} title="Cancel" className="!text-red-400">

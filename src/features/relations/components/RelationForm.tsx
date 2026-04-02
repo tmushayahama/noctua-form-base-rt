@@ -26,7 +26,7 @@ import {
   buildConnectorOperations,
   buildConnectorDeleteOperations,
 } from '../services/connectorServices'
-import TermAutocomplete from '@/features/search/components/Autocomplete2'
+import TermAutocomplete from '@/features/search/components/Autocomplete'
 import { AutocompleteType } from '@/features/search/models/search'
 import type { GOlrResponse } from '@/features/search/models/search'
 import ReferenceField from '@/features/gocam/components/forms/ReferenceField'

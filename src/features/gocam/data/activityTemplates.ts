@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { Relations } from '@/@noctua.core/models/relations'
 import type { Activity, Edge, GraphNode, Aspect } from '../models/cam'
+import type { GOlrResponse } from '@/features/search/models/search'
 import type {
   ActivityFormType,
   TermNode,
@@ -121,7 +122,7 @@ export function createActivityTemplate(type: ActivityFormType): TermNode {
 
 // ── Edit mode: Activity → TermNode ──────────────────────────────────
 
-function graphNodeToGOlrResponse(node: GraphNode): import('@/features/search/models/search').GOlrResponse {
+function graphNodeToGOlrResponse(node: GraphNode): GOlrResponse {
   return {
     id: node.id,
     label: node.label,

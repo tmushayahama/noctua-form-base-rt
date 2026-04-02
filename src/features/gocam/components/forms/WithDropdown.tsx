@@ -128,7 +128,7 @@ const WithDropdown: React.FC<WithDropdownProps> = ({
       onClose={onClose}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      PaperProps={{ className: '!bg-yellow-50 !shadow-lg' }}
+      PaperProps={{ className: '!bg-accent-50 !shadow-lg' }}
     >
       <div
         className="flex w-full flex-col items-stretch justify-start px-2 py-2"

@@ -1,6 +1,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { createSlice } from '@reduxjs/toolkit'
-import type { GraphModel, Activity, Edge } from '../models/cam'
+import type { GraphModel, Activity, Edge, GraphNode } from '../models/cam'
+import type { GOlrResponse } from '@/features/search/models/search'
 
 export interface SelectedConnection {
   sourceActivity: Activity
@@ -114,5 +115,66 @@ export const {
 export const selectCamModel = (state: { cam: CamState }) => state.cam.model
 export const selectSelectedActivity = (state: { cam: CamState }) => state.cam.selectedActivity
 export const selectSelectedConnection = (state: { cam: CamState }) => state.cam.selectedConnection
+
+/** Convert a GraphNode to a minimal GOlrResponse for autocomplete prefetch */
+function nodeToOption(node: GraphNode): GOlrResponse {
+  return {
+    id: node.id,
+    label: node.label,
+    link: '',
+    description: '',
+    isObsolete: false,
+    replacedBy: '',
+    rootTypes: [],
+    xref: '',
+    notAnnotatable: true,
+    neighborhoodGraphJson: '',
+  }
+}
+
+/** Unique terms from all activities, filtered by rootTypes overlap */
+export function getModelTerms(model: GraphModel | null, rootTypeIds: string[]): GOlrResponse[] {
+  if (!model) return []
+  const seen = new Set<string>()
+  const results: GOlrResponse[] = []
+  for (const activity of model.activities) {
+    for (const node of activity.nodes) {
+      if (!node.id || !node.label || seen.has(node.id)) continue
+      if (rootTypeIds.length > 0 && !node.rootTypes.some(rt => rootTypeIds.includes(rt))) continue
+      seen.add(node.id)
+      results.push(nodeToOption(node))
+    }
+  }
+  return results
+}
+
+/** Unique evidence codes from all edges in the model */
+export function getModelEvidence(model: GraphModel | null): GOlrResponse[] {
+  if (!model) return []
+  const seen = new Set<string>()
+  const results: GOlrResponse[] = []
+  for (const activity of model.activities) {
+    for (const edge of activity.edges) {
+      if (!edge.evidence) continue
+      for (const ev of edge.evidence) {
+        if (!ev.evidenceCode?.id || seen.has(ev.evidenceCode.id)) continue
+        seen.add(ev.evidenceCode.id)
+        results.push({
+          id: ev.evidenceCode.id,
+          label: ev.evidenceCode.label,
+          link: '',
+          description: '',
+          isObsolete: false,
+          replacedBy: '',
+          rootTypes: [],
+          xref: '',
+          notAnnotatable: true,
+          neighborhoodGraphJson: '',
+        })
+      }
+    }
+  }
+  return results
+}
 
 export default camSlice.reducer

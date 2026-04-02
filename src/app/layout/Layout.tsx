@@ -87,8 +87,8 @@ const Layout: React.FC<LayoutProps> = ({ rightDrawerContent }) => {
               '& .MuiDrawer-paper': {
                 width: isMobile ? '100%' : 800,
                 top: 120,
-                height: '100%',
-                overflow: 'auto',
+                height: 'calc(100vh - 120px)',
+                overflow: 'hidden',
                 transition: theme =>
                   theme.transitions.create('transform', {
                     easing: theme.transitions.easing.sharp,
