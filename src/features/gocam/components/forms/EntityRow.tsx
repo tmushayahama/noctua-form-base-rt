@@ -195,7 +195,6 @@ const EntityRow: React.FC<EntityRowProps> = ({
     closeAllMenus()
   }
 
-
   return (
     <>
       <div className="flex w-full flex-row items-stretch justify-start overflow-hidden">
@@ -241,46 +240,46 @@ const EntityRow: React.FC<EntityRowProps> = ({
 
         {/* Evidence columns */}
         {node.showEvidence !== false && (
-        <div className="flex min-w-0 basis-[65%] flex-col items-stretch justify-start">
-          {evidence.map(ev => (
-            <div
-              key={ev.uid}
-              className="flex w-full flex-row items-stretch justify-start"
-            >
-              <div className="w-1/2 px-2 py-2">
-                <TermAutocomplete
-                  label="Evidence"
-                  name={`evidence-${ev.uid}`}
-                  autocompleteType={AutocompleteType.EVIDENCE_CODE}
-                  rootTypeIds={[RootTypes.EVIDENCE]}
-                  value={
-                    ev.evidenceCode?.id
-                      ? ({
+          <div className="flex min-w-0 basis-[65%] flex-col items-stretch justify-start">
+            {evidence.map(ev => (
+              <div
+                key={ev.uid}
+                className="flex w-full flex-row items-stretch justify-start"
+              >
+                <div className="w-1/2 px-2 py-2">
+                  <TermAutocomplete
+                    label="Evidence"
+                    name={`evidence-${ev.uid}`}
+                    autocompleteType={AutocompleteType.EVIDENCE_CODE}
+                    rootTypeIds={[RootTypes.EVIDENCE]}
+                    value={
+                      ev.evidenceCode?.id
+                        ? ({
                           id: ev.evidenceCode.id,
                           label: ev.evidenceCode.label,
                         } as GOlrResponse)
-                      : null
-                  }
-                  onChange={handleEvidenceCodeChange(ev)}
-                  variant="outlined"
-                  initialOptions={evidenceInitialOptions}
-                />
+                        : null
+                    }
+                    onChange={handleEvidenceCodeChange(ev)}
+                    variant="outlined"
+                    initialOptions={evidenceInitialOptions}
+                  />
+                </div>
+                <div className="w-1/4 px-2 py-2">
+                  <ReferenceField
+                    value={ev.reference}
+                    onChange={value => handleEvidenceFieldChange(ev, 'reference', value)}
+                  />
+                </div>
+                <div className="w-1/4 px-2 py-2">
+                  <WithField
+                    value={ev.withFrom}
+                    onChange={value => handleEvidenceFieldChange(ev, 'withFrom', value)}
+                  />
+                </div>
               </div>
-              <div className="w-1/4 px-2 py-2">
-                <ReferenceField
-                  value={ev.reference}
-                  onChange={value => handleEvidenceFieldChange(ev, 'reference', value)}
-                />
-              </div>
-              <div className="w-1/4 px-2 py-2">
-                <WithField
-                  value={ev.withFrom}
-                  onChange={value => handleEvidenceFieldChange(ev, 'withFrom', value)}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         )}
 
         {/* Menu button (ellipsis) */}
@@ -386,7 +385,6 @@ const EntityRow: React.FC<EntityRowProps> = ({
           <MenuItem onClick={handleCloneEvidence}>Clone Evidence</MenuItem>
         )}
       </Menu>
-
     </>
   )
 }

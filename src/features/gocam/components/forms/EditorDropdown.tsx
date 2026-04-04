@@ -1,17 +1,18 @@
 import type React from 'react'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { IconButton, InputAdornment, Menu, MenuItem, Popover, TextField } from '@mui/material'
-import { FaEllipsisV, FaPlusSquare } from 'react-icons/fa'
+import { IconButton, Menu, MenuItem, Popover } from '@mui/material'
+import { FaEllipsisV } from 'react-icons/fa'
 import { FaRegCircleXmark, FaRegCircleCheck } from 'react-icons/fa6'
 import { useAppSelector } from '@/app/hooks'
 import { EditorCategory } from '../../models/editorCategory'
 import { RootTypes } from '../../models/cam'
+import { ROOT_NODES, EVIDENCE_AUTO_POPULATE } from '../../data/camConstants'
 import { selectCamModel, getModelTerms, getModelEvidence } from '../../slices/camSlice'
 import TermAutocomplete from '@/features/search/components/Autocomplete'
 import { AutocompleteType } from '@/features/search/models/search'
 import type { GOlrResponse } from '@/features/search/models/search'
-import ReferenceDropdown from './ReferenceDropdown'
-import WithDropdown from './WithDropdown'
+import ReferenceField from './ReferenceField'
+import WithField from './WithField'
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -28,30 +29,21 @@ export interface EditorDropdownProps {
   onClose: () => void
   onSave: (values: EditorDropdownValues) => void
 
-  // Label & root types for term autocomplete
   termLabel?: string
   termRootTypes?: string[]
 
-  // Initial values for pre-filling
   initialTerm?: { id: string; label: string } | null
   initialEvidence?: { id: string; label: string } | null
   initialReference?: string
   initialWith?: string
 
-  // Optional action menu callbacks (shown when category is all/evidenceAll)
-  onSearchAnnotations?: () => void
-  onFillRootTerm?: () => void
-  /** Whether the node has an aspect (needed for Search Annotations) */
+  /** Whether the node has an aspect — controls Search Annotations / Fill Root Term visibility */
   hasAspect?: boolean
+  onSearchAnnotations?: () => void
 }
 
 function getDisplaySections(category: EditorCategory) {
-  const sections = {
-    term: false,
-    evidence: false,
-    reference: false,
-    with: false,
-  }
+  const sections = { term: false, evidence: false, reference: false, with: false }
   switch (category) {
     case EditorCategory.term:
       sections.term = true
@@ -93,13 +85,14 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
   initialEvidence = null,
   initialReference = '',
   initialWith = '',
-  onSearchAnnotations,
-  onFillRootTerm,
   hasAspect = false,
+  onSearchAnnotations,
 }) => {
   const open = Boolean(anchorEl)
   const sections = getDisplaySections(category)
   const model = useAppSelector(selectCamModel)
+  const showActionMenu =
+    (category === EditorCategory.all || category === EditorCategory.evidenceAll) && hasAspect
 
   const termInitialOptions = useMemo(
     () => getModelTerms(model, termRootTypes ?? []),
@@ -112,14 +105,8 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
   const [evidence, setEvidence] = useState<GOlrResponse | null>(null)
   const [reference, setReference] = useState('')
   const [withVal, setWithVal] = useState('')
-
-  // Sub-dropdown anchors for Reference/With DB pickers
-  const [refDbAnchor, setRefDbAnchor] = useState<HTMLElement | null>(null)
-  const [withDbAnchor, setWithDbAnchor] = useState<HTMLElement | null>(null)
-  // Action menu anchor
   const [actionMenuAnchor, setActionMenuAnchor] = useState<HTMLElement | null>(null)
 
-  // Reset fields when popover opens
   useEffect(() => {
     if (open) {
       setTerm(initialTerm ? ({ id: initialTerm.id, label: initialTerm.label } as GOlrResponse) : null)
@@ -130,17 +117,13 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
       )
       setReference(initialReference)
       setWithVal(initialWith)
-      setRefDbAnchor(null)
-      setWithDbAnchor(null)
       setActionMenuAnchor(null)
     }
   }, [open, initialTerm, initialEvidence, initialReference, initialWith])
 
   const handleClose = useCallback(() => {
-    if (!refDbAnchor && !withDbAnchor && !actionMenuAnchor) {
-      onClose()
-    }
-  }, [refDbAnchor, withDbAnchor, actionMenuAnchor, onClose])
+    if (!actionMenuAnchor) onClose()
+  }, [actionMenuAnchor, onClose])
 
   const handleSave = useCallback(() => {
     onSave({
@@ -151,183 +134,115 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
     })
   }, [term, evidence, reference, withVal, sections, onSave])
 
+  const handleFillRootTerm = useCallback(() => {
+    const matchedRoot = termRootTypes?.find(rt => ROOT_NODES[rt])
+    if (!matchedRoot) return
+    const { id, label } = ROOT_NODES[matchedRoot]
+    const { evidence: ndEvidence, reference: ndReference } = EVIDENCE_AUTO_POPULATE.nd
+    setTerm({ id, label } as GOlrResponse)
+    setEvidence({ id: ndEvidence.id, label: ndEvidence.label } as GOlrResponse)
+    setReference(ndReference)
+  }, [termRootTypes])
+
   return (
-    <>
-      <Popover
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        PaperProps={{ className: '!bg-accent-50 !shadow-lg' }}
-      >
-        <div className="flex w-full flex-row items-center justify-start px-1 pb-1 pt-2">
-          {/* ── Term section (250px) ── */}
-          {sections.term && (
-            <div className="w-[250px] px-1">
-              <TermAutocomplete
-                label={termLabel}
-                name="editor-term"
-                autocompleteType={AutocompleteType.TERM}
-                rootTypeIds={termRootTypes ?? []}
-                value={term}
-                onChange={val => {
-                  if (val && typeof val === 'object') setTerm(val)
-                }}
-                variant="outlined"
-                initialOptions={termInitialOptions}
-              />
-            </div>
-          )}
+    <Popover
+      open={open}
+      anchorEl={anchorEl}
+      onClose={handleClose}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      PaperProps={{ className: '!bg-accent-50 !shadow-lg', style: { minWidth: 400 } }}
+    >
+      <div className="flex w-full flex-row items-stretch justify-start pb-1 pt-2">
+        {sections.term && (
+          <div className="w-[250px] p-1">
+            <TermAutocomplete
+              label={termLabel}
+              name="editor-term"
+              autocompleteType={AutocompleteType.TERM}
+              rootTypeIds={termRootTypes ?? []}
+              value={term}
+              onChange={val => {
+                if (val && typeof val === 'object') setTerm(val)
+              }}
+              variant="outlined"
+              initialOptions={termInitialOptions}
+            />
+          </div>
+        )}
+        {sections.evidence && (
+          <div className="w-[250px] p-1">
+            <TermAutocomplete
+              label="Evidence"
+              name="editor-evidence"
+              autocompleteType={AutocompleteType.EVIDENCE_CODE}
+              rootTypeIds={[RootTypes.EVIDENCE]}
+              value={evidence}
+              onChange={val => {
+                if (val && typeof val === 'object') setEvidence(val)
+              }}
+              variant="outlined"
+              initialOptions={evidenceInitialOptions}
+            />
+          </div>
+        )}
+        {sections.reference && (
+          <div className="w-[150px] p-1">
+            <ReferenceField value={reference} onChange={setReference} />
+          </div>
+        )}
+        {sections.with && (
+          <div className="w-[150px] p-1">
+            <WithField value={withVal} onChange={setWithVal} />
+          </div>
+        )}
 
-          {/* ── Evidence section (250px) ── */}
-          {sections.evidence && (
-            <div className="w-[250px] px-1">
-              <TermAutocomplete
-                label="Evidence"
-                name="editor-evidence"
-                autocompleteType={AutocompleteType.EVIDENCE_CODE}
-                rootTypeIds={[RootTypes.EVIDENCE]}
-                value={evidence}
-                onChange={val => {
-                  if (val && typeof val === 'object') setEvidence(val)
-                }}
-                variant="outlined"
-                initialOptions={evidenceInitialOptions}
-              />
-            </div>
-          )}
-
-          {/* ── Reference section (150px) ── */}
-          {sections.reference && (
-            <div className="w-[150px] px-1">
-              <TextField
-                size="small"
-                variant="outlined"
-                label="Reference"
-                placeholder="PMID:12345"
-                value={reference}
-                onChange={e => setReference(e.target.value)}
-                multiline
-                rows={2}
-                fullWidth
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          onClick={e => setRefDbAnchor(e.currentTarget)}
-                          className="!h-5 !w-5"
-                        >
-                          <FaPlusSquare size={14} />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-            </div>
-          )}
-
-          {/* ── With section (150px) ── */}
-          {sections.with && (
-            <div className="w-[150px] px-1">
-              <TextField
-                size="small"
-                variant="outlined"
-                label="With"
-                placeholder="UniProtKB:P12345"
-                value={withVal}
-                onChange={e => setWithVal(e.target.value)}
-                multiline
-                rows={2}
-                fullWidth
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          onClick={e => setWithDbAnchor(e.currentTarget)}
-                          className="!h-5 !w-5"
-                        >
-                          <FaPlusSquare size={14} />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-            </div>
-          )}
-
-          {/* ── Action menu (all / evidenceAll categories only) ── */}
-          {(category === EditorCategory.all || category === EditorCategory.evidenceAll) &&
-            (onSearchAnnotations || onFillRootTerm) && (
-              <>
-                <IconButton
-                  size="small"
-                  onClick={e => setActionMenuAnchor(e.currentTarget)}
-                  className="!h-10 !w-10"
+        {showActionMenu && (
+          <>
+            <IconButton
+              size="small"
+              onClick={e => setActionMenuAnchor(e.currentTarget)}
+              className="!h-10 !w-10"
+            >
+              <FaEllipsisV size={12} />
+            </IconButton>
+            <Menu
+              anchorEl={actionMenuAnchor}
+              open={Boolean(actionMenuAnchor)}
+              onClose={() => setActionMenuAnchor(null)}
+            >
+              {category !== EditorCategory.evidenceAll && onSearchAnnotations && (
+                <MenuItem
+                  onClick={() => {
+                    setActionMenuAnchor(null)
+                    onSearchAnnotations()
+                  }}
                 >
-                  <FaEllipsisV size={12} />
-                </IconButton>
-                <Menu
-                  anchorEl={actionMenuAnchor}
-                  open={Boolean(actionMenuAnchor)}
-                  onClose={() => setActionMenuAnchor(null)}
+                  Search Annotations
+                </MenuItem>
+              )}
+              {category !== EditorCategory.evidenceAll && (
+                <MenuItem
+                  onClick={() => {
+                    setActionMenuAnchor(null)
+                    handleFillRootTerm()
+                  }}
                 >
-                  {hasAspect && onSearchAnnotations && (
-                    <MenuItem
-                      onClick={() => {
-                        setActionMenuAnchor(null)
-                        onSearchAnnotations()
-                      }}
-                    >
-                      Search Annotations
-                    </MenuItem>
-                  )}
-                  {hasAspect && onFillRootTerm && (
-                    <MenuItem
-                      onClick={() => {
-                        setActionMenuAnchor(null)
-                        onFillRootTerm()
-                      }}
-                    >
-                      Fill with root term
-                    </MenuItem>
-                  )}
-                </Menu>
-              </>
-            )}
+                  Fill with root term
+                </MenuItem>
+              )}
+            </Menu>
+          </>
+        )}
 
-          {/* ── Cancel / Save buttons ── */}
-          <IconButton size="small" onClick={onClose} title="Cancel" className="!text-red-400">
-            <FaRegCircleXmark size={18} />
-          </IconButton>
-          <IconButton size="small" onClick={handleSave} title="Save" className="!text-green-600">
-            <FaRegCircleCheck size={18} />
-          </IconButton>
-        </div>
-      </Popover>
-
-      {/* ── Reference DB picker sub-dropdown ── */}
-      <ReferenceDropdown
-        anchorEl={refDbAnchor}
-        currentValue={reference}
-        onClose={() => setRefDbAnchor(null)}
-        onSave={val => setReference(val)}
-      />
-
-      {/* ── With DB picker sub-dropdown ── */}
-      <WithDropdown
-        anchorEl={withDbAnchor}
-        currentValue={withVal}
-        onClose={() => setWithDbAnchor(null)}
-        onSave={val => setWithVal(val)}
-      />
-    </>
+        <IconButton size="small" onClick={onClose} title="Cancel" className="!text-red-400">
+          <FaRegCircleXmark size={18} />
+        </IconButton>
+        <IconButton size="small" onClick={handleSave} title="Save" className="!text-green-600">
+          <FaRegCircleCheck size={18} />
+        </IconButton>
+      </div>
+    </Popover>
   )
 }
 

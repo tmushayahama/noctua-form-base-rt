@@ -11,6 +11,7 @@ import type {
 import { createEvidenceForm } from '../models/formModels'
 import type { Entity, Activity } from '../models/cam'
 import { createActivityTemplate, activityToFormTree } from '../data/activityTemplates'
+import { ROOT_NODES, EVIDENCE_AUTO_POPULATE } from '../data/camConstants'
 import { v4 as uuidv4 } from 'uuid'
 import type { GOlrResponse } from '@/features/search/models/search'
 
@@ -279,17 +280,12 @@ export const activityFormSlice = createSlice({
       if (!node || !rel) return
 
       // Fill term with root term for the node's aspect
-      const rootTerms: Record<string, { id: string; label: string }> = {
-        F: { id: 'GO:0003674', label: 'molecular_function' },
-        P: { id: 'GO:0008150', label: 'biological_process' },
-        C: { id: 'GO:0005575', label: 'cellular_component' },
-      }
-      const rootTerm = node.aspect ? rootTerms[node.aspect] : null
-      if (!rootTerm) return
+      const rootEntry = Object.values(ROOT_NODES).find(rn => rn.aspect === node.aspect)
+      if (!rootEntry) return
 
       node.term = {
-        id: rootTerm.id,
-        label: rootTerm.label,
+        id: rootEntry.id,
+        label: rootEntry.label,
         link: '',
         description: '',
         isObsolete: false,
@@ -304,8 +300,8 @@ export const activityFormSlice = createSlice({
       rel.evidence = [
         {
           uid: uuidv4(),
-          evidenceCode: { id: 'ECO:0000307', label: 'ND' },
-          reference: 'GO_REF:0000015',
+          evidenceCode: EVIDENCE_AUTO_POPULATE.nd.evidence,
+          reference: EVIDENCE_AUTO_POPULATE.nd.reference,
           withFrom: '',
         },
       ]

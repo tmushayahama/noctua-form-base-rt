@@ -206,6 +206,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
                   modelId={modelId}
                   userContext={userContext}
                   allEdges={activity.edges}
+                  gpNodeId={activity.enabledBy?.id}
                 />
               ))}
             </div>
@@ -225,6 +226,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
                 modelId={modelId}
                 userContext={userContext}
                 allEdges={activity.edges}
+                gpNodeId={activity.enabledBy?.id}
               />
             ))}
           </div>

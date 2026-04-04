@@ -429,21 +429,24 @@ export const buildDeleteActivityOperations = (
 
 /**
  * Add a new child node with an edge to an existing parent node.
+ * Optionally includes a specific term type and evidence.
  */
 export const buildAddNodeOperations = (
   parentUid: string,
   predicateId: string,
   typeId: string,
   modelId: string,
-  userContext?: UserContext
+  userContext?: UserContext,
+  details?: { termId?: string; evidence?: EvidenceForm }
 ): Operation[] => {
   const varId = uuidv4()
+  const nodeTypeId = details?.termId || typeId
   const operations: Operation[] = [
     {
       entity: 'individual',
       operation: 'add',
       arguments: {
-        expressions: [{ type: 'class', id: typeId }],
+        expressions: [{ type: 'class', id: nodeTypeId }],
         'model-id': modelId,
         'assign-to-variable': varId,
       },
@@ -473,6 +476,18 @@ export const buildAddNodeOperations = (
         'model-id': modelId,
       },
     })
+  }
+
+  if (details?.evidence?.evidenceCode?.id) {
+    addEvidenceOperations(
+      operations,
+      parentUid,
+      varId,
+      predicateId,
+      [details.evidence],
+      modelId,
+      userContext
+    )
   }
 
   operations.push({

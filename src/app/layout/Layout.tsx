@@ -89,6 +89,8 @@ const Layout: React.FC<LayoutProps> = ({ rightDrawerContent }) => {
                 top: 120,
                 height: 'calc(100vh - 120px)',
                 overflow: 'hidden',
+                borderLeft: '1px solid #bbb',
+                boxShadow: '-4px 0 12px rgba(0,0,0,0.15)',
                 transition: theme =>
                   theme.transitions.create('transform', {
                     easing: theme.transitions.easing.sharp,

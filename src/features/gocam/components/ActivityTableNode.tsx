@@ -5,8 +5,9 @@ import { FaEllipsisV, FaPencilAlt, FaPlus, FaTrash } from 'react-icons/fa'
 import type { Edge, Evidence, UserContext, DisplayTreeNode } from '../models/cam'
 import { RootTypes } from '../models/cam'
 import { EditorCategory } from '../models/editorCategory'
-import { useAppSelector } from '@/app/hooks'
+import { useAppSelector, useAppDispatch } from '@/app/hooks'
 import type { RootState } from '@/app/store/store'
+import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
 import { useUpdateGraphModelMutation } from '../slices/camApiSlice'
 import {
   buildEditIndividualTypeOperations,
@@ -29,6 +30,7 @@ interface ActivityTableNodeProps {
   userContext?: UserContext
   allEdges: Edge[]
   onNodeDeleted?: () => void
+  gpNodeId?: string
 }
 
 function getAspectFromRootTypes(rootTypes: string[]): string | null {
@@ -198,7 +200,9 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
   userContext,
   allEdges,
   onNodeDeleted,
+  gpNodeId,
 }) => {
+  const dispatch = useAppDispatch()
   const { node, edge, children, treeLevel, canDelete, showEvidence, showMenu, showAddButton } =
     treeNode
   const evidence = edge?.evidence ?? []
@@ -209,6 +213,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null)
   const [editorAnchor, setEditorAnchor] = useState<HTMLElement | null>(null)
   const [editorCategory, setEditorCategory] = useState<EditorCategory>(EditorCategory.term)
+  const [pendingInsert, setPendingInsert] = useState<InsertMenuItem | null>(null)
   const [updateGraphModel] = useUpdateGraphModelMutation()
   const authUser = useAppSelector((state: RootState) => state.auth.user)
 
@@ -219,7 +224,23 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
   }, [userContext, authUser])
 
   const insertMenuItems = getInsertMenuItems(node.rootTypes[0] ?? '')
-  const termWidth = Math.max(250 - treeLevel * 16, 100)
+  const nodePadding = treeLevel * 16
+  const termWidth = 250 - nodePadding
+  const { aspect } = treeNode
+
+  const handleSearchAnnotations = useCallback(() => {
+    if (!gpNodeId || !aspect) return
+    dispatch(
+      openDialog({
+        component: 'SearchAnnotations',
+        title: 'Search Annotations',
+        size: 'md',
+        fullWidth: true,
+        showActions: false,
+        customProps: { gpId: gpNodeId, aspect },
+      })
+    )
+  }, [gpNodeId, aspect, dispatch])
 
   const handleEditorSave = useCallback(
     async (values: EditorDropdownValues) => {
@@ -246,10 +267,33 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
           )
           break
         }
+        case EditorCategory.all: {
+          if (!pendingInsert) break
+          const ev = values.evidence
+            ? {
+                ...createEvidenceForm(),
+                evidenceCode: { id: values.evidence.id, label: values.evidence.label },
+                reference: values.reference || '',
+                withFrom: values.with || '',
+              }
+            : undefined
+          await updateGraphModel(
+            buildAddNodeOperations(
+              node.uid,
+              pendingInsert.predicate.id,
+              pendingInsert.targetType,
+              modelId,
+              resolvedUserContext,
+              { termId: values.term?.id, evidence: ev }
+            )
+          )
+          setPendingInsert(null)
+          break
+        }
       }
       setEditorAnchor(null)
     },
-    [editorCategory, node.uid, node.id, edge, modelId, resolvedUserContext, updateGraphModel]
+    [editorCategory, node.uid, node.id, edge, modelId, resolvedUserContext, updateGraphModel, pendingInsert]
   )
 
   const handleRemoveEvidence = useCallback(
@@ -279,24 +323,27 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
   }, [node.uid, allEdges, modelId, updateGraphModel, onNodeDeleted])
 
   const handleInsertNode = useCallback(
-    async (item: InsertMenuItem) => {
-      await updateGraphModel(
-        buildAddNodeOperations(node.uid, item.predicate.id, item.targetType, modelId, resolvedUserContext)
-      )
+    (item: InsertMenuItem) => {
+      setPendingInsert(item)
+      setEditorCategory(EditorCategory.all)
+      setEditorAnchor(actionCellRef.current)
       setAddMenuAnchor(null)
       setMenuAnchor(null)
     },
-    [node.uid, modelId, resolvedUserContext, updateGraphModel]
+    []
   )
 
   return (
     <>
-      <div className="mb-2 flex w-full flex-row items-stretch justify-start">
+      <div
+        className="mb-2 flex w-full flex-row items-stretch justify-start"
+        style={{ paddingLeft: nodePadding }}
+      >
         {/* Term cell */}
         <div
           ref={termCellRef}
           className={`${cellBase} shrink-0 rounded-md`}
-          style={{ flexBasis: termWidth, minWidth: termWidth }}
+          style={{ flexBasis: termWidth }}
         >
           <div className={floatingLabel}>{treeNode.floatingLabel}</div>
           {node.label ? (
@@ -375,14 +422,19 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
       <EditorDropdown
         anchorEl={editorAnchor}
         category={editorCategory}
-        onClose={() => setEditorAnchor(null)}
+        onClose={() => {
+          setEditorAnchor(null)
+          setPendingInsert(null)
+        }}
         onSave={handleEditorSave}
-        termLabel={treeNode.floatingLabel}
-        termRootTypes={node.rootTypes}
-        initialTerm={node.id ? { id: node.id, label: node.label } : null}
+        termLabel={pendingInsert?.label ?? treeNode.floatingLabel}
+        termRootTypes={pendingInsert ? [pendingInsert.targetType] : node.rootTypes}
+        initialTerm={pendingInsert ? null : node.id ? { id: node.id, label: node.label } : null}
         initialEvidence={null}
         initialReference=""
         initialWith=""
+        hasAspect={Boolean(pendingInsert ? getAspectFromRootTypes([pendingInsert.targetType]) : aspect)}
+        onSearchAnnotations={gpNodeId ? handleSearchAnnotations : undefined}
       />
 
       {children.map(child => (
@@ -391,6 +443,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
           treeNode={child}
           modelId={modelId}
           userContext={resolvedUserContext}
+          gpNodeId={gpNodeId}
           allEdges={allEdges}
           onNodeDeleted={onNodeDeleted}
         />
