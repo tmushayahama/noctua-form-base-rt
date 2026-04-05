@@ -3,26 +3,32 @@ import { useState } from 'react'
 import { TextField } from '@mui/material'
 import { FaFileMedical } from 'react-icons/fa'
 import ReferenceDropdown from './ReferenceDropdown'
+import WithDropdown from './WithDropdown'
 
-interface ReferenceFieldProps {
+interface DatabaseFieldProps {
   value: string
   onChange: (value: string) => void
   label?: string
+  type: 'reference' | 'with'
 }
 
-const ReferenceField: React.FC<ReferenceFieldProps> = ({
+const DatabaseField: React.FC<DatabaseFieldProps> = ({
   value,
   onChange,
-  label = 'Reference',
+  label,
+  type,
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
+  const resolvedLabel = label ?? (type === 'reference' ? 'Reference' : 'With')
+
+  const Dropdown = type === 'reference' ? ReferenceDropdown : WithDropdown
 
   return (
     <>
       <TextField
         size="small"
         variant="outlined"
-        label={label}
+        label={resolvedLabel}
         value={value}
         onChange={e => onChange(e.target.value)}
         onBlur={e => {
@@ -45,7 +51,7 @@ const ReferenceField: React.FC<ReferenceFieldProps> = ({
           ),
         }}
       />
-      <ReferenceDropdown
+      <Dropdown
         anchorEl={anchorEl}
         currentValue={value}
         onClose={() => setAnchorEl(null)}
@@ -55,4 +61,4 @@ const ReferenceField: React.FC<ReferenceFieldProps> = ({
   )
 }
 
-export default ReferenceField
+export default DatabaseField

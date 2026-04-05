@@ -1,5 +1,6 @@
 import type React from 'react';
 import { Link } from 'react-router-dom';
+import { EXTERNAL_LINKS } from '@/@noctua.core/data/constants';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -15,7 +16,7 @@ const Footer: React.FC = () => {
         </div>
         <div className="mr-4">
           <a
-            href="http://help.geneontology.org"
+            href={EXTERNAL_LINKS.GO_HELP}
             className="text-white"
             target="_blank"
             rel="noopener noreferrer"
@@ -38,7 +39,7 @@ const Footer: React.FC = () => {
         <small>
           Copyright © 1999-{currentYear} Member of the{' '}
           <a
-            href="http://www.obofoundry.org/"
+            href={EXTERNAL_LINKS.OBO_FOUNDRY}
             className="text-white underline"
             rel="noopener noreferrer"
             target="_blank"
@@ -49,7 +50,7 @@ const Footer: React.FC = () => {
           . The Gene Ontology Consortium is supported by a P41 grant from the National Human Genome
           Research Institute (NHGRI) [grant{' '}
           <a
-            href="https://projectreporter.nih.gov/project_info_details.cfm?aid=9209989"
+            href={EXTERNAL_LINKS.NIH_GRANT}
             className="text-white underline"
             rel="noopener noreferrer"
             target="_blank"

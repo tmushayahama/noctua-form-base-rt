@@ -13,13 +13,12 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import useTheme from '@mui/material/styles/useTheme'
 import Box from '@mui/material/Box'
 import Drawer from '@mui/material/Drawer'
-import { ENVIRONMENT } from '@/@noctua.core/data/constants'
+import { ENVIRONMENT, EXTERNAL_LINKS } from '@/@noctua.core/data/constants'
 import CamToolbar from '@/features/gocam/components/CamToolbar'
 
 interface LayoutProps {
   rightDrawerContent?: React.ReactNode
 }
-// TODO update google analytics
 const Layout: React.FC<LayoutProps> = ({ rightDrawerContent }) => {
   const isDev = ENVIRONMENT.isDev
   const location = useLocation()
@@ -48,7 +47,7 @@ const Layout: React.FC<LayoutProps> = ({ rightDrawerContent }) => {
           Testing Version. Visit{' '}
           <a
             className="hover:underline"
-            href="http://noctua.geneontology.org/"
+            href={EXTERNAL_LINKS.NOCTUA_PRODUCTION}
             target="_blank"
             rel="noreferrer"
           >

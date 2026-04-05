@@ -1,6 +1,7 @@
 import type { Entity, Evidence } from '@/features/gocam/models/cam'
 import type { Group } from '@/features/users/models/contributor'
 import type { GOlrResponse, AnnotationsResponse } from '../models/search'
+import { ENVIRONMENT } from '@/@noctua.core/data/constants'
 
 // Helper function to escape special characters in Golr queries
 export const escapeGOlrValue = (str: string): string => {
@@ -54,7 +55,6 @@ export const processAnnotationsResponse = (response: any): AnnotationsResponse[]
   docs.forEach((doc: any) => {
     const annotationId = doc.annotation_class
 
-    // Create evidence
     const evidence: Evidence = {
       uid: crypto.randomUUID(),
       evidenceCode: {
@@ -69,7 +69,6 @@ export const processAnnotationsResponse = (response: any): AnnotationsResponse[]
       date: doc.date || '',
     }
 
-    // Process annotation extensions
     if (doc.annotation_extension_json) {
       try {
         const extJsons = Array.isArray(doc.annotation_extension_json)
@@ -93,7 +92,6 @@ export const processAnnotationsResponse = (response: any): AnnotationsResponse[]
       }
     }
 
-    // Add to existing result or create new one
     if (resultMap[annotationId]) {
       resultMap[annotationId].evidences.push(evidence)
     } else {
@@ -115,7 +113,6 @@ export const getGroupsFromNames = (names: string[]): Group[] => {
   return names.map(name => ({
     id: name,
     name: name,
-    // Add other required properties from your Group interface
   }))
 }
 
@@ -148,15 +145,15 @@ export const processHasParticipants = (
 
 function getTermURL(id: string): string {
   if (id.startsWith('ECO')) {
-    return 'http://www.evidenceontology.org/term/' + id
+    return ENVIRONMENT.evidenceOntologyUrl + id
   } else if (id.startsWith('PMID')) {
     const idAccession = id.split(':')
     if (idAccession.length > 1) {
-      return 'https://www.ncbi.nlm.nih.gov/pubmed/' + idAccession[1].trim()
+      return ENVIRONMENT.pubmedUrl + idAccession[1].trim()
     } else {
       return null
     }
   } else {
-    return `https://amigo.geneontology.org/amigo/term/${id}`
+    return `${ENVIRONMENT.amigoTermUrl}${id}`
   }
 }

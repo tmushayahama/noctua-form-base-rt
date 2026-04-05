@@ -1,17 +1,16 @@
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
-import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice'
-import type { RootState } from '@/app/store/store'
+import { closeDialog, DialogComponent, selectDialogState } from '@/@noctua.core/components/dialog/dialogSlice'
 import SimpleDialog from './SimpleDialog'
 import SearchAnnotations from '@/features/gocam/components/forms/SearchAnnotations'
 import CamMetadataForm from '@/features/gocam/components/CamMetadataForm'
 import CopyModelDialog from '@/features/gocam/components/CopyModelDialog'
 import ChemicalConnectorForm from '@/features/relations/components/ChemicalConnectorForm'
 
-const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
-  SearchAnnotations,
-  CamMetadataForm,
-  CopyModelDialog,
-  ChemicalConnectorForm,
+const COMPONENT_MAP: Record<DialogComponent, React.ComponentType<any>> = {
+  [DialogComponent.SEARCH_ANNOTATIONS]: SearchAnnotations,
+  [DialogComponent.CAM_METADATA_FORM]: CamMetadataForm,
+  [DialogComponent.COPY_MODEL_DIALOG]: CopyModelDialog,
+  [DialogComponent.CHEMICAL_CONNECTOR_FORM]: ChemicalConnectorForm,
 }
 
 const GlobalDialog: React.FC = () => {
@@ -26,7 +25,7 @@ const GlobalDialog: React.FC = () => {
     cancelLabel,
     component,
     customProps,
-  } = useAppSelector((state: RootState) => state.dialog)
+  } = useAppSelector(selectDialogState)
 
   if (!open || !component || !(component in COMPONENT_MAP)) return null
 

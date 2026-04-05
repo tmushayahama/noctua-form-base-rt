@@ -1,12 +1,15 @@
 import { v4 as uuidv4 } from 'uuid'
 import type { TermNode, EvidenceForm } from '../models/formModels'
 import type { Activity, UserContext } from '../models/cam'
+import {
+  OperationEntity,
+  OperationType,
+  AnnotationKey,
+  ExpressionType,
+} from '../models/operations'
+import type { Operation } from '../models/operations'
 
-export type Operation = {
-  entity: string
-  operation: string
-  arguments: Record<string, unknown>
-}
+export type { Operation }
 
 /**
  * Build Barista API operations to create a new activity from a TermNode tree.
@@ -26,12 +29,12 @@ export const buildCreateActivityOperations = (
     termVarIds.set(node.uid, varId)
 
     const expression = node.isComplement
-      ? { type: 'complement', filler: { type: 'class', id: node.term.id } }
-      : { type: 'class', id: node.term.id }
+      ? { type: ExpressionType.COMPLEMENT, filler: { type: ExpressionType.CLASS, id: node.term.id } }
+      : { type: ExpressionType.CLASS, id: node.term.id }
 
     operations.push({
-      entity: 'individual',
-      operation: 'add',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.ADD,
       arguments: {
         expressions: [expression],
         'model-id': modelId,
@@ -47,8 +50,8 @@ export const buildCreateActivityOperations = (
       if (!parentVarId || !targetVarId) continue
 
       operations.push({
-        entity: 'edge',
-        operation: 'add',
+        entity: OperationEntity.EDGE,
+        operation: OperationType.ADD,
         arguments: {
           subject: parentVarId,
           object: targetVarId,
@@ -72,8 +75,8 @@ export const buildCreateActivityOperations = (
   walkTerm(root)
 
   operations.push({
-    entity: 'model',
-    operation: 'store',
+    entity: OperationEntity.MODEL,
+    operation: OperationType.STORE,
     arguments: { 'model-id': modelId },
   })
 
@@ -95,33 +98,33 @@ function addEvidenceOperations(
     const evidenceVarId = uuidv4()
 
     operations.push({
-      entity: 'individual',
-      operation: 'add',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.ADD,
       arguments: {
-        expressions: [{ type: 'class', id: evidence.evidenceCode.id }],
+        expressions: [{ type: ExpressionType.CLASS, id: evidence.evidenceCode.id }],
         'model-id': modelId,
         'assign-to-variable': evidenceVarId,
       },
     })
 
-    const annotationValues: { key: string; value: string }[] = []
+    const annotationValues: { key: AnnotationKey; value: string }[] = []
     if (evidence.reference) {
-      annotationValues.push({ key: 'source', value: evidence.reference })
+      annotationValues.push({ key: AnnotationKey.SOURCE, value: evidence.reference })
     }
     if (evidence.withFrom) {
-      annotationValues.push({ key: 'with', value: evidence.withFrom })
+      annotationValues.push({ key: AnnotationKey.WITH, value: evidence.withFrom })
     }
     if (userContext?.orcid) {
-      annotationValues.push({ key: 'contributor', value: userContext.orcid })
+      annotationValues.push({ key: AnnotationKey.CONTRIBUTOR, value: userContext.orcid })
     }
     if (userContext?.groupUrl) {
-      annotationValues.push({ key: 'providedBy', value: userContext.groupUrl })
+      annotationValues.push({ key: AnnotationKey.PROVIDED_BY, value: userContext.groupUrl })
     }
 
     if (annotationValues.length > 0) {
       operations.push({
-        entity: 'individual',
-        operation: 'add-annotation',
+        entity: OperationEntity.INDIVIDUAL,
+        operation: OperationType.ADD_ANNOTATION,
         arguments: {
           individual: evidenceVarId,
           values: annotationValues,
@@ -131,13 +134,13 @@ function addEvidenceOperations(
     }
 
     operations.push({
-      entity: 'edge',
-      operation: 'add-annotation',
+      entity: OperationEntity.EDGE,
+      operation: OperationType.ADD_ANNOTATION,
       arguments: {
         subject: subjectId,
         object: objectId,
         predicate: predicateId,
-        values: [{ key: 'evidence', value: evidenceVarId }],
+        values: [{ key: AnnotationKey.EVIDENCE, value: evidenceVarId }],
         'model-id': modelId,
       },
     })
@@ -149,12 +152,12 @@ function addEvidenceOperations(
  *
  * Strategy:
  * 1. Nodes that exist in both old and new with same UID:
- *    - If term changed → remove-type + add-type (in-place)
- *    - If term unchanged → no-op for the node itself
- * 2. Edges that exist in old but not in new → remove edge
- * 3. Edges that exist in new but not in old → add edge
- * 4. Nodes in old but not in new → remove individual
- * 5. Nodes in new but not in old (no UID match) → add individual
+ *    - If term changed -> remove-type + add-type (in-place)
+ *    - If term unchanged -> no-op for the node itself
+ * 2. Edges that exist in old but not in new -> remove edge
+ * 3. Edges that exist in new but not in old -> add edge
+ * 4. Nodes in old but not in new -> remove individual
+ * 5. Nodes in new but not in old (no UID match) -> add individual
  * 6. Evidence is always replaced (remove old evidence nodes, add new)
  *
  * Falls back to delete-all + recreate-all when the tree structure differs
@@ -166,7 +169,6 @@ export const buildEditActivityOperations = (
   modelId: string,
   userContext?: UserContext
 ): Operation[] => {
-  // Collect all form nodes that have existing server UIDs
   const formNodes = new Map<string, TermNode>()
   const formEdges: { sourceUid: string; targetUid: string; predicateId: string; evidence: EvidenceForm[] }[] = []
 
@@ -187,12 +189,9 @@ export const buildEditActivityOperations = (
   }
   collectFormData(root)
 
-  // Check if any form node has a server-assigned UID (edit mode should preserve UIDs)
   const oldNodeUids = new Set(existingActivity.nodes.map(n => n.uid))
   const hasServerUids = [...formNodes.keys()].some(uid => oldNodeUids.has(uid))
 
-  // If no UIDs match (e.g. form was built from template, not loaded from activity),
-  // fall back to full delete+recreate
   if (!hasServerUids) {
     return buildFullReplaceOperations(root, existingActivity, modelId, userContext)
   }
@@ -200,29 +199,27 @@ export const buildEditActivityOperations = (
   const operations: Operation[] = []
   const newNodeVarIds = new Map<string, string>()
 
-  // 1. Handle nodes: type changes for existing, add for new
   for (const [uid, formNode] of formNodes) {
     const oldNode = existingActivity.nodes.find(n => n.uid === uid)
     if (oldNode) {
-      // Existing node — check if type changed
       if (oldNode.id !== formNode.term!.id) {
         operations.push({
-          entity: 'individual',
-          operation: 'remove-type',
+          entity: OperationEntity.INDIVIDUAL,
+          operation: OperationType.REMOVE_TYPE,
           arguments: {
             individual: uid,
-            expressions: [{ type: 'class', id: oldNode.id }],
+            expressions: [{ type: ExpressionType.CLASS, id: oldNode.id }],
             'model-id': modelId,
           },
         })
 
         const expression = formNode.isComplement
-          ? { type: 'complement', filler: { type: 'class', id: formNode.term!.id } }
-          : { type: 'class', id: formNode.term!.id }
+          ? { type: ExpressionType.COMPLEMENT, filler: { type: ExpressionType.CLASS, id: formNode.term!.id } }
+          : { type: ExpressionType.CLASS, id: formNode.term!.id }
 
         operations.push({
-          entity: 'individual',
-          operation: 'add-type',
+          entity: OperationEntity.INDIVIDUAL,
+          operation: OperationType.ADD_TYPE,
           arguments: {
             individual: uid,
             expressions: [expression],
@@ -230,19 +227,18 @@ export const buildEditActivityOperations = (
           },
         })
       }
-      newNodeVarIds.set(uid, uid) // use real UID
+      newNodeVarIds.set(uid, uid)
     } else {
-      // New node — needs to be created
       const varId = uuidv4()
       newNodeVarIds.set(uid, varId)
 
       const expression = formNode.isComplement
-        ? { type: 'complement', filler: { type: 'class', id: formNode.term!.id } }
-        : { type: 'class', id: formNode.term!.id }
+        ? { type: ExpressionType.COMPLEMENT, filler: { type: ExpressionType.CLASS, id: formNode.term!.id } }
+        : { type: ExpressionType.CLASS, id: formNode.term!.id }
 
       operations.push({
-        entity: 'individual',
-        operation: 'add',
+        entity: OperationEntity.INDIVIDUAL,
+        operation: OperationType.ADD,
         arguments: {
           expressions: [expression],
           'model-id': modelId,
@@ -252,7 +248,6 @@ export const buildEditActivityOperations = (
     }
   }
 
-  // 2. Remove old edges not in new form
   const newEdgeKeys = new Set(
     formEdges.map(e => `${e.sourceUid}|${e.targetUid}|${e.predicateId}`)
   )
@@ -260,8 +255,8 @@ export const buildEditActivityOperations = (
     const key = `${edge.sourceId}|${edge.targetId}|${edge.id}`
     if (!newEdgeKeys.has(key)) {
       operations.push({
-        entity: 'edge',
-        operation: 'remove',
+        entity: OperationEntity.EDGE,
+        operation: OperationType.REMOVE,
         arguments: {
           subject: edge.sourceId,
           object: edge.targetId,
@@ -272,7 +267,6 @@ export const buildEditActivityOperations = (
     }
   }
 
-  // 3. Add new edges + evidence
   const oldEdgeKeys = new Set(
     existingActivity.edges.map(e => `${e.sourceId}|${e.targetId}|${e.id}`)
   )
@@ -283,10 +277,9 @@ export const buildEditActivityOperations = (
 
     const key = `${fe.sourceUid}|${fe.targetUid}|${fe.predicateId}`
     if (!oldEdgeKeys.has(key)) {
-      // New edge
       operations.push({
-        entity: 'edge',
-        operation: 'add',
+        entity: OperationEntity.EDGE,
+        operation: OperationType.ADD,
         arguments: {
           subject: sourceVar,
           object: targetVar,
@@ -296,15 +289,14 @@ export const buildEditActivityOperations = (
       })
     }
 
-    // Always replace evidence: remove old evidence nodes for this edge, add new
     const oldEdge = existingActivity.edges.find(
       e => e.sourceId === fe.sourceUid && e.targetId === fe.targetUid && e.id === fe.predicateId
     )
     if (oldEdge?.evidence) {
       for (const ev of oldEdge.evidence) {
         operations.push({
-          entity: 'individual',
-          operation: 'remove',
+          entity: OperationEntity.INDIVIDUAL,
+          operation: OperationType.REMOVE,
           arguments: { individual: ev.uid, 'model-id': modelId },
         })
       }
@@ -321,29 +313,25 @@ export const buildEditActivityOperations = (
     )
   }
 
-  // 4. Remove nodes that are in old but not in new
   for (const oldNode of existingActivity.nodes) {
     if (!formNodes.has(oldNode.uid)) {
       operations.push({
-        entity: 'individual',
-        operation: 'remove',
+        entity: OperationEntity.INDIVIDUAL,
+        operation: OperationType.REMOVE,
         arguments: { individual: oldNode.uid, 'model-id': modelId },
       })
     }
   }
 
   operations.push({
-    entity: 'model',
-    operation: 'store',
+    entity: OperationEntity.MODEL,
+    operation: OperationType.STORE,
     arguments: { 'model-id': modelId },
   })
 
   return operations
 }
 
-/**
- * Full delete+recreate fallback for when UIDs don't match.
- */
 const buildFullReplaceOperations = (
   root: TermNode,
   existingActivity: Activity,
@@ -354,8 +342,8 @@ const buildFullReplaceOperations = (
 
   for (const edge of existingActivity.edges) {
     operations.push({
-      entity: 'edge',
-      operation: 'remove',
+      entity: OperationEntity.EDGE,
+      operation: OperationType.REMOVE,
       arguments: {
         subject: edge.sourceId,
         object: edge.targetId,
@@ -367,21 +355,21 @@ const buildFullReplaceOperations = (
 
   for (const node of existingActivity.nodes) {
     operations.push({
-      entity: 'individual',
-      operation: 'remove',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.REMOVE,
       arguments: { individual: node.uid, 'model-id': modelId },
     })
   }
 
   const createOps = buildCreateActivityOperations(root, modelId, userContext)
   const withoutStore = createOps.filter(
-    op => !(op.entity === 'model' && op.operation === 'store')
+    op => !(op.entity === OperationEntity.MODEL && op.operation === OperationType.STORE)
   )
   operations.push(...withoutStore)
 
   operations.push({
-    entity: 'model',
-    operation: 'store',
+    entity: OperationEntity.MODEL,
+    operation: OperationType.STORE,
     arguments: { 'model-id': modelId },
   })
 
@@ -399,8 +387,8 @@ export const buildDeleteActivityOperations = (
 
   for (const edge of activity.edges) {
     operations.push({
-      entity: 'edge',
-      operation: 'remove',
+      entity: OperationEntity.EDGE,
+      operation: OperationType.REMOVE,
       arguments: {
         subject: edge.sourceId,
         object: edge.targetId,
@@ -412,15 +400,15 @@ export const buildDeleteActivityOperations = (
 
   for (const node of activity.nodes) {
     operations.push({
-      entity: 'individual',
-      operation: 'remove',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.REMOVE,
       arguments: { individual: node.uid, 'model-id': modelId },
     })
   }
 
   operations.push({
-    entity: 'model',
-    operation: 'store',
+    entity: OperationEntity.MODEL,
+    operation: OperationType.STORE,
     arguments: { 'model-id': modelId },
   })
 
@@ -429,7 +417,6 @@ export const buildDeleteActivityOperations = (
 
 /**
  * Add a new child node with an edge to an existing parent node.
- * Optionally includes a specific term type and evidence.
  */
 export const buildAddNodeOperations = (
   parentUid: string,
@@ -443,17 +430,17 @@ export const buildAddNodeOperations = (
   const nodeTypeId = details?.termId || typeId
   const operations: Operation[] = [
     {
-      entity: 'individual',
-      operation: 'add',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.ADD,
       arguments: {
-        expressions: [{ type: 'class', id: nodeTypeId }],
+        expressions: [{ type: ExpressionType.CLASS, id: nodeTypeId }],
         'model-id': modelId,
         'assign-to-variable': varId,
       },
     },
     {
-      entity: 'edge',
-      operation: 'add',
+      entity: OperationEntity.EDGE,
+      operation: OperationType.ADD,
       arguments: {
         subject: parentUid,
         object: varId,
@@ -465,13 +452,13 @@ export const buildAddNodeOperations = (
 
   if (userContext) {
     operations.push({
-      entity: 'individual',
-      operation: 'add-annotation',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.ADD_ANNOTATION,
       arguments: {
         individual: varId,
         values: [
-          { key: 'contributor', value: userContext.orcid },
-          { key: 'providedBy', value: userContext.groupUrl },
+          { key: AnnotationKey.CONTRIBUTOR, value: userContext.orcid },
+          { key: AnnotationKey.PROVIDED_BY, value: userContext.groupUrl },
         ],
         'model-id': modelId,
       },
@@ -491,8 +478,8 @@ export const buildAddNodeOperations = (
   }
 
   operations.push({
-    entity: 'model',
-    operation: 'store',
+    entity: OperationEntity.MODEL,
+    operation: OperationType.STORE,
     arguments: { 'model-id': modelId },
   })
 
@@ -511,8 +498,8 @@ export const buildDeleteNodeOperations = (
 
   for (const edge of edges) {
     operations.push({
-      entity: 'edge',
-      operation: 'remove',
+      entity: OperationEntity.EDGE,
+      operation: OperationType.REMOVE,
       arguments: {
         subject: edge.sourceId,
         object: edge.targetId,
@@ -523,14 +510,14 @@ export const buildDeleteNodeOperations = (
   }
 
   operations.push({
-    entity: 'individual',
-    operation: 'remove',
+    entity: OperationEntity.INDIVIDUAL,
+    operation: OperationType.REMOVE,
     arguments: { individual: nodeUid, 'model-id': modelId },
   })
 
   operations.push({
-    entity: 'model',
-    operation: 'store',
+    entity: OperationEntity.MODEL,
+    operation: OperationType.STORE,
     arguments: { 'model-id': modelId },
   })
 
@@ -539,7 +526,6 @@ export const buildDeleteNodeOperations = (
 
 /**
  * Build operations to save model annotations (title, state, comments).
- * Strategy: remove all existing, add new, store.
  */
 export const buildSaveModelAnnotationsOperations = (
   modelId: string,
@@ -550,22 +536,22 @@ export const buildSaveModelAnnotationsOperations = (
 
   if (current.title) {
     operations.push({
-      entity: 'model',
-      operation: 'remove-annotation',
+      entity: OperationEntity.MODEL,
+      operation: OperationType.REMOVE_ANNOTATION,
       arguments: {
         'model-id': modelId,
-        values: [{ key: 'title', value: current.title }],
+        values: [{ key: AnnotationKey.TITLE, value: current.title }],
       },
     })
   }
 
   if (current.state) {
     operations.push({
-      entity: 'model',
-      operation: 'remove-annotation',
+      entity: OperationEntity.MODEL,
+      operation: OperationType.REMOVE_ANNOTATION,
       arguments: {
         'model-id': modelId,
-        values: [{ key: 'state', value: current.state }],
+        values: [{ key: AnnotationKey.STATE, value: current.state }],
       },
     })
   }
@@ -573,48 +559,48 @@ export const buildSaveModelAnnotationsOperations = (
   if (current.comments) {
     for (const comment of current.comments) {
       operations.push({
-        entity: 'model',
-        operation: 'remove-annotation',
+        entity: OperationEntity.MODEL,
+        operation: OperationType.REMOVE_ANNOTATION,
         arguments: {
           'model-id': modelId,
-          values: [{ key: 'comment', value: comment }],
+          values: [{ key: AnnotationKey.COMMENT, value: comment }],
         },
       })
     }
   }
 
   operations.push({
-    entity: 'model',
-    operation: 'add-annotation',
+    entity: OperationEntity.MODEL,
+    operation: OperationType.ADD_ANNOTATION,
     arguments: {
       'model-id': modelId,
-      values: [{ key: 'title', value: updated.title }],
+      values: [{ key: AnnotationKey.TITLE, value: updated.title }],
     },
   })
 
   operations.push({
-    entity: 'model',
-    operation: 'add-annotation',
+    entity: OperationEntity.MODEL,
+    operation: OperationType.ADD_ANNOTATION,
     arguments: {
       'model-id': modelId,
-      values: [{ key: 'state', value: updated.state }],
+      values: [{ key: AnnotationKey.STATE, value: updated.state }],
     },
   })
 
   for (const comment of updated.comments) {
     operations.push({
-      entity: 'model',
-      operation: 'add-annotation',
+      entity: OperationEntity.MODEL,
+      operation: OperationType.ADD_ANNOTATION,
       arguments: {
         'model-id': modelId,
-        values: [{ key: 'comment', value: comment }],
+        values: [{ key: AnnotationKey.COMMENT, value: comment }],
       },
     })
   }
 
   operations.push({
-    entity: 'model',
-    operation: 'store',
+    entity: OperationEntity.MODEL,
+    operation: OperationType.STORE,
     arguments: { 'model-id': modelId },
   })
 
@@ -645,8 +631,8 @@ export const buildAddEvidenceToEdgeOperations = (
   )
 
   operations.push({
-    entity: 'model',
-    operation: 'store',
+    entity: OperationEntity.MODEL,
+    operation: OperationType.STORE,
     arguments: { 'model-id': modelId },
   })
 
@@ -661,13 +647,13 @@ export const buildRemoveEvidenceOperations = (
   modelId: string
 ): Operation[] => [
     {
-      entity: 'individual',
-      operation: 'remove',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.REMOVE,
       arguments: { individual: evidenceUid, 'model-id': modelId },
     },
     {
-      entity: 'model',
-      operation: 'store',
+      entity: OperationEntity.MODEL,
+      operation: OperationType.STORE,
       arguments: { 'model-id': modelId },
     },
   ]
@@ -682,26 +668,26 @@ export const buildEditIndividualTypeOperations = (
   modelId: string
 ): Operation[] => [
     {
-      entity: 'individual',
-      operation: 'remove-type',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.REMOVE_TYPE,
       arguments: {
         individual: individualUid,
-        expressions: [{ type: 'class', id: oldTypeId }],
+        expressions: [{ type: ExpressionType.CLASS, id: oldTypeId }],
         'model-id': modelId,
       },
     },
     {
-      entity: 'individual',
-      operation: 'add-type',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.ADD_TYPE,
       arguments: {
         individual: individualUid,
-        expressions: [{ type: 'class', id: newTypeId }],
+        expressions: [{ type: ExpressionType.CLASS, id: newTypeId }],
         'model-id': modelId,
       },
     },
     {
-      entity: 'model',
-      operation: 'store',
+      entity: OperationEntity.MODEL,
+      operation: OperationType.STORE,
       arguments: { 'model-id': modelId },
     },
   ]
@@ -711,7 +697,7 @@ export const buildEditIndividualTypeOperations = (
  */
 export const buildEditEvidenceAnnotationOperations = (
   evidenceUid: string,
-  key: 'source' | 'with',
+  key: AnnotationKey.SOURCE | AnnotationKey.WITH,
   oldValue: string,
   newValue: string,
   modelId: string,
@@ -719,8 +705,8 @@ export const buildEditEvidenceAnnotationOperations = (
 ): Operation[] => {
   const operations: Operation[] = [
     {
-      entity: 'individual',
-      operation: 'remove-annotation',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.REMOVE_ANNOTATION,
       arguments: {
         individual: evidenceUid,
         values: [{ key, value: oldValue }],
@@ -728,8 +714,8 @@ export const buildEditEvidenceAnnotationOperations = (
       },
     },
     {
-      entity: 'individual',
-      operation: 'add-annotation',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.ADD_ANNOTATION,
       arguments: {
         individual: evidenceUid,
         values: [{ key, value: newValue }],
@@ -740,22 +726,22 @@ export const buildEditEvidenceAnnotationOperations = (
 
   if (userContext) {
     operations.push({
-      entity: 'individual',
-      operation: 'remove-annotation',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.REMOVE_ANNOTATION,
       arguments: {
         individual: evidenceUid,
-        values: [{ key: 'contributor', value: userContext.orcid }],
+        values: [{ key: AnnotationKey.CONTRIBUTOR, value: userContext.orcid }],
         'model-id': modelId,
       },
     })
     operations.push({
-      entity: 'individual',
-      operation: 'add-annotation',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.ADD_ANNOTATION,
       arguments: {
         individual: evidenceUid,
         values: [
-          { key: 'contributor', value: userContext.orcid },
-          { key: 'providedBy', value: userContext.groupUrl },
+          { key: AnnotationKey.CONTRIBUTOR, value: userContext.orcid },
+          { key: AnnotationKey.PROVIDED_BY, value: userContext.groupUrl },
         ],
         'model-id': modelId,
       },
@@ -763,8 +749,8 @@ export const buildEditEvidenceAnnotationOperations = (
   }
 
   operations.push({
-    entity: 'model',
-    operation: 'store',
+    entity: OperationEntity.MODEL,
+    operation: OperationType.STORE,
     arguments: { 'model-id': modelId },
   })
 
@@ -777,7 +763,7 @@ export const buildEditEvidenceAnnotationOperations = (
  */
 export const buildClearEvidenceAnnotationOperations = (
   evidenceUid: string,
-  key: 'source' | 'with',
+  key: AnnotationKey.SOURCE | AnnotationKey.WITH,
   oldValue: string,
   modelId: string,
   userContext?: UserContext
@@ -786,8 +772,8 @@ export const buildClearEvidenceAnnotationOperations = (
 
   const operations: Operation[] = [
     {
-      entity: 'individual',
-      operation: 'remove-annotation',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.REMOVE_ANNOTATION,
       arguments: {
         individual: evidenceUid,
         values: [{ key, value: oldValue }],
@@ -798,22 +784,22 @@ export const buildClearEvidenceAnnotationOperations = (
 
   if (userContext) {
     operations.push({
-      entity: 'individual',
-      operation: 'remove-annotation',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.REMOVE_ANNOTATION,
       arguments: {
         individual: evidenceUid,
-        values: [{ key: 'contributor', value: userContext.orcid }],
+        values: [{ key: AnnotationKey.CONTRIBUTOR, value: userContext.orcid }],
         'model-id': modelId,
       },
     })
     operations.push({
-      entity: 'individual',
-      operation: 'add-annotation',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.ADD_ANNOTATION,
       arguments: {
         individual: evidenceUid,
         values: [
-          { key: 'contributor', value: userContext.orcid },
-          { key: 'providedBy', value: userContext.groupUrl },
+          { key: AnnotationKey.CONTRIBUTOR, value: userContext.orcid },
+          { key: AnnotationKey.PROVIDED_BY, value: userContext.groupUrl },
         ],
         'model-id': modelId,
       },
@@ -821,8 +807,8 @@ export const buildClearEvidenceAnnotationOperations = (
   }
 
   operations.push({
-    entity: 'model',
-    operation: 'store',
+    entity: OperationEntity.MODEL,
+    operation: OperationType.STORE,
     arguments: { 'model-id': modelId },
   })
 

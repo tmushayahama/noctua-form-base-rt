@@ -4,6 +4,7 @@ import { type Edge, type GraphModel, type GraphNode, type Activity, ActivityType
 import { Relations } from "@/@noctua.core/models/relations";
 import { v4 as uuidv4 } from 'uuid';
 import { store } from "@/app/store/store";
+import { AnnotationKey } from '../models/operations';
 
 
 export function extractActivities(nodes: GraphNode[], edges: Edge[]): Activity[] {
@@ -245,15 +246,15 @@ export const transformGraphData = (data: any): GraphModel => {
 
       if (individual.annotations && Array.isArray(individual.annotations)) {
         individual.annotations.forEach((annotation: any) => {
-          if (annotation.key === 'contributor') {
+          if (annotation.key === AnnotationKey.CONTRIBUTOR) {
             nodeData.contributors.push(getContributor(annotation.value));
-          } else if (annotation.key === 'date') {
+          } else if (annotation.key === AnnotationKey.DATE) {
             nodeData.date = annotation.value;
-          } else if (annotation.key === 'providedBy') {
+          } else if (annotation.key === AnnotationKey.PROVIDED_BY) {
             nodeData.groups.push(getGroup(annotation.value));
-          } else if (annotation.key === 'source') {
+          } else if (annotation.key === AnnotationKey.SOURCE) {
             nodeData.sources.push(annotation.value);
-          } else if (annotation.key === 'with') {
+          } else if (annotation.key === AnnotationKey.WITH) {
             nodeData.with = annotation.value;
           }
         });
@@ -283,13 +284,13 @@ export const transformGraphData = (data: any): GraphModel => {
 
         if (fact.annotations && Array.isArray(fact.annotations)) {
           fact.annotations.forEach((annotation: any) => {
-            if (annotation.key === 'contributor') {
+            if (annotation.key === AnnotationKey.CONTRIBUTOR) {
               edgeData.contributors.push(getContributor(annotation.value));
-            } else if (annotation.key === 'date') {
+            } else if (annotation.key === AnnotationKey.DATE) {
               edgeData.date = annotation.value;
-            } else if (annotation.key === 'providedBy') {
+            } else if (annotation.key === AnnotationKey.PROVIDED_BY) {
               edgeData.groups.push(getGroup(annotation.value));
-            } else if (annotation.key === 'evidence') {
+            } else if (annotation.key === AnnotationKey.EVIDENCE) {
               const evidence = extractEvidence(annotation.value, nodes);
               if (evidence) {
                 edgeData.evidence?.push(evidence);
@@ -324,21 +325,21 @@ export const transformGraphData = (data: any): GraphModel => {
 
   if (data.annotations && Array.isArray(data.annotations)) {
     data.annotations.forEach((annotation: any) => {
-      if (annotation.key === 'conforms-to-gpad') {
+      if (annotation.key === AnnotationKey.CONFORMS_TO_GPAD) {
         graphModel.conformsToGPAD = annotation.value === 'true';
-      } else if (annotation.key === 'state') {
+      } else if (annotation.key === AnnotationKey.STATE) {
         graphModel.state = annotation.value;
-      } else if (annotation.key === 'date') {
+      } else if (annotation.key === AnnotationKey.DATE) {
         graphModel.date = annotation.value;
-      } else if (annotation.key === 'title') {
+      } else if (annotation.key === AnnotationKey.TITLE) {
         graphModel.title = annotation.value;
-      } else if (annotation.key === 'contributor') {
+      } else if (annotation.key === AnnotationKey.CONTRIBUTOR) {
         graphModel.contributors.push(getContributor(annotation.value));
-      } else if (annotation.key === 'providedBy') {
+      } else if (annotation.key === AnnotationKey.PROVIDED_BY) {
         graphModel.groups.push(getGroup(annotation.value));
-      } else if (annotation.key === 'comment') {
+      } else if (annotation.key === AnnotationKey.COMMENT) {
         graphModel.comments.push(annotation.value);
-      } else if (annotation.key === 'https://w3id.org/biolink/vocab/in_taxon') {
+      } else if (annotation.key === AnnotationKey.IN_TAXON) {
         graphModel.taxon = annotation.value;
       }
     });

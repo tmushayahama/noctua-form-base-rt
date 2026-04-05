@@ -5,6 +5,7 @@ import {
   useUpdateGraphModelMutation,
 } from '@/features/gocam/slices/camApiSlice'
 import { useAppDispatch, useAppSelector } from './hooks'
+import { OperationEntity, OperationType } from '@/features/gocam/models/operations'
 import {
   setModel,
   setSelectedActivity,
@@ -18,6 +19,7 @@ import type { LayoutDetail, LayoutSpacing, CamCanvas } from '@/features/pathway/
 import {
   setRightDrawerOpen,
   setRightPanelTab,
+  RightPanelTab,
 } from '@/@noctua.core/components/drawer/drawerSlice'
 import type { Activity } from '@/features/gocam/models/cam'
 import type { ActivityFormType } from '@/features/gocam/models/formModels'
@@ -32,7 +34,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import ActivityDialog from '@/features/gocam/components/dialogs/ActivityFormDialog'
 import ActivityForm from '@/features/gocam/components/forms/ActivityForm'
 import ConnectorForm from '@/features/relations/components/ConnectorForm'
-import type { RootState } from './store/store'
+import { selectAuthUser } from '@/features/auth/slices/authSlice'
 
 const PathwayEditor: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -50,7 +52,7 @@ const PathwayEditor: React.FC = () => {
   const [connectorSource, setConnectorSource] = useState<Activity | null>(null)
   const [connectorTarget, setConnectorTarget] = useState<Activity | null>(null)
 
-  const user = useAppSelector((state: RootState) => state.auth.user)
+  const user = useAppSelector(selectAuthUser)
   const isLoggedIn = !!user
 
   const [updateGraphModel] = useUpdateGraphModelMutation()
@@ -82,7 +84,7 @@ const PathwayEditor: React.FC = () => {
       const activity = graphModel?.data?.activities.find(a => a.uid === activityId)
       if (activity) {
         dispatch(setSelectedActivity(activity))
-        dispatch(setRightPanelTab('activityTable'))
+        dispatch(setRightPanelTab(RightPanelTab.ACTIVITY_TABLE))
         dispatch(setRightDrawerOpen(true))
       }
     },
@@ -94,7 +96,7 @@ const PathwayEditor: React.FC = () => {
       const activity = graphModel?.data?.activities.find(a => a.uid === activityId)
       if (activity) {
         dispatch(setSelectedActivity(activity))
-        dispatch(setRightPanelTab('activityTable'))
+        dispatch(setRightPanelTab(RightPanelTab.ACTIVITY_TABLE))
         dispatch(setRightDrawerOpen(true))
       }
     },
@@ -112,55 +114,37 @@ const PathwayEditor: React.FC = () => {
     const activity = model.activities.find(a => a.uid === deleteTarget)
     if (!activity) return
 
-    // Build minerva requests to remove the activity's facts + individuals
     const requests: Record<string, unknown>[] = []
 
-    // Remove all edges (facts) within the activity
     for (const edge of activity.edges) {
       requests.push({
-        entity: 'edge',
-        operation: 'remove',
-        arguments: {
-          'model-id': model.id,
-          subject: edge.sourceId,
-          object: edge.targetId,
-          predicate: edge.id,
-        },
+        entity: OperationEntity.EDGE,
+        operation: OperationType.REMOVE,
+        arguments: { 'model-id': model.id, subject: edge.sourceId, object: edge.targetId, predicate: edge.id },
       })
     }
 
-    // Remove activity connections involving this activity
     for (const conn of model.activityConnections) {
       if (conn.sourceId === activity.rootNode?.uid || conn.targetId === activity.rootNode?.uid) {
         requests.push({
-          entity: 'edge',
-          operation: 'remove',
-          arguments: {
-            'model-id': model.id,
-            subject: conn.sourceId,
-            object: conn.targetId,
-            predicate: conn.id,
-          },
+          entity: OperationEntity.EDGE,
+          operation: OperationType.REMOVE,
+          arguments: { 'model-id': model.id, subject: conn.sourceId, object: conn.targetId, predicate: conn.id },
         })
       }
     }
 
-    // Remove all nodes (individuals) in the activity
     for (const node of activity.nodes) {
       requests.push({
-        entity: 'individual',
-        operation: 'remove',
-        arguments: {
-          'model-id': model.id,
-          individual: node.uid,
-        },
+        entity: OperationEntity.INDIVIDUAL,
+        operation: OperationType.REMOVE,
+        arguments: { 'model-id': model.id, individual: node.uid },
       })
     }
 
-    // Store model
     requests.push({
-      entity: 'model',
-      operation: 'store',
+      entity: OperationEntity.MODEL,
+      operation: OperationType.STORE,
       arguments: { 'model-id': model.id },
     })
 
@@ -191,7 +175,7 @@ const PathwayEditor: React.FC = () => {
               edge: connection,
             })
           )
-          dispatch(setRightPanelTab('connectorTable'))
+          dispatch(setRightPanelTab(RightPanelTab.CONNECTOR_TABLE))
           dispatch(setRightDrawerOpen(true))
         }
       }

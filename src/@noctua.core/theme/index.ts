@@ -1,4 +1,3 @@
-// src/themes/index.ts
 import type { Theme } from '@mui/material/styles'
 import { DialogTheme } from './components/DialogTheme'
 import { ButtonTheme } from './components/ButtonTheme'

@@ -6,6 +6,7 @@ import { useSearchTermsQuery } from '../slices/lookupApiSlice'
 import type { GOlrResponse } from '../models/search'
 import { AutocompleteType } from '../models/search'
 import { TextField, Popper, Paper, CircularProgress } from '@mui/material'
+import { DEBOUNCE_MS, BLUR_CLOSE_DELAY_MS, MIN_SEARCH_LENGTH } from '@/@noctua.core/data/uiConstants'
 
 interface TermAutocompleteProps {
   label: string
@@ -50,7 +51,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
   const { data, isLoading, isFetching } = useSearchTermsQuery(
     { searchText: debouncedSearchTerm, closureIds: rootTypeIds },
     {
-      skip: !useAutocomplete || !debouncedSearchTerm || debouncedSearchTerm.length < 3,
+      skip: !useAutocomplete || !debouncedSearchTerm || debouncedSearchTerm.length < MIN_SEARCH_LENGTH,
       selectFromResult: ({ data, isLoading, isFetching }) => ({
         data: data || [],
         isLoading,
@@ -69,7 +70,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
   }, [data, useAutocomplete])
 
   // Show initialOptions on focus when no search is active
-  const showInitial = open && inputValue.length < 3 && options.length === 0 && !searching
+  const showInitial = open && inputValue.length < MIN_SEARCH_LENGTH && options.length === 0 && !searching
   const displayOptions = showInitial ? initialOptions : options
 
   useEffect(() => {
@@ -77,7 +78,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
 
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(inputValue)
-    }, 300)
+    }, DEBOUNCE_MS)
 
     return () => {
       clearTimeout(handler)
@@ -153,7 +154,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
           }}
           onFocus={() => useAutocomplete && !inputValue && setOpen(true)}
           onBlur={() => {
-            setTimeout(() => setOpen(false), 200)
+            setTimeout(() => setOpen(false), BLUR_CLOSE_DELAY_MS)
             onBlur?.()
           }}
           disabled={disabled}
@@ -180,7 +181,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
         >
           {!searching && displayOptions.length === 0 && (
             <div className="p-4 text-center text-xs text-gray-500">
-              {inputValue.length < 3
+              {inputValue.length < MIN_SEARCH_LENGTH
                 ? 'Type at least 3 characters to search'
                 : 'No results found'}
             </div>

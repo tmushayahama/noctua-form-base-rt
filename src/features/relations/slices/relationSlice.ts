@@ -134,4 +134,9 @@ export const {
   resetConnectorEvidences,
   setConnectorEvidences,
 } = relationSlice.actions
+
+export const selectRelationSelected = (state: { relation: RelationState }) => state.relation.selected
+export const selectRelation = (state: { relation: RelationState }) => state.relation.relation
+export const selectConnectorEvidences = (state: { relation: RelationState }) => state.relation.connectorEvidences
+
 export default relationSlice.reducer

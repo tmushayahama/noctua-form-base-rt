@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { RootState } from '@/app/store/store'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { removeBaristaTokenFromUrl } from '../authServices'
 import { useGetUserInfoQuery } from '../slices/authApiSlice'
-import { setBaristaToken, setUser } from '../slices/authSlice'
+import { setBaristaToken, setUser, selectBaristaToken, selectAuthUser } from '../slices/authSlice'
 
 export const useAuthSetup = () => {
   const dispatch = useAppDispatch()
-  const baristaToken = useAppSelector((state: RootState) => state.auth.baristaToken)
-  const user = useAppSelector((state: RootState) => state.auth.user)
+  const baristaToken = useAppSelector(selectBaristaToken)
+  const user = useAppSelector(selectAuthUser)
   const [isInitialized, setIsInitialized] = useState(false)
 
   // Parse query parameters - removed useLocation dependency

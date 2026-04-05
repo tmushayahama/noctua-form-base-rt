@@ -1,13 +1,13 @@
-import { RootTypes } from '../models/cam'
+import { RootTypes, Aspect } from '../models/cam'
 
 /** Valid model lifecycle states */
 export const MODEL_STATES = ['development', 'production', 'review', 'closed', 'delete'] as const
 
 /** Root GO terms by aspect, matching Angular noctuaFormConfig.rootNode */
 export const ROOT_NODES: Record<string, { id: string; label: string; aspect: string }> = {
-  [RootTypes.MOLECULAR_FUNCTION]: { id: RootTypes.MOLECULAR_FUNCTION, label: 'molecular_function', aspect: 'F' },
-  [RootTypes.BIOLOGICAL_PROCESS]: { id: RootTypes.BIOLOGICAL_PROCESS, label: 'biological_process', aspect: 'P' },
-  [RootTypes.CELLULAR_COMPONENT]: { id: RootTypes.CELLULAR_COMPONENT, label: 'cellular_component', aspect: 'C' },
+  [RootTypes.MOLECULAR_FUNCTION]: { id: RootTypes.MOLECULAR_FUNCTION, label: 'molecular_function', aspect: Aspect.MOLECULAR_FUNCTION },
+  [RootTypes.BIOLOGICAL_PROCESS]: { id: RootTypes.BIOLOGICAL_PROCESS, label: 'biological_process', aspect: Aspect.BIOLOGICAL_PROCESS },
+  [RootTypes.CELLULAR_COMPONENT]: { id: RootTypes.CELLULAR_COMPONENT, label: 'cellular_component', aspect: Aspect.CELLULAR_COMPONENT },
 }
 
 /** Pre-configured evidence for auto-populate, matching Angular noctuaFormConfig.evidenceAutoPopulate */

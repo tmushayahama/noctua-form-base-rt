@@ -8,7 +8,7 @@ import {
 } from '@mui/material'
 import { FiPlus, FiX } from 'react-icons/fi'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
-import type { RootState } from '@/app/store/store'
+import { selectCamModel } from '@/features/gocam/slices/camSlice'
 import { useUpdateGraphModelMutation } from '../slices/camApiSlice'
 import { buildSaveModelAnnotationsOperations } from '../services/activityOperations'
 import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice'
@@ -16,7 +16,7 @@ import { MODEL_STATES } from '../data/camConstants'
 
 const CamMetadataForm: React.FC = () => {
   const dispatch = useAppDispatch()
-  const cam = useAppSelector((state: RootState) => state.cam.model)
+  const cam = useAppSelector(selectCamModel)
   const [updateGraphModel, { isLoading }] = useUpdateGraphModelMutation()
 
   const [title, setTitle] = useState(cam?.title ?? '')

@@ -11,7 +11,9 @@ import {
 } from '@mui/material'
 import { FaRegTimesCircle, FaRegCheckCircle, FaUser, FaCalendarAlt } from 'react-icons/fa'
 import { referenceAllowedDBs } from '../../data/allowedDatabases'
+import { ENVIRONMENT } from '@/@noctua.core/data/constants'
 import { useLazyGetPubmedInfoQuery } from '@/features/search/slices/lookupApiSlice'
+import { PUBMED_LOOKUP_DELAY_MS, MIN_PMID_LENGTH } from '@/@noctua.core/data/uiConstants'
 
 interface ReferenceDropdownProps {
   anchorEl: HTMLElement | null
@@ -56,8 +58,8 @@ const ReferenceDropdown: React.FC<ReferenceDropdownProps> = ({
 
   // Fetch PubMed info when PMID accession changes
   useEffect(() => {
-    if (db.name === 'PMID' && accession.trim().length >= 4) {
-      const timer = setTimeout(() => triggerPubmed(accession.trim()), 500)
+    if (db.name === 'PMID' && accession.trim().length >= MIN_PMID_LENGTH) {
+      const timer = setTimeout(() => triggerPubmed(accession.trim()), PUBMED_LOOKUP_DELAY_MS)
       return () => clearTimeout(timer)
     }
   }, [db.name, accession, triggerPubmed])
@@ -132,7 +134,7 @@ const ReferenceDropdown: React.FC<ReferenceDropdownProps> = ({
             {!pubmedLoading && pubmedInfo && (
               <div className="flex flex-col gap-1">
                 <a
-                  href={`https://pubmed.ncbi.nlm.nih.gov/${accession.trim()}`}
+                  href={`${ENVIRONMENT.pubmedUrl}${accession.trim()}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="line-clamp-2 font-medium text-blue-700 hover:underline"

@@ -59,14 +59,26 @@ export const ENVIRONMENT = {
   globalKnownRelations: globalKnownRelations,
   searchApi: `${baristaLocation}/search/`,
 
-  //Workbench
   noctuaUrl: `${window.location.origin}`,
   noctuaLandingPageUrl: `${window.location.origin}/workbench/noctua-landing-page`,
 
   workbenchUrl: `${window.location.origin}/workbench/`,
 
-  amigoTerm: 'http://amigo.geneontology.org/amigo/term/',
+  amigoTermUrl: 'http://amigo.geneontology.org/amigo/term/',
+  pubmedUrl: 'https://pubmed.ncbi.nlm.nih.gov/',
+  pubmedApiUrl: 'https://api.ncbi.nlm.nih.gov/lit/ctxp/v1/pubmed/',
   pubMedSummaryApi: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=',
-  announcementUrl: 'https://raw.githubusercontent.com/geneontology/noctua-announcements/dev/notification.json'
+  evidenceOntologyUrl: 'http://www.evidenceontology.org/term/',
+  announcementUrl: 'https://raw.githubusercontent.com/geneontology/noctua-announcements/dev/notification.json',
+}
 
+export const EXTERNAL_LINKS = {
+  GO_HELP: 'http://help.geneontology.org',
+  OBO_FOUNDRY: 'http://www.obofoundry.org/',
+  NIH_GRANT: 'https://projectreporter.nih.gov/project_info_details.cfm?aid=9209989',
+  GO_ONTOLOGY_ISSUES: 'https://github.com/geneontology/go-ontology/issues',
+  NOCTUA_USERS_GUIDE: 'https://docs.google.com/document/d/1a5YZBJrnJ9LKJxPVpXk62dJJGpHB2b9zH8-xr_Rm1Vs',
+  GO_HOMEPAGE: 'http://geneontology.org/',
+  ALLIANCE_GENOME: 'https://www.alliancegenome.org',
+  NOCTUA_PRODUCTION: 'http://noctua.geneontology.org/',
 }

@@ -13,9 +13,10 @@ import {
 } from '@mui/material'
 import { FaExclamationCircle, FaInfoCircle } from 'react-icons/fa'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
-import type { RootState } from '@/app/store/store'
+import { selectCamModel } from '../../slices/camSlice'
+import { selectAuthUser } from '@/features/auth/slices/authSlice'
 import { Relations } from '@/@noctua.core/models/relations'
-import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
+import { DialogComponent, openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
 import {
   initCreateForm,
   resetForm,
@@ -34,41 +35,16 @@ import {
   buildCreateActivityOperations,
   buildEditActivityOperations,
 } from '../../services/activityOperations'
+import { FormMode } from '../../models/formModels'
 import type { TermNode, RelationNode, ValidationError, FlatRow } from '../../models/formModels'
+import { ActivityType } from '../../models/cam'
 import type { Evidence, UserContext } from '../../models/cam'
 import { referenceAllowedDBs, withFromAllowedDBs } from '../../data/allowedDatabases'
 import EntityRow from './EntityRow'
 import CloneEvidenceDialog from './CloneEvidenceDialog'
 import AllowedDatabasesPopover from './AllowedDatabasesPopover'
 import { v4 as uuidv4 } from 'uuid'
-
-// ── Flatten tree into renderable rows ────────────────────────────────
-
-function flattenNode(
-  node: TermNode,
-  relation: RelationNode | null,
-  parentTermUid: string | null,
-  treeLevel: number,
-  rows: FlatRow[]
-) {
-  rows.push({ termNode: node, relation, parentTermUid, treeLevel })
-  for (const rel of node.relations) {
-    flattenNode(rel.target, rel, node.uid, treeLevel + 1, rows)
-  }
-}
-
-function getAspectBorderClass(node: TermNode): string {
-  switch (node.aspect) {
-    case 'F':
-      return 'border-l-4 border-l-green-400'
-    case 'P':
-      return 'border-l-4 border-l-orange-300'
-    case 'C':
-      return 'border-l-4 border-l-purple-300'
-    default:
-      return ''
-  }
-}
+import { flattenNode, getAspectBorderClass, findTargetUidByRelation } from '../../services/formUtils'
 
 /** Collect all unique evidences from the current activity (for clone evidence) */
 function collectUniqueEvidences(root: TermNode): Evidence[] {
@@ -113,8 +89,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
   const activityType = useAppSelector(selectFormType)
   const errors = useAppSelector(selectFormErrors)
   const existingActivityUid = useAppSelector(selectExistingActivityUid)
-  const model = useAppSelector((state: RootState) => state.cam.model)
-  const authUser = useAppSelector((state: RootState) => state.auth.user)
+  const model = useAppSelector(selectCamModel)
+  const authUser = useAppSelector(selectAuthUser)
 
   const userContext: UserContext | undefined = useMemo(() => {
     if (!authUser?.uri || !authUser?.group?.id) return undefined
@@ -131,7 +107,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
   const [withInfoAnchor, setWithInfoAnchor] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
-    if (!root && mode === 'create' && !activityType) {
+    if (!root && mode === FormMode.CREATE && !activityType) {
       dispatch(initCreateForm('activity'))
     }
   }, [root, mode, activityType, dispatch])
@@ -150,7 +126,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
     switch (activityType) {
       case 'molecule':
         return { gp: 'Chemical', fd: 'Location (optional)' }
-      case 'proteinComplex':
+      case ActivityType.PROTEIN_COMPLEX:
         return { gp: 'Gene Product', fd: 'Function Description' }
       default:
         return { gp: 'Gene Product', fd: 'Function Description' }
@@ -208,7 +184,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
     if (!root || !model?.id || hasErrors) return
 
     let operations
-    if (mode === 'edit' && existingActivityUid) {
+    if (mode === FormMode.EDIT && existingActivityUid) {
       const existingActivity = model.activities.find(
         a => a.uid === existingActivityUid
       )
@@ -244,7 +220,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
       }
       dispatch(
         openDialog({
-          component: 'SearchAnnotations',
+          component: DialogComponent.SEARCH_ANNOTATIONS,
           title: 'Search Annotations',
           size: 'lg',
           customProps: {
@@ -298,7 +274,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
     <div className="flex h-full w-full flex-col items-stretch justify-start">
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
-        {activityType === 'proteinComplex' && (
+        {activityType === ActivityType.PROTEIN_COMPLEX && (
           <div className="mx-3 mt-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs italic text-amber-800">
             Note that this should be used rarely, and only in the case where the activity cannot be
             ascribed to a single subunit of a complex
@@ -481,16 +457,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
       />
     </div>
   )
-}
-
-/** Find the target TermNode uid for a given relation uid */
-function findTargetUidByRelation(root: TermNode, relationUid: string): string | null {
-  for (const rel of root.relations) {
-    if (rel.uid === relationUid) return rel.target.uid
-    const found = findTargetUidByRelation(rel.target, relationUid)
-    if (found) return found
-  }
-  return null
 }
 
 /** Render FD node groups that have nested children (tree level 3+) */

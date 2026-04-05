@@ -25,8 +25,7 @@ import { selectCamModel, getModelTerms, getModelEvidence } from '../../slices/ca
 import { getNodeCategory } from '../../data/nodeCategories'
 import { getInsertMenuItems } from '../../data/insertMenuConfig'
 import type { InsertMenuItem } from '../../data/insertMenuConfig'
-import ReferenceField from './ReferenceField'
-import WithField from './WithField'
+import DatabaseField from './DatabaseField'
 
 interface EntityRowProps {
   node: TermNode
@@ -266,13 +265,15 @@ const EntityRow: React.FC<EntityRowProps> = ({
                   />
                 </div>
                 <div className="w-1/4 px-2 py-2">
-                  <ReferenceField
+                  <DatabaseField
+                    type="reference"
                     value={ev.reference}
                     onChange={value => handleEvidenceFieldChange(ev, 'reference', value)}
                   />
                 </div>
                 <div className="w-1/4 px-2 py-2">
-                  <WithField
+                  <DatabaseField
+                    type="with"
                     value={ev.withFrom}
                     onChange={value => handleEvidenceFieldChange(ev, 'withFrom', value)}
                   />

@@ -3,6 +3,8 @@ import { Dialog, DialogContent, IconButton } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import { useAppSelector } from '@/app/hooks'
 import { selectFormType, selectFormMode } from '../../slices/activityFormSlice'
+import { ActivityType } from '../../models/cam'
+import { FormMode } from '../../models/formModels'
 
 interface ActivityFormDialogProps {
   open: boolean
@@ -11,17 +13,17 @@ interface ActivityFormDialogProps {
 }
 
 function getDialogTitle(
-  mode: 'create' | 'edit' | null,
+  mode: FormMode | null,
   activityType: string | null
 ): string {
   const typeLabel =
-    activityType === 'molecule'
+    activityType === ActivityType.MOLECULE
       ? 'Chemical'
-      : activityType === 'proteinComplex'
+      : activityType === ActivityType.PROTEIN_COMPLEX
         ? 'Protein Complex'
         : 'Activity Unit'
 
-  return mode === 'edit' ? `Edit ${typeLabel}` : `${typeLabel} Form`
+  return mode === FormMode.EDIT ? `Edit ${typeLabel}` : `${typeLabel} Form`
 }
 
 const ActivityFormDialog: React.FC<ActivityFormDialogProps> = ({ open, onClose, children }) => {

@@ -11,8 +11,7 @@ import { selectCamModel, getModelTerms, getModelEvidence } from '../../slices/ca
 import TermAutocomplete from '@/features/search/components/Autocomplete'
 import { AutocompleteType } from '@/features/search/models/search'
 import type { GOlrResponse } from '@/features/search/models/search'
-import ReferenceField from './ReferenceField'
-import WithField from './WithField'
+import DatabaseField from './DatabaseField'
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -188,12 +187,12 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
         )}
         {sections.reference && (
           <div className="w-[150px] p-1">
-            <ReferenceField value={reference} onChange={setReference} />
+            <DatabaseField type="reference" value={reference} onChange={setReference} />
           </div>
         )}
         {sections.with && (
           <div className="w-[150px] p-1">
-            <WithField value={withVal} onChange={setWithVal} />
+            <DatabaseField type="with" value={withVal} onChange={setWithVal} />
           </div>
         )}
 

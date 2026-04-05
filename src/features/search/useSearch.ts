@@ -1,8 +1,8 @@
 import { useAppSelector } from '@/app/hooks'
-import type { RootState } from '@/app/store/store'
+import { selectSearch } from './searchSlice'
 
 export const useSearchFilter = () => {
-  const search = useAppSelector((state: RootState) => state.search)
+  const search = useAppSelector(selectSearch)
 
   const getQueryFilter = () => ({
     geneIds: search.genes.map(g => g.gene),

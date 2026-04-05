@@ -98,4 +98,7 @@ const updateFiltersAndTooltips = (state: SearchState) => {
 
 export const { addItem, removeItem, clearSearch, setSearchType, setPage, setPageSize } =
   searchSlice.actions
+
+export const selectSearch = (state: { search: SearchState }) => state.search
+
 export default searchSlice.reducer

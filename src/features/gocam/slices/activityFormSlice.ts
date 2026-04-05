@@ -8,8 +8,9 @@ import type {
   ActivityFormType,
   ActivityFormState,
 } from '../models/formModels'
-import { createEvidenceForm } from '../models/formModels'
-import type { Entity, Activity } from '../models/cam'
+import { createEvidenceForm, FormMode } from '../models/formModels'
+import type { Entity, Activity, Aspect } from '../models/cam'
+import { ActivityType } from '../models/cam'
 import { createActivityTemplate, activityToFormTree } from '../data/activityTemplates'
 import { ROOT_NODES, EVIDENCE_AUTO_POPULATE } from '../data/camConstants'
 import { v4 as uuidv4 } from 'uuid'
@@ -64,7 +65,7 @@ function findRelationByTargetUid(
 
 const initialState: ActivityFormState = {
   activityType: null,
-  mode: 'create',
+  mode: FormMode.CREATE,
   existingActivityUid: null,
   root: null,
   isDirty: false,
@@ -78,7 +79,7 @@ export const activityFormSlice = createSlice({
     initCreateForm(state, action: PayloadAction<ActivityFormType>) {
       state.root = createActivityTemplate(action.payload)
       state.activityType = action.payload
-      state.mode = 'create'
+      state.mode = FormMode.CREATE
       state.existingActivityUid = null
       state.isDirty = false
       state.errors = []
@@ -91,7 +92,7 @@ export const activityFormSlice = createSlice({
       const { activity, activityType } = action.payload
       state.root = activityToFormTree(activity)
       state.activityType = activityType
-      state.mode = 'edit'
+      state.mode = FormMode.EDIT
       state.existingActivityUid = activity.uid
       state.isDirty = false
       state.errors = []
@@ -100,14 +101,14 @@ export const activityFormSlice = createSlice({
     loadActivity(state, action: PayloadAction<Activity>) {
       const activity = action.payload
       const activityType: ActivityFormType =
-        activity.type === 'molecule'
+        activity.type === ActivityType.MOLECULE
           ? 'molecule'
-          : activity.type === 'proteinComplex'
+          : activity.type === ActivityType.PROTEIN_COMPLEX
             ? 'proteinComplex'
             : 'activity'
       state.root = activityToFormTree(activity)
       state.activityType = activityType
-      state.mode = 'edit'
+      state.mode = FormMode.EDIT
       state.existingActivityUid = activity.uid
       state.isDirty = false
       state.errors = []
@@ -240,7 +241,7 @@ export const activityFormSlice = createSlice({
         category: action.payload.nodeType,
         label: action.payload.label,
         term: null,
-        aspect: (action.payload.aspect as any) ?? null,
+        aspect: (action.payload.aspect as Aspect | null) ?? null,
         rootTypes: action.payload.rootTypes,
         isComplement: false,
         canDelete: true,

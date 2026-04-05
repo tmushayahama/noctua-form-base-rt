@@ -2,12 +2,13 @@ import { v4 as uuidv4 } from 'uuid'
 import type { Activity, GraphNode, UserContext } from '@/features/gocam/models/cam'
 import { Relations } from '@/@noctua.core/models/relations'
 import type { EvidenceForm } from '@/features/gocam/models/formModels'
-
-type Operation = {
-  entity: string
-  operation: string
-  arguments: Record<string, unknown>
-}
+import {
+  OperationEntity,
+  OperationType,
+  AnnotationKey,
+  ExpressionType,
+} from '@/features/gocam/models/operations'
+import type { Operation } from '@/features/gocam/models/operations'
 
 /**
  * Build Barista API operations to create a causal relation between two activities.
@@ -25,10 +26,9 @@ export const buildConnectorOperations = (
   const subjectId = sourceActivity.rootNode.uid
   const objectId = targetActivity.rootNode.uid
 
-  // Add the causal relation edge
   operations.push({
-    entity: 'edge',
-    operation: 'add',
+    entity: OperationEntity.EDGE,
+    operation: OperationType.ADD,
     arguments: {
       subject: subjectId,
       object: objectId,
@@ -37,41 +37,38 @@ export const buildConnectorOperations = (
     },
   })
 
-  // Add evidence for the edge
   const validEvidences = evidences.filter(ev => ev.evidenceCode?.id)
   for (const evidence of validEvidences) {
     const evidenceVarId = uuidv4()
 
-    // Create evidence individual
     operations.push({
-      entity: 'individual',
-      operation: 'add',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.ADD,
       arguments: {
-        expressions: [{ type: 'class', id: evidence.evidenceCode.id }],
+        expressions: [{ type: ExpressionType.CLASS, id: evidence.evidenceCode.id }],
         'model-id': modelId,
         'assign-to-variable': evidenceVarId,
       },
     })
 
-    // Add annotations to evidence (source/reference, with, user attribution)
-    const annotationValues: { key: string; value: string }[] = []
+    const annotationValues: { key: AnnotationKey; value: string }[] = []
     if (evidence.reference) {
-      annotationValues.push({ key: 'source', value: evidence.reference })
+      annotationValues.push({ key: AnnotationKey.SOURCE, value: evidence.reference })
     }
     if (evidence.withFrom) {
-      annotationValues.push({ key: 'with', value: evidence.withFrom })
+      annotationValues.push({ key: AnnotationKey.WITH, value: evidence.withFrom })
     }
     if (userContext?.orcid) {
-      annotationValues.push({ key: 'contributor', value: userContext.orcid })
+      annotationValues.push({ key: AnnotationKey.CONTRIBUTOR, value: userContext.orcid })
     }
     if (userContext?.groupUrl) {
-      annotationValues.push({ key: 'providedBy', value: userContext.groupUrl })
+      annotationValues.push({ key: AnnotationKey.PROVIDED_BY, value: userContext.groupUrl })
     }
 
     if (annotationValues.length > 0) {
       operations.push({
-        entity: 'individual',
-        operation: 'add-annotation',
+        entity: OperationEntity.INDIVIDUAL,
+        operation: OperationType.ADD_ANNOTATION,
         arguments: {
           individual: evidenceVarId,
           values: annotationValues,
@@ -80,24 +77,22 @@ export const buildConnectorOperations = (
       })
     }
 
-    // Attach evidence to the edge
     operations.push({
-      entity: 'edge',
-      operation: 'add-annotation',
+      entity: OperationEntity.EDGE,
+      operation: OperationType.ADD_ANNOTATION,
       arguments: {
         subject: subjectId,
         object: objectId,
         predicate: relationId,
-        values: [{ key: 'evidence', value: evidenceVarId }],
+        values: [{ key: AnnotationKey.EVIDENCE, value: evidenceVarId }],
         'model-id': modelId,
       },
     })
   }
 
-  // Store model
   operations.push({
-    entity: 'model',
-    operation: 'store',
+    entity: OperationEntity.MODEL,
+    operation: OperationType.STORE,
     arguments: { 'model-id': modelId },
   })
 
@@ -126,21 +121,19 @@ export const buildChemicalParticipantOperations = (
   for (const chemical of chemicals) {
     const chemVarId = uuidv4()
 
-    // Create individual for the chemical node
     operations.push({
-      entity: 'individual',
-      operation: 'add',
+      entity: OperationEntity.INDIVIDUAL,
+      operation: OperationType.ADD,
       arguments: {
-        expressions: [{ type: 'class', id: chemical.id }],
+        expressions: [{ type: ExpressionType.CLASS, id: chemical.id }],
         'model-id': modelId,
         'assign-to-variable': chemVarId,
       },
     })
 
-    // subjectMfNode --[has_output]--> chemicalNode
     operations.push({
-      entity: 'edge',
-      operation: 'add',
+      entity: OperationEntity.EDGE,
+      operation: OperationType.ADD,
       arguments: {
         subject: subjectMfNode.uid,
         object: chemVarId,
@@ -149,10 +142,9 @@ export const buildChemicalParticipantOperations = (
       },
     })
 
-    // objectMfNode --[has_input]--> chemicalNode
     operations.push({
-      entity: 'edge',
-      operation: 'add',
+      entity: OperationEntity.EDGE,
+      operation: OperationType.ADD,
       arguments: {
         subject: objectMfNode.uid,
         object: chemVarId,
@@ -162,11 +154,10 @@ export const buildChemicalParticipantOperations = (
     })
   }
 
-  // Store model
   if (chemicals.length > 0) {
     operations.push({
-      entity: 'model',
-      operation: 'store',
+      entity: OperationEntity.MODEL,
+      operation: OperationType.STORE,
       arguments: { 'model-id': modelId },
     })
   }
@@ -185,8 +176,8 @@ export const buildConnectorDeleteOperations = (
 ): Operation[] => {
   return [
     {
-      entity: 'edge',
-      operation: 'remove',
+      entity: OperationEntity.EDGE,
+      operation: OperationType.REMOVE,
       arguments: {
         subject: sourceNodeUid,
         object: targetNodeUid,
@@ -195,8 +186,8 @@ export const buildConnectorDeleteOperations = (
       },
     },
     {
-      entity: 'model',
-      operation: 'store',
+      entity: OperationEntity.MODEL,
+      operation: OperationType.STORE,
       arguments: { 'model-id': modelId },
     },
   ]

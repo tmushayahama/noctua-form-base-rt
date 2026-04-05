@@ -5,15 +5,15 @@ import { FaGithub } from 'react-icons/fa'
 import { IoChevronDown } from 'react-icons/io5'
 import { useAuth } from '@/features/auth/authProvider'
 import { useAppSelector } from '../hooks'
-import type { RootState } from '../store/store'
-import { ENVIRONMENT } from '@/@noctua.core/data/constants'
+import { selectAuthUser } from '@/features/auth/slices/authSlice'
+import { ENVIRONMENT, EXTERNAL_LINKS } from '@/@noctua.core/data/constants'
 
 const Toolbar: React.FC = () => {
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
   const [helpMenuAnchor, setHelpMenuAnchor] = useState<null | HTMLElement>(null)
 
   const { isLoggedIn, loginUrl, logoutUrl, noctuaUrl } = useAuth()
-  const user = useAppSelector((state: RootState) => state.auth.user)
+  const user = useAppSelector(selectAuthUser)
 
   const isDev = ENVIRONMENT.isDev
 
@@ -51,7 +51,7 @@ const Toolbar: React.FC = () => {
         {/* GitHub */}
         <div className="flex flex-row items-center border-r border-gray-300 pr-3">
           <IconButton
-            href="https://github.com/geneontology/go-ontology/issues"
+            href={EXTERNAL_LINKS.GO_ONTOLOGY_ISSUES}
             target="_blank"
             rel="noreferrer"
             color="inherit"
@@ -71,7 +71,7 @@ const Toolbar: React.FC = () => {
           >
             <MenuItem onClick={() => setHelpMenuAnchor(null)}>
               <a
-                href="https://docs.google.com/document/d/1a5YZBJrnJ9LKJxPVpXk62dJJGpHB2b9zH8-xr_Rm1Vs"
+                href={EXTERNAL_LINKS.NOCTUA_USERS_GUIDE}
                 target="_blank"
                 rel="noreferrer"
                 className="w-full"
@@ -126,7 +126,7 @@ const Toolbar: React.FC = () => {
 
       {/* GO Logo — right side */}
       <div className="flex h-full w-[200px] flex-row items-center justify-start border-r border-gray-300 py-1 pl-2">
-        <a href="http://geneontology.org/" target="_blank" rel="noreferrer">
+        <a href={EXTERNAL_LINKS.GO_HOMEPAGE} target="_blank" rel="noreferrer">
           <img
             src="assets/images/logos/go-logo.large.png"
             alt="GO Logo"
@@ -137,7 +137,7 @@ const Toolbar: React.FC = () => {
 
       {/* Alliance Logo — far right */}
       <div className="border-l border-gray-300 py-1">
-        <a href="https://www.alliancegenome.org" target="_blank" rel="noreferrer">
+        <a href={EXTERNAL_LINKS.ALLIANCE_GENOME} target="_blank" rel="noreferrer">
           <img
             src="assets/images/logos/alliance-logo.png"
             alt="Alliance Logo"

@@ -13,7 +13,6 @@ export const DialogTheme = (theme: Theme) => ({
       '& .MuiDialogContent-root': {
         padding: theme.spacing(2),
         '@apply red-100 text-gray-800': {},
-        // backgroundColor: 'red',
       },
       '& .MuiDialogActions-root': {
         padding: '12px',

@@ -11,36 +11,22 @@ import {
 } from 'react-icons/fa'
 import { IoChevronDown } from 'react-icons/io5'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
-import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
+import { selectCamModel } from '@/features/gocam/slices/camSlice'
+import { selectBaristaToken } from '@/features/auth/slices/authSlice'
+import { openDialog, DialogComponent } from '@/@noctua.core/components/dialog/dialogSlice'
 import {
   setRightDrawerOpen,
   setRightPanelTab,
+  RightPanelTab,
 } from '@/@noctua.core/components/drawer/drawerSlice'
 import { processViolations, computeDiffs, computeTotalErrors } from '../services/violationService'
-import { ENVIRONMENT } from '@/@noctua.core/data/constants'
-
-/** Build workbench URLs for VIEW IN / EXPORT AS menus */
-function useModelUrls(modelId: string | undefined, baristaToken: string | null) {
-  return useMemo(() => {
-    if (!modelId) return null
-    const params = new URLSearchParams()
-    params.set('model_id', modelId)
-    if (baristaToken) params.set('barista_token', baristaToken)
-    const qs = params.toString()
-    return {
-      annotationPreview: `${ENVIRONMENT.workbenchUrl}annpreview?${qs}`,
-      pathwayViewer: `${ENVIRONMENT.workbenchUrl}noctua-alliance-pathway-preview?${qs}`,
-      graphEditor: `${ENVIRONMENT.noctuaUrl}/editor/graph/${modelId}?${qs}`,
-      gpad: `${ENVIRONMENT.noctuaUrl}/download/${modelId}/gpad`,
-      owl: `${ENVIRONMENT.noctuaUrl}/download/${modelId}/owl`,
-    }
-  }, [modelId, baristaToken])
-}
+import { useModelUrls } from '../hooks/useModelUrls'
+import { getStateColor } from '../data/stateColors'
 
 const CamToolbar: React.FC = () => {
   const dispatch = useAppDispatch()
-  const cam = useAppSelector(state => state.cam.model)
-  const baristaToken = useAppSelector(state => state.auth.baristaToken)
+  const cam = useAppSelector(selectCamModel)
+  const baristaToken = useAppSelector(selectBaristaToken)
   const urls = useModelUrls(cam?.id, baristaToken)
 
   const [viewMenuAnchor, setViewMenuAnchor] = useState<null | HTMLElement>(null)
@@ -51,26 +37,11 @@ const CamToolbar: React.FC = () => {
   const openCamForm = () => {
     dispatch(
       openDialog({
-        component: 'CamMetadataForm',
+        component: DialogComponent.CAM_METADATA_FORM,
         title: 'Edit Model',
         size: 'sm',
       })
     )
-  }
-
-  const getStateColor = (stateName?: string) => {
-    switch (stateName) {
-      case 'development':
-        return 'bg-orange-300 text-amber-900 border-orange-400'
-      case 'production':
-        return 'bg-green-200 text-green-900 border-green-400'
-      case 'review':
-        return 'bg-lime-200 text-yellow-900 border-lime-400'
-      case 'delete':
-        return 'bg-red-100 text-red-800 border-red-300'
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-300'
-    }
   }
 
   const totalErrors = useMemo(() => {
@@ -81,7 +52,7 @@ const CamToolbar: React.FC = () => {
   }, [cam])
 
   const openCamErrors = () => {
-    dispatch(setRightPanelTab('camErrors'))
+    dispatch(setRightPanelTab(RightPanelTab.CAM_ERRORS))
     dispatch(setRightDrawerOpen(true))
   }
 
@@ -151,7 +122,7 @@ const CamToolbar: React.FC = () => {
             onClick={() =>
               dispatch(
                 openDialog({
-                  component: 'CopyModelDialog',
+                  component: DialogComponent.COPY_MODEL_DIALOG,
                   title: 'Copy Model',
                   size: 'sm',
                 })

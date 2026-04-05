@@ -6,13 +6,13 @@ import {
   Checkbox,
 } from '@mui/material'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
-import type { RootState } from '@/app/store/store'
+import { selectCamModel } from '@/features/gocam/slices/camSlice'
 import { useCopyGraphModelMutation } from '../slices/camApiSlice'
 import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice'
 
 const CopyModelDialog: React.FC = () => {
   const dispatch = useAppDispatch()
-  const cam = useAppSelector((state: RootState) => state.cam.model)
+  const cam = useAppSelector(selectCamModel)
   const [copyModel, { isLoading }] = useCopyGraphModelMutation()
 
   const [title, setTitle] = useState(cam?.title ? `Copy of ${cam.title}` : '')

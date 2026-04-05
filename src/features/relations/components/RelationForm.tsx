@@ -1,18 +1,17 @@
 import { globalKnownRelations } from '@/@noctua.core/data/relations'
+import SectionRow from './SectionRow'
+import RadioPillGroup from './RadioPillGroup'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import type { Activity, UserContext } from '@/features/gocam/models/cam'
 import { RootTypes } from '@/features/gocam/models/cam'
 import { useMemo, useEffect, useCallback } from 'react'
 import {
-  ConnectorType,
-  ActivityRelationshipId,
-  ActivityMoleculeRelationshipId,
-  MoleculeActivityRelationshipId,
-  definitions,
   EffectDirectionId,
   DirectnessId,
+  definitions,
 } from '../models/decisionTree'
-import { getConnectorType, reverseLookup } from '../services/decisionTree'
+import { reverseLookup } from '../services/decisionTree'
+import { useRelationFormConfig } from '../hooks/useRelationFormConfig'
 import {
   resetSelection,
   updateSelection,
@@ -29,13 +28,18 @@ import {
 import TermAutocomplete from '@/features/search/components/Autocomplete'
 import { AutocompleteType } from '@/features/search/models/search'
 import type { GOlrResponse } from '@/features/search/models/search'
-import ReferenceField from '@/features/gocam/components/forms/ReferenceField'
-import WithField from '@/features/gocam/components/forms/WithField'
+import DatabaseField from '@/features/gocam/components/forms/DatabaseField'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import { FiX, FiPlus } from 'react-icons/fi'
-import type { RootState } from '@/app/store/store'
-import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
+import {
+  selectRelationSelected,
+  selectRelation,
+  selectConnectorEvidences,
+} from '../slices/relationSlice'
+import { selectCamModel } from '@/features/gocam/slices/camSlice'
+import { selectAuthUser } from '@/features/auth/slices/authSlice'
+import { openDialog, DialogComponent } from '@/@noctua.core/components/dialog/dialogSlice'
 import { showToast } from '@/@noctua.core/components/toast/toastSlice'
 
 interface Props {
@@ -63,11 +67,11 @@ const RelationForm: React.FC<Props> = ({
   onSaved,
 }) => {
   const dispatch = useAppDispatch()
-  const { selected, relation, connectorEvidences } = useAppSelector(
-    (state: RootState) => state.relation
-  )
-  const model = useAppSelector((state: RootState) => state.cam.model)
-  const authUser = useAppSelector((state: RootState) => state.auth.user)
+  const selected = useAppSelector(selectRelationSelected)
+  const relation = useAppSelector(selectRelation)
+  const connectorEvidences = useAppSelector(selectConnectorEvidences)
+  const model = useAppSelector(selectCamModel)
+  const authUser = useAppSelector(selectAuthUser)
   const [updateGraphModel, { isLoading: isSaving }] = useUpdateGraphModelMutation()
 
   const userContext: UserContext | undefined = useMemo(() => {
@@ -75,12 +79,15 @@ const RelationForm: React.FC<Props> = ({
     return { orcid: authUser.uri, groupUrl: authUser.group.id }
   }, [authUser])
 
-  const connectorType = useMemo(
-    () => getConnectorType(sourceActivity.type, targetActivity.type),
-    [sourceActivity.type, targetActivity.type]
-  )
+  const {
+    connectorType,
+    relationshipOptions,
+    definitionMap,
+    shouldShowDirection,
+    shouldShowDirectness,
+    shouldShowChemicalIntermediate,
+  } = useRelationFormConfig(sourceActivity.type, targetActivity.type, selected)
 
-  // Initialize form when connection changes (not on every model refresh)
   useEffect(() => {
     dispatch(
       resetSelection({
@@ -89,9 +96,8 @@ const RelationForm: React.FC<Props> = ({
       })
     )
 
-    // Pre-populate from existing edge
     if (existingEdgeId) {
-      const lookup = reverseLookup(existingEdgeId as any)
+      const lookup = reverseLookup(existingEdgeId)
       if (lookup) {
         dispatch(
           updateSelection({
@@ -101,68 +107,31 @@ const RelationForm: React.FC<Props> = ({
           })
         )
       }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, sourceActivity.type, targetActivity.type, existingEdgeId])
 
-  // Pre-populate evidence from existing connection (only on mount)
-  useEffect(() => {
-    if (existingEdgeId && existingSourceUid && existingTargetUid) {
-      const existingConn = model?.activityConnections.find(
-        c => c.sourceId === existingSourceUid && c.targetId === existingTargetUid
-      )
-      if (existingConn?.evidence && existingConn.evidence.length > 0) {
-        const evForms = existingConn.evidence.map(ev => ({
-          uid: ev.uid,
-          evidenceCode: ev.evidenceCode
-            ? { id: ev.evidenceCode.id, label: ev.evidenceCode.label }
-            : { id: '', label: '' },
-          reference: ev.reference || '',
-          withFrom: ev.with || '',
-        }))
-        dispatch(setConnectorEvidences(evForms))
+      if (existingSourceUid && existingTargetUid) {
+        const existingConn = model?.activityConnections.find(
+          c => c.sourceId === existingSourceUid && c.targetId === existingTargetUid
+        )
+        if (existingConn?.evidence && existingConn.evidence.length > 0) {
+          const evForms = existingConn.evidence.map(ev => ({
+            uid: ev.uid,
+            evidenceCode: ev.evidenceCode
+              ? { id: ev.evidenceCode.id, label: ev.evidenceCode.label }
+              : { id: '', label: '' },
+            reference: ev.reference || '',
+            withFrom: ev.with || '',
+          }))
+          dispatch(setConnectorEvidences(evForms))
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, existingEdgeId, existingSourceUid, existingTargetUid])
-
-  const relationshipOptions =
-    connectorType === ConnectorType.ACTIVITY_ACTIVITY
-      ? Object.values(ActivityRelationshipId)
-      : connectorType === ConnectorType.ACTIVITY_MOLECULE
-        ? Object.values(ActivityMoleculeRelationshipId)
-        : Object.values(MoleculeActivityRelationshipId)
-
-  const definitionMap =
-    definitions[
-      connectorType === ConnectorType.ACTIVITY_ACTIVITY
-        ? 'activityRelationship'
-        : connectorType === ConnectorType.ACTIVITY_MOLECULE
-          ? 'activityMoleculeRelationship'
-          : 'moleculeActivityRelationship'
-    ]
-
-  const shouldShowDirection =
-    connectorType === ConnectorType.ACTIVITY_ACTIVITY &&
-    selected.relationshipId === ActivityRelationshipId.REGULATION
-      ? true
-      : connectorType === ConnectorType.MOLECULE_ACTIVITY &&
-          selected.relationshipId === MoleculeActivityRelationshipId.REGULATES
-        ? true
-        : selected.relationshipId === ActivityRelationshipId.UNDETERMINED
-
-  const shouldShowDirectness =
-    connectorType === ConnectorType.ACTIVITY_ACTIVITY &&
-    selected.relationshipId === ActivityRelationshipId.REGULATION
-
-  const shouldShowChemicalIntermediate =
-    connectorType === ConnectorType.ACTIVITY_ACTIVITY &&
-    selected.relationshipId === ActivityRelationshipId.PROVIDES_INPUT_FOR
+  }, [dispatch, sourceActivity.type, targetActivity.type, existingEdgeId, existingSourceUid, existingTargetUid])
 
   const handleOpenChemicalConnector = useCallback(() => {
     dispatch(
       openDialog({
-        component: 'ChemicalConnectorForm',
+        component: DialogComponent.CHEMICAL_CONNECTOR_FORM,
         title: 'Connect via Chemical Intermediate',
         size: 'md',
         customProps: {
@@ -365,17 +334,16 @@ const RelationForm: React.FC<Props> = ({
                 autocompleteType={AutocompleteType.EVIDENCE_CODE}
                 value={ev.evidenceCode?.id ? ev.evidenceCode : null}
                 onChange={value => handleEvidenceFieldChange(index, 'evidenceCode', value)}
-                onOpenTermDetails={() => {}}
               />
             </div>
             <div className="w-1/4 p-4">
-              <ReferenceField
+              <DatabaseField type="reference"
                 value={ev.reference || ''}
                 onChange={value => handleEvidenceFieldChange(index, 'reference', value)}
               />
             </div>
             <div className="w-[20%] p-4">
-              <WithField
+              <DatabaseField type="with"
                 value={ev.withFrom || ''}
                 onChange={value => handleEvidenceFieldChange(index, 'withFrom', value)}
               />
@@ -441,78 +409,5 @@ const RelationForm: React.FC<Props> = ({
     </div>
   )
 }
-
-/* ── Sub-components ─────────────────────────────────────────── */
-
-const SectionRow: React.FC<{ label: string; children: React.ReactNode }> = ({
-  label,
-  children,
-}) => (
-  <div className="border-b border-blue-800/70">
-    <div className="flex items-start gap-3 px-4 py-2">
-      <span className="w-[100px] shrink-0 pt-1.5 text-xs font-medium text-blue-800">
-        {label}
-      </span>
-      <div className="flex-1">{children}</div>
-    </div>
-  </div>
-)
-
-interface PillOption {
-  value: string
-  label: string
-  description?: string
-}
-
-const RadioPillGroup: React.FC<{
-  name: string
-  value: string
-  options: PillOption[]
-  onChange: (value: string) => void
-}> = ({ name, value, options, onChange }) => (
-  <div className="flex flex-col py-1">
-    {options.map((opt, index) => {
-      const isSelected = value === opt.value
-      return (
-        <div
-          key={opt.value}
-          className="flex w-full items-center py-[5px]"
-          style={{
-            borderBottom:
-              index < options.length - 1 ? '1px solid rgba(59,89,152,0.6)' : 'none',
-          }}
-        >
-          <label className="flex w-[170px] shrink-0 cursor-pointer items-center gap-2 text-xs">
-            <span
-              className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 ${isSelected ? 'border-blue-800' : 'border-gray-400'}`}
-            >
-              {isSelected && (
-                <span
-                  className="block h-[10px] w-[10px] rounded-full bg-blue-800"
-                />
-              )}
-            </span>
-            <input
-              type="radio"
-              name={name}
-              value={opt.value}
-              checked={isSelected}
-              onChange={() => onChange(opt.value)}
-              className="sr-only"
-            />
-            <span style={{ color: '#333' }}>{opt.label}</span>
-          </label>
-          {opt.description && (
-            <span
-              className="ml-3 max-w-[300px] grow text-xs italic text-neutral-500"
-            >
-              {opt.description}
-            </span>
-          )}
-        </div>
-      )
-    })}
-  </div>
-)
 
 export default RelationForm

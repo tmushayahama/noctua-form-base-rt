@@ -5,7 +5,8 @@ import { v4 as uuidv4 } from 'uuid'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice'
 import { showToast } from '@/@noctua.core/components/toast/toastSlice'
-import type { RootState } from '@/app/store/store'
+import { selectCamModel } from '@/features/gocam/slices/camSlice'
+import { selectAuthUser } from '@/features/auth/slices/authSlice'
 import type { Activity, GraphNode, UserContext } from '@/features/gocam/models/cam'
 import { RootTypes } from '@/features/gocam/models/cam'
 import type { EvidenceForm } from '@/features/gocam/models/formModels'
@@ -13,8 +14,7 @@ import { useLazyGetChemicalParticipantsQuery } from '@/features/search/slices/lo
 import { AutocompleteType } from '@/features/search/models/search'
 import type { GOlrResponse } from '@/features/search/models/search'
 import TermAutocomplete from '@/features/search/components/Autocomplete'
-import ReferenceField from '@/features/gocam/components/forms/ReferenceField'
-import WithField from '@/features/gocam/components/forms/WithField'
+import DatabaseField from '@/features/gocam/components/forms/DatabaseField'
 import { useUpdateGraphModelMutation } from '@/features/gocam/slices/camApiSlice'
 import { buildChemicalParticipantOperations } from '../services/connectorServices'
 import {
@@ -30,8 +30,8 @@ interface Props {
 
 const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity }) => {
   const dispatch = useAppDispatch()
-  const model = useAppSelector((state: RootState) => state.cam.model)
-  const authUser = useAppSelector((state: RootState) => state.auth.user)
+  const model = useAppSelector(selectCamModel)
+  const authUser = useAppSelector(selectAuthUser)
   const [updateGraphModel, { isLoading: isSaving }] = useUpdateGraphModelMutation()
 
   const userContext: UserContext | undefined = useMemo(() => {
@@ -259,17 +259,16 @@ const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity
                       autocompleteType={AutocompleteType.EVIDENCE_CODE}
                       value={ev.evidenceCode?.id ? ev.evidenceCode : null}
                       onChange={value => updateEvidence(ev.uid, 'evidenceCode', value)}
-                      onOpenTermDetails={() => {}}
                     />
                   </div>
                   <div className="w-1/4 p-4">
-                    <ReferenceField
+                    <DatabaseField type="reference"
                       value={ev.reference}
                       onChange={value => updateEvidence(ev.uid, 'reference', value)}
                     />
                   </div>
                   <div className="w-[20%] p-4">
-                    <WithField
+                    <DatabaseField type="with"
                       value={ev.withFrom}
                       onChange={value => updateEvidence(ev.uid, 'withFrom', value)}
                     />

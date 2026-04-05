@@ -3,8 +3,8 @@ import { transformGraphData } from '../services/graphServices';
 import type { GraphModelApiResponse } from '../models/cam';
 import type { RootState } from '@/app/store/store';
 import { getBaristaApiUrl } from '@/@noctua.core/services/linksService';
+import { AnnotationKey, OperationEntity, OperationType } from '../models/operations';
 
-// TODO Cchec if user is there first
 export const addTagTypes = ['graph'] as const;
 
 const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
@@ -17,8 +17,8 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
 
         const requests = encodeURIComponent(JSON.stringify([
           {
-            entity: 'model',
-            operation: 'get',
+            entity: OperationEntity.MODEL,
+            operation: OperationType.GET,
             arguments: { 'model-id': modelId },
           },
         ]));
@@ -49,12 +49,12 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
 
         const requests = JSON.stringify([
           {
-            entity: 'model',
-            operation: 'copy',
+            entity: OperationEntity.MODEL,
+            operation: OperationType.COPY,
             arguments: {
               'model-id': modelId,
               'preserve-evidence': preserveEvidence,
-              values: [{ key: 'title', value: title }],
+              values: [{ key: AnnotationKey.TITLE, value: title }],
             },
           },
         ]);

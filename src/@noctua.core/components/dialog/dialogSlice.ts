@@ -1,6 +1,12 @@
-// dialogSlice.ts
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
+
+export enum DialogComponent {
+  SEARCH_ANNOTATIONS = 'SearchAnnotations',
+  CAM_METADATA_FORM = 'CamMetadataForm',
+  COPY_MODEL_DIALOG = 'CopyModelDialog',
+  CHEMICAL_CONNECTOR_FORM = 'ChemicalConnectorForm',
+}
 
 export interface DialogState {
   open: boolean;
@@ -11,8 +17,8 @@ export interface DialogState {
   confirmLabel: string;
   cancelLabel: string;
   preventBackdropClose: boolean;
-  component: string | null; // <--- add this
-  customProps: Record<string, any>;
+  component: DialogComponent | null;
+  customProps: Record<string, unknown>;
 }
 
 const initialState: DialogState = {
@@ -34,7 +40,7 @@ export const dialogSlice = createSlice({
   reducers: {
     openDialog: (
       state,
-      action: PayloadAction<Partial<DialogState> & { component: string }>
+      action: PayloadAction<Partial<DialogState> & { component: DialogComponent }>
     ) => {
       return {
         ...state,
@@ -49,4 +55,7 @@ export const dialogSlice = createSlice({
 });
 
 export const { openDialog, closeDialog } = dialogSlice.actions;
+
+export const selectDialogState = (state: { dialog: DialogState }) => state.dialog
+
 export default dialogSlice.reducer;

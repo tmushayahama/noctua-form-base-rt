@@ -1,10 +1,11 @@
 import { ENVIRONMENT } from '@/@noctua.core/data/constants';
 import { useAppSelector } from '@/app/hooks';
+import { selectBaristaToken } from '../slices/authSlice';
 import { useMemo } from 'react';
 import { parameterize } from '../authServices';
 
 export const useAuthUrls = () => {
-  const baristaToken = useAppSelector(state => state.auth.baristaToken);
+  const baristaToken = useAppSelector(selectBaristaToken);
 
   return useMemo(() => {
     const returnUrl = window.location.href;

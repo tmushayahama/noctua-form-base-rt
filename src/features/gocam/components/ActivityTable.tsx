@@ -13,7 +13,9 @@ import {
 import { FaEllipsisV } from 'react-icons/fa'
 import { FiX } from 'react-icons/fi'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
-import type { RootState } from '@/app/store/store'
+import { selectCamModel } from '../slices/camSlice'
+import { selectAuthUser } from '@/features/auth/slices/authSlice'
+import { ActivityType } from '../models/cam'
 import type { Activity, Edge, UserContext, DisplayTreeNode } from '../models/cam'
 import { Relations } from '@/@noctua.core/models/relations'
 import { setSelectedActivity } from '../slices/camSlice'
@@ -134,8 +136,8 @@ interface ActivityTableProps {
 
 const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
   const dispatch = useAppDispatch()
-  const model = useAppSelector((state: RootState) => state.cam.model)
-  const authUser = useAppSelector((state: RootState) => state.auth.user)
+  const model = useAppSelector(selectCamModel)
+  const authUser = useAppSelector(selectAuthUser)
   const [updateGraphModel] = useUpdateGraphModelMutation()
 
   const [headerMenuAnchor, setHeaderMenuAnchor] = useState<HTMLElement | null>(null)
@@ -164,7 +166,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
   }, [activity, modelId, updateGraphModel, dispatch])
 
 
-  const gpLabel = activity.type === 'molecule' ? 'Chemical' : 'Gene Product'
+  const gpLabel = activity.type === ActivityType.MOLECULE ? 'Chemical' : 'Gene Product'
 
   const activityLabel = activity.enabledBy?.label
     ? activity.enabledBy.label

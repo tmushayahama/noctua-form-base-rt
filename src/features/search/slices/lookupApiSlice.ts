@@ -11,36 +11,26 @@ import type { Aspect } from '@/features/gocam/models/cam'
 
 function createJsonpScript(url: string): Promise<any> {
   return new Promise((resolve, reject) => {
-    // Create a unique callback name
     const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random())
-
-    // Add the callback parameter to the URL
     const jsonpUrl = `${url}${url.includes('?') ? '&' : '?'}json.wrf=${callbackName}`
 
-    // Create script element
     const script = document.createElement('script')
     script.src = jsonpUrl
     script.async = true
     script.type = 'text/javascript'
 
-    // Define the callback function
     window[callbackName as any] = function (data: any) {
-      // Clean up
       document.body.removeChild(script)
       delete window[callbackName as any]
-
-      // Resolve the promise with the data
       resolve(data)
     }
 
-    // Handle errors
     script.onerror = function () {
       document.body.removeChild(script)
       delete window[callbackName as any]
       reject(new Error('JSONP request failed'))
     }
 
-    // Add the script to the page
     document.body.appendChild(script)
   })
 }
@@ -56,16 +46,13 @@ const lookupApi = apiService
       searchTerms: builder.query<GOlrResponse[], { searchText: string; closureIds: string[] }>({
         queryFn: async ({ searchText, closureIds }) => {
           try {
-            // Format the search query properly
             const escapedQuery = escapeGOlrValue(searchText)
 
-            // Build the closure filter if provided
             const closureFilter =
               closureIds && closureIds.length > 0
                 ? closureIds.map(id => `isa_closure:"${id}"`).join(' OR ')
                 : null
 
-            // Build request parameters
             const requestParams = {
               q: escapedQuery + '*',
               defType: 'edismax',
@@ -90,7 +77,6 @@ const lookupApi = apiService
               ],
             }
 
-            // Convert parameters to URL format
             const params = new URLSearchParams()
 
             for (const [key, value] of Object.entries(requestParams)) {
@@ -103,7 +89,6 @@ const lookupApi = apiService
 
             const url = `${ENVIRONMENT.globalGolrNeoServer}select?${params.toString()}`
 
-            // Use JSONP to make the request
             const response = await createJsonpScript(url)
 
             return {
@@ -237,7 +222,7 @@ const lookupApi = apiService
       >({
         queryFn: async pmid => {
           try {
-            const url = `https://api.ncbi.nlm.nih.gov/lit/ctxp/v1/pubmed/?format=csl&id=${encodeURIComponent(pmid)}`
+            const url = `${ENVIRONMENT.pubmedApiUrl}?format=csl&id=${encodeURIComponent(pmid)}`
             const res = await fetch(url)
             if (!res.ok) return { data: null }
             const data = await res.json()

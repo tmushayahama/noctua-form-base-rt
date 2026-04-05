@@ -95,7 +95,7 @@ export const getDefaultSelection = (
 
 
 
-export const reverseLookup = (relation: RelationId): RelationshipInput | null => {
+export const reverseLookup = (relation: string): RelationshipInput | null => {
   for (const [relationshipId, branch] of Object.entries(decisionTree)) {
     const base = branch as any;
 

@@ -4,6 +4,11 @@ import type { GOlrResponse } from '@/features/search/models/search'
 
 export type ActivityFormType = 'activity' | 'molecule' | 'proteinComplex'
 
+export enum FormMode {
+  CREATE = 'create',
+  EDIT = 'edit',
+}
+
 // ── Template descriptors (used by activityTemplates.ts) ─────────────
 
 export interface NodeCategory {
@@ -69,7 +74,7 @@ export interface ValidationError {
 
 export interface ActivityFormState {
   activityType: ActivityFormType | null
-  mode: 'create' | 'edit'
+  mode: FormMode
   existingActivityUid: string | null
   root: TermNode | null
   isDirty: boolean

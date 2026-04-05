@@ -1,12 +1,11 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { useGetAllDataQuery } from '../slices/metadataApiSlice';
+import { SPLASH_SCREEN_DELAY_MS } from '@/@noctua.core/data/uiConstants';
 
 interface SplashScreenProps {
   children: React.ReactNode;
 }
-
-// TODO fix error message
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ children }) => {
   const { isLoading, isError, error } = useGetAllDataQuery();
@@ -16,7 +15,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ children }) => {
     if (!isLoading) {
       const timer = setTimeout(() => {
         setDisplaySplash(false);
-      }, 500);
+      }, SPLASH_SCREEN_DELAY_MS);
 
       return () => clearTimeout(timer);
     }

@@ -4,21 +4,25 @@ import {
   setRightDrawerOpen,
   setRightPanelTab,
   selectRightPanelTab,
+  RightPanelTab,
 } from '@/@noctua.core/components/drawer/drawerSlice'
 import Button from '@mui/material/Button'
-import type { RootState } from '../store/store'
-import { setSelectedActivity, setSelectedConnection } from '@/features/gocam/slices/camSlice'
+import {
+  setSelectedActivity,
+  setSelectedConnection,
+  selectSelectedActivity,
+  selectSelectedConnection,
+  selectCamModel,
+} from '@/features/gocam/slices/camSlice'
 import ActivityTable from '@/features/gocam/components/ActivityTable'
 import ConnectorTable from '@/features/gocam/components/ConnectorTable'
 import CamErrors from '@/features/gocam/components/CamErrors'
 
 const RightDrawerContent: React.FC = () => {
   const dispatch = useAppDispatch()
-  const activity = useAppSelector((state: RootState) => state.cam.selectedActivity)
-  const selectedConnection = useAppSelector(
-    (state: RootState) => state.cam.selectedConnection
-  )
-  const model = useAppSelector((state: RootState) => state.cam.model)
+  const activity = useAppSelector(selectSelectedActivity)
+  const selectedConnection = useAppSelector(selectSelectedConnection)
+  const model = useAppSelector(selectCamModel)
   const activeTab = useAppSelector(selectRightPanelTab)
 
   const handleClose = () => {
@@ -27,21 +31,18 @@ const RightDrawerContent: React.FC = () => {
     dispatch(setSelectedConnection(null))
   }
 
-  // Render based on active tab
-  if (activeTab === 'connectorTable' && selectedConnection) {
+  if (activeTab === RightPanelTab.CONNECTOR_TABLE && selectedConnection) {
     return <ConnectorTable />
   }
 
-  if (activeTab === 'camErrors' && model) {
+  if (activeTab === RightPanelTab.CAM_ERRORS && model) {
     return <CamErrors model={model} />
   }
 
-  // Default: activity table
   if (activity) {
     return <ActivityTable activity={activity} />
   }
 
-  // Nothing selected
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center border-b border-gray-200 p-4">
@@ -52,7 +53,7 @@ const RightDrawerContent: React.FC = () => {
               variant="text"
               size="small"
               className="!text-xs !normal-case"
-              onClick={() => dispatch(setRightPanelTab('camErrors'))}
+              onClick={() => dispatch(setRightPanelTab(RightPanelTab.CAM_ERRORS))}
             >
               Errors
             </Button>

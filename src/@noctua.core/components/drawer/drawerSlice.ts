@@ -2,7 +2,11 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 import { createSlice } from '@reduxjs/toolkit'
 import type { RootState } from '@/app/store/store'
 
-export type RightPanelTab = 'activityTable' | 'connectorTable' | 'camErrors'
+export enum RightPanelTab {
+  ACTIVITY_TABLE = 'activityTable',
+  CONNECTOR_TABLE = 'connectorTable',
+  CAM_ERRORS = 'camErrors',
+}
 
 interface DrawerState {
   leftDrawerOpen: boolean
@@ -13,7 +17,7 @@ interface DrawerState {
 const initialState: DrawerState = {
   leftDrawerOpen: false,
   rightDrawerOpen: false,
-  rightPanelTab: 'activityTable',
+  rightPanelTab: RightPanelTab.ACTIVITY_TABLE,
 }
 
 export const drawerSlice = createSlice({

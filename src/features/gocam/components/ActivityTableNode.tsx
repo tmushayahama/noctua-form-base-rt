@@ -1,23 +1,19 @@
 import type React from 'react'
-import { useState, useCallback, useMemo, useRef } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { IconButton, Menu, MenuItem } from '@mui/material'
 import { FaEllipsisV, FaPencilAlt, FaPlus, FaTrash } from 'react-icons/fa'
 import type { Edge, Evidence, UserContext, DisplayTreeNode } from '../models/cam'
-import { RootTypes } from '../models/cam'
+import { RootTypes, Aspect } from '../models/cam'
 import { EditorCategory } from '../models/editorCategory'
-import { useAppSelector, useAppDispatch } from '@/app/hooks'
-import type { RootState } from '@/app/store/store'
-import { openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
-import { useUpdateGraphModelMutation } from '../slices/camApiSlice'
+import { ENVIRONMENT } from '@/@noctua.core/data/constants'
+import EvidenceRow from './EvidenceRow'
+import { useAppDispatch } from '@/app/hooks'
+import { openDialog, DialogComponent } from '@/@noctua.core/components/dialog/dialogSlice'
 import {
-  buildEditIndividualTypeOperations,
-  buildEditEvidenceAnnotationOperations,
   buildAddEvidenceToEdgeOperations,
-  buildRemoveEvidenceOperations,
-  buildClearEvidenceAnnotationOperations,
-  buildDeleteNodeOperations,
   buildAddNodeOperations,
 } from '../services/activityOperations'
+import { useActivityNodeEditor } from '../hooks/useActivityNodeEditor'
 import { getInsertMenuItems } from '../data/insertMenuConfig'
 import type { InsertMenuItem } from '../data/insertMenuConfig'
 import { createEvidenceForm } from '../models/formModels'
@@ -33,10 +29,10 @@ interface ActivityTableNodeProps {
   gpNodeId?: string
 }
 
-function getAspectFromRootTypes(rootTypes: string[]): string | null {
-  if (rootTypes.includes(RootTypes.MOLECULAR_FUNCTION)) return 'F'
-  if (rootTypes.includes(RootTypes.BIOLOGICAL_PROCESS)) return 'P'
-  if (rootTypes.includes(RootTypes.CELLULAR_COMPONENT)) return 'C'
+function getAspectFromRootTypes(rootTypes: string[]): Aspect | null {
+  if (rootTypes.includes(RootTypes.MOLECULAR_FUNCTION)) return Aspect.MOLECULAR_FUNCTION
+  if (rootTypes.includes(RootTypes.BIOLOGICAL_PROCESS)) return Aspect.BIOLOGICAL_PROCESS
+  if (rootTypes.includes(RootTypes.CELLULAR_COMPONENT)) return Aspect.CELLULAR_COMPONENT
   return null
 }
 
@@ -45,152 +41,6 @@ const cellBase =
 
 const floatingLabel =
   'absolute left-1 -top-1.5 h-3 max-w-[80%] truncate bg-white px-1 text-[8px] leading-3 text-gray-500 group-hover/cell:text-primary-500'
-
-const deleteBtn =
-  'absolute right-0 top-0 hidden h-5 w-5 items-center justify-center text-red-400 hover:bg-red-400 hover:text-white group-hover/cell:flex'
-
-const editBtn =
-  'absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center text-gray-500 opacity-0 hover:bg-gray-200 group-hover/cell:opacity-100'
-
-// ── Evidence row ────────────────────────────────────────────────────
-
-interface EvidenceRowProps {
-  ev: Evidence
-  modelId: string
-  userContext?: UserContext
-  onRemoveEvidence: (ev: Evidence) => void
-  onClearField: (ev: Evidence, key: 'source' | 'with') => void
-}
-
-const EvidenceRowComponent: React.FC<EvidenceRowProps> = ({
-  ev,
-  modelId,
-  userContext,
-  onRemoveEvidence,
-  onClearField,
-}) => {
-  const [updateGraphModel] = useUpdateGraphModelMutation()
-  const evCellRef = useRef<HTMLDivElement>(null)
-  const refCellRef = useRef<HTMLDivElement>(null)
-  const withCellRef = useRef<HTMLDivElement>(null)
-
-  const [editorAnchor, setEditorAnchor] = useState<HTMLElement | null>(null)
-  const [editorCategory, setEditorCategory] = useState<EditorCategory>(EditorCategory.evidence)
-
-  const openEditor = (ref: React.RefObject<HTMLDivElement | null>, cat: EditorCategory) => {
-    setEditorCategory(cat)
-    setEditorAnchor(ref.current)
-  }
-
-  const handleEditorSave = useCallback(
-    async (values: EditorDropdownValues) => {
-      switch (editorCategory) {
-        case EditorCategory.evidence: {
-          if (!values.evidence || !ev.evidenceCode?.id) break
-          await updateGraphModel(
-            buildEditIndividualTypeOperations(ev.uid, ev.evidenceCode.id, values.evidence.id, modelId)
-          )
-          break
-        }
-        case EditorCategory.reference: {
-          if (values.reference === undefined) break
-          await updateGraphModel(
-            buildEditEvidenceAnnotationOperations(
-              ev.uid, 'source', ev.reference || '', values.reference, modelId, userContext
-            )
-          )
-          break
-        }
-        case EditorCategory.with: {
-          if (values.with === undefined) break
-          await updateGraphModel(
-            buildEditEvidenceAnnotationOperations(
-              ev.uid, 'with', ev.with || '', values.with, modelId, userContext
-            )
-          )
-          break
-        }
-      }
-      setEditorAnchor(null)
-    },
-    [editorCategory, ev, modelId, userContext, updateGraphModel]
-  )
-
-  return (
-    <div className="mb-2 flex h-full flex-row items-stretch last:mb-0">
-      {/* Evidence code cell */}
-      <div ref={evCellRef} className={`${cellBase} ml-1 flex grow flex-col items-stretch rounded-lg`}>
-        <div className={floatingLabel}>Evidence</div>
-        <span>
-          {ev.evidenceCode?.label || '—'}
-          {ev.evidenceCode?.id && (
-            <>
-              <br />
-              <a
-                href={`http://amigo.geneontology.org/amigo/term/${ev.evidenceCode.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-              >
-                {ev.evidenceCode.id}
-              </a>
-            </>
-          )}
-        </span>
-        <button onClick={() => onRemoveEvidence(ev)} className={deleteBtn}>
-          <FaTrash size={10} />
-        </button>
-        <button onClick={() => openEditor(evCellRef, EditorCategory.evidence)} className={editBtn}>
-          <FaPencilAlt size={9} />
-        </button>
-      </div>
-
-      {/* Reference cell */}
-      <div ref={refCellRef} className={`${cellBase} ml-1 flex w-[100px] shrink-0 flex-col items-stretch rounded-lg`}>
-        <div className={floatingLabel}>Reference</div>
-        {ev.referenceUrl ? (
-          <a href={ev.referenceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-            {ev.reference}
-          </a>
-        ) : (
-          <span>{ev.reference || '—'}</span>
-        )}
-        {ev.reference && (
-          <button onClick={() => onClearField(ev, 'source')} className={deleteBtn}>
-            <FaTrash size={10} />
-          </button>
-        )}
-        <button onClick={() => openEditor(refCellRef, EditorCategory.reference)} className={editBtn}>
-          <FaPencilAlt size={9} />
-        </button>
-      </div>
-
-      {/* With cell */}
-      <div ref={withCellRef} className={`${cellBase} ml-1 flex w-[100px] shrink-0 flex-col items-stretch rounded-lg`}>
-        <div className={floatingLabel}>With</div>
-        <span>{ev.with || '—'}</span>
-        {ev.with && (
-          <button onClick={() => onClearField(ev, 'with')} className={deleteBtn}>
-            <FaTrash size={10} />
-          </button>
-        )}
-        <button onClick={() => openEditor(withCellRef, EditorCategory.with)} className={editBtn}>
-          <FaPencilAlt size={9} />
-        </button>
-      </div>
-
-      <EditorDropdown
-        anchorEl={editorAnchor}
-        category={editorCategory}
-        onClose={() => setEditorAnchor(null)}
-        onSave={handleEditorSave}
-        initialEvidence={ev.evidenceCode?.id ? ev.evidenceCode : null}
-        initialReference={ev.reference || ''}
-        initialWith={ev.with || ''}
-      />
-    </div>
-  )
-}
 
 // ── Main ActivityTableNode ──────────────────────────────────────────
 
@@ -214,14 +64,14 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
   const [editorAnchor, setEditorAnchor] = useState<HTMLElement | null>(null)
   const [editorCategory, setEditorCategory] = useState<EditorCategory>(EditorCategory.term)
   const [pendingInsert, setPendingInsert] = useState<InsertMenuItem | null>(null)
-  const [updateGraphModel] = useUpdateGraphModelMutation()
-  const authUser = useAppSelector((state: RootState) => state.auth.user)
 
-  const resolvedUserContext: UserContext | undefined = useMemo(() => {
-    if (userContext) return userContext
-    if (!authUser?.uri || !authUser?.group?.id) return undefined
-    return { orcid: authUser.uri, groupUrl: authUser.group.id }
-  }, [userContext, authUser])
+  const {
+    updateGraphModel,
+    resolvedUserContext,
+    handleRemoveEvidence,
+    handleClearField,
+    handleDeleteNode: handleDeleteNodeRaw,
+  } = useActivityNodeEditor({ nodeUid: node.uid, modelId, userContext, allEdges, onNodeDeleted })
 
   const insertMenuItems = getInsertMenuItems(node.rootTypes[0] ?? '')
   const nodePadding = treeLevel * 16
@@ -232,7 +82,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
     if (!gpNodeId || !aspect) return
     dispatch(
       openDialog({
-        component: 'SearchAnnotations',
+        component: DialogComponent.SEARCH_ANNOTATIONS,
         title: 'Search Annotations',
         size: 'md',
         fullWidth: true,
@@ -296,31 +146,10 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
     [editorCategory, node.uid, node.id, edge, modelId, resolvedUserContext, updateGraphModel, pendingInsert]
   )
 
-  const handleRemoveEvidence = useCallback(
-    async (ev: Evidence) => {
-      await updateGraphModel(buildRemoveEvidenceOperations(ev.uid, modelId))
-    },
-    [modelId, updateGraphModel]
-  )
-
-  const handleClearField = useCallback(
-    async (ev: Evidence, key: 'source' | 'with') => {
-      const oldValue = key === 'source' ? ev.reference : ev.with
-      if (!oldValue) return
-      const ops = buildClearEvidenceAnnotationOperations(ev.uid, key, oldValue, modelId, resolvedUserContext)
-      if (ops.length > 0) await updateGraphModel(ops)
-    },
-    [modelId, resolvedUserContext, updateGraphModel]
-  )
-
   const handleDeleteNode = useCallback(async () => {
-    const nodeEdges = allEdges
-      .filter(e => e.sourceId === node.uid || e.targetId === node.uid)
-      .map(e => ({ sourceId: e.sourceId, targetId: e.targetId, predicateId: e.id }))
-    await updateGraphModel(buildDeleteNodeOperations(node.uid, nodeEdges, modelId))
+    await handleDeleteNodeRaw()
     setMenuAnchor(null)
-    onNodeDeleted?.()
-  }, [node.uid, allEdges, modelId, updateGraphModel, onNodeDeleted])
+  }, [handleDeleteNodeRaw])
 
   const handleInsertNode = useCallback(
     (item: InsertMenuItem) => {
@@ -351,7 +180,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
               {node.label}
               <br />
               <a
-                href={`http://amigo.geneontology.org/amigo/term/${node.id}`}
+                href={`${ENVIRONMENT.amigoTermUrl}${node.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
@@ -384,7 +213,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
             {evidence.length > 0 ? (
               evidence.map(ev =>
                 edge ? (
-                  <EvidenceRowComponent
+                  <EvidenceRow
                     key={ev.uid}
                     ev={ev}
                     modelId={modelId}
