@@ -36,11 +36,12 @@ import {
   buildEditActivityOperations,
 } from '../../services/activityOperations'
 import { FormMode } from '../../models/formModels'
-import type { TermNode, RelationNode, ValidationError, FlatRow } from '../../models/formModels'
+import type { TermNode, RelationNode, FlatRow } from '../../models/formModels'
 import { ActivityType } from '../../models/cam'
 import type { Evidence } from '../../models/cam'
 import { referenceAllowedDBs, withFromAllowedDBs } from '../../data/allowedDatabases'
 import EntityRow from './EntityRow'
+import NestedNodeGroups from './NestedNodeGroups'
 import CloneEvidenceDialog from './CloneEvidenceDialog'
 import AllowedDatabasesPopover from './AllowedDatabasesPopover'
 import { v4 as uuidv4 } from 'uuid'
@@ -359,12 +360,12 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
               return null
             })}
 
-            {renderNestedNodeGroups(
-              root,
-              errors,
-              handleSearchAnnotations,
-              handleCloneEvidence
-            )}
+            <NestedNodeGroups
+              root={root}
+              errors={errors}
+              onSearchAnnotations={handleSearchAnnotations}
+              onCloneEvidence={handleCloneEvidence}
+            />
           </div>
         </div>
       </div>
@@ -450,56 +451,6 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
       />
     </div>
   )
-}
-
-/** Render FD node groups that have nested children (tree level 3+) */
-function renderNestedNodeGroups(
-  root: TermNode,
-  errors: ValidationError[],
-  onSearchAnnotations: (node: TermNode, relation: RelationNode | null) => void,
-  onCloneEvidence: (relationUid: string) => void
-): React.ReactNode[] {
-  const groups: React.ReactNode[] = []
-
-  for (const rel of root.relations) {
-    if (rel.predicate.id === Relations.ENABLED_BY) continue
-
-    if (rel.target.relations.length > 0) {
-      for (const childRel of rel.target.relations) {
-        const rows: FlatRow[] = []
-        flattenNode(childRel.target, childRel, rel.target.uid, 2, rows)
-
-        for (const row of rows) {
-          groups.push(
-            <div
-              key={row.termNode.uid}
-              className={`mb-1 flex flex-row items-stretch justify-start bg-white ${getAspectBorderClass(row.termNode)}`}
-            >
-              {row.termNode.isComplement && (
-                <div className="flex w-[50px] flex-col items-center justify-center bg-gray-300 text-center text-[10px]">
-                  <div>IS NOT</div>
-                </div>
-              )}
-              <div className="w-full">
-                <EntityRow
-                  node={row.termNode}
-                  relation={row.relation}
-                  parentTermUid={row.parentTermUid}
-                  treeLevel={row.treeLevel}
-                  errors={errors}
-                  displayMenuButton={true}
-                  onSearchAnnotations={onSearchAnnotations}
-                  onCloneEvidence={onCloneEvidence}
-                />
-              </div>
-            </div>
-          )
-        }
-      }
-    }
-  }
-
-  return groups
 }
 
 export default ActivityForm

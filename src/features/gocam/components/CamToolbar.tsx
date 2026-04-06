@@ -1,7 +1,6 @@
 import type React from 'react'
 import { useMemo } from 'react'
-import { Button, IconButton, Menu, MenuItem, Tooltip } from '@mui/material'
-import { usePopover } from '@/@noctua.core/hooks/usePopover'
+import { IconButton, Tooltip } from '@mui/material'
 import {
   FaCalendarDay,
   FaComment,
@@ -10,7 +9,6 @@ import {
   FaPen,
   FaTasks,
 } from 'react-icons/fa'
-import { IoChevronDown } from 'react-icons/io5'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
 import { selectCamModel } from '@/features/gocam/slices/camSlice'
 import { selectBaristaToken } from '@/features/auth/slices/authSlice'
@@ -23,16 +21,14 @@ import {
 import { processViolations, computeDiffs, computeTotalErrors } from '../services/violationService'
 import { useModelUrls } from '../hooks/useModelUrls'
 import { getStateColor } from '../data/stateColors'
+import ContributorChips from './ContributorChips'
+import ToolbarLinkMenu from './ToolbarLinkMenu'
 
 const CamToolbar: React.FC = () => {
   const dispatch = useAppDispatch()
   const cam = useAppSelector(selectCamModel)
   const baristaToken = useAppSelector(selectBaristaToken)
   const urls = useModelUrls(cam?.id, baristaToken)
-
-  const viewMenu = usePopover()
-  const exportMenu = usePopover()
-  const contributorsMenu = usePopover()
 
   const openCamForm = () => {
     dispatch(
@@ -56,15 +52,29 @@ const CamToolbar: React.FC = () => {
     dispatch(setRightDrawerOpen(true))
   }
 
+  const viewInItems = useMemo(
+    () => [
+      { label: 'Annotation Preview', href: urls?.annotationPreview },
+      { label: 'Pathway Viewer', href: urls?.pathwayViewer },
+      { label: 'Graph Editor', href: urls?.graphEditor },
+    ],
+    [urls]
+  )
+
+  const exportItems = useMemo(
+    () => [
+      { label: 'GPAD', href: urls?.gpad },
+      { label: 'OWL', href: urls?.owl },
+    ],
+    [urls]
+  )
+
   if (!cam) return null
 
   const commentCount = cam.comments?.length || 0
-  const contributors = cam.contributors || []
-  const visibleContributors = contributors.slice(0, 2)
-  const hiddenContributors = contributors.slice(2)
 
   return (
-    <div className="flex h-10 w-full items-center bg-white px-2 py-1 text-xs border-b border-gray-400">
+    <div className="flex h-10 w-full items-center border-b border-gray-400 bg-white px-2 py-1 text-xs">
       {/* Title */}
       {cam.title && (
         <div className="flex h-full max-w-[250px] items-center border-r border-gray-300 px-2">
@@ -97,9 +107,7 @@ const CamToolbar: React.FC = () => {
       {/* Comments */}
       <div className="h-full px-1">
         <Tooltip
-          title={
-            cam.comments.length > 0 ? cam.comments.join(', ') : 'No comments'
-          }
+          title={cam.comments.length > 0 ? cam.comments.join(', ') : 'No comments'}
           placement="top"
         >
           <IconButton
@@ -168,139 +176,12 @@ const CamToolbar: React.FC = () => {
       )}
 
       {/* Contributors */}
-      <div className="flex flex-grow items-center overflow-x-auto px-2">
-        <div className="flex flex-nowrap">
-          {visibleContributors.map(contributor => (
-            <div
-              key={contributor.uri}
-              className="mr-2 flex h-6 max-w-[180px] items-center truncate rounded-full border border-slate-400 bg-slate-300 pr-2 text-xs text-gray-800"
-            >
-              <div className="text-2xs mr-1 flex h-full min-w-6 items-center justify-center rounded-full bg-slate-400 text-center font-bold text-gray-800">
-                {contributor.initials}
-              </div>
-              <span className="flex-grow truncate">{contributor.name}</span>
-            </div>
-          ))}
-
-          {hiddenContributors.length > 0 && (
-            <>
-              <button
-                className="flex h-6 cursor-pointer items-center rounded-full border border-slate-400 bg-slate-300 px-2 text-gray-800"
-                onClick={e => contributorsMenu.open(e.currentTarget)}
-              >
-                <span>...</span>
-              </button>
-              <Menu
-                anchorEl={contributorsMenu.anchor}
-                open={contributorsMenu.isOpen}
-                onClose={contributorsMenu.close}
-              >
-                {hiddenContributors.map(contributor => (
-                  <MenuItem
-                    key={contributor.uri}
-                    onClick={contributorsMenu.close}
-                  >
-                    <div className="flex items-center">
-                      <div className="text-2xs mr-1 flex h-6 w-6 items-center justify-center rounded-full bg-slate-400 text-center font-bold text-gray-800">
-                        {contributor.initials}
-                      </div>
-                      <span>{contributor.name}</span>
-                    </div>
-                  </MenuItem>
-                ))}
-              </Menu>
-            </>
-          )}
-        </div>
-      </div>
+      <ContributorChips contributors={cam.contributors || []} />
 
       {/* Right-side action buttons */}
       <div className="flex flex-shrink-0 items-center justify-end gap-2">
-        {/* VIEW IN */}
-        <Button
-          variant="outlined"
-          size="small"
-          color="primary"
-          onClick={e => viewMenu.open(e.currentTarget)}
-          endIcon={<IoChevronDown size={12} />}
-          className="!text-xs !normal-case"
-        >
-          View In
-        </Button>
-        <Menu
-          anchorEl={viewMenu.anchor}
-          open={viewMenu.isOpen}
-          onClose={viewMenu.close}
-        >
-          <MenuItem onClick={viewMenu.close}>
-            <a
-              href={urls?.annotationPreview}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full"
-            >
-              Annotation Preview
-            </a>
-          </MenuItem>
-          <MenuItem onClick={viewMenu.close}>
-            <a
-              href={urls?.pathwayViewer}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full"
-            >
-              Pathway Viewer
-            </a>
-          </MenuItem>
-          <MenuItem onClick={viewMenu.close}>
-            <a
-              href={urls?.graphEditor}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full"
-            >
-              Graph Editor
-            </a>
-          </MenuItem>
-        </Menu>
-
-        {/* EXPORT AS */}
-        <Button
-          variant="outlined"
-          size="small"
-          color="primary"
-          onClick={e => exportMenu.open(e.currentTarget)}
-          endIcon={<IoChevronDown size={12} />}
-          className="!text-xs !normal-case"
-        >
-          Export As
-        </Button>
-        <Menu
-          anchorEl={exportMenu.anchor}
-          open={exportMenu.isOpen}
-          onClose={exportMenu.close}
-        >
-          <MenuItem onClick={exportMenu.close}>
-            <a
-              href={urls?.gpad}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full"
-            >
-              GPAD
-            </a>
-          </MenuItem>
-          <MenuItem onClick={exportMenu.close}>
-            <a
-              href={urls?.owl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full"
-            >
-              OWL
-            </a>
-          </MenuItem>
-        </Menu>
+        <ToolbarLinkMenu label="View In" items={viewInItems} />
+        <ToolbarLinkMenu label="Export As" items={exportItems} />
       </div>
     </div>
   )
