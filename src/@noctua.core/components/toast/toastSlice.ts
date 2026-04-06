@@ -1,9 +1,9 @@
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { createSlice } from '@reduxjs/toolkit'
 
-export type ToastSeverity = 'success' | 'error' | 'warning' | 'info'
+type ToastSeverity = 'success' | 'error' | 'warning' | 'info'
 
-export interface ToastState {
+interface ToastState {
   open: boolean
   message: string
   severity: ToastSeverity

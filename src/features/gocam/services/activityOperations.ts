@@ -9,8 +9,6 @@ import {
 } from '../models/operations'
 import type { Operation } from '../models/operations'
 
-export type { Operation }
-
 /**
  * Build Barista API operations to create a new activity from a TermNode tree.
  */

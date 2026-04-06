@@ -24,7 +24,6 @@ export const useAuthUrls = () => {
         ...returnUrlParams
       })}`,
       noctuaUrl: `${ENVIRONMENT.noctuaUrl}?${baristaToken ? parameterize(baristaParams) : ''}`,
-      homeUrl: window.location.href,
     };
   }, [baristaToken]);
 };

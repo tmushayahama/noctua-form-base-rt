@@ -23,7 +23,7 @@ export interface EditorDropdownValues {
   with?: string
 }
 
-export interface EditorDropdownProps {
+interface EditorDropdownProps {
   anchorEl: HTMLElement | null
   category: EditorCategory
   onClose: () => void

@@ -25,7 +25,7 @@ const deleteBtn =
 const editBtn =
   'absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center text-gray-500 opacity-0 hover:bg-gray-200 group-hover/cell:opacity-100'
 
-export interface EvidenceRowProps {
+interface EvidenceRowProps {
   ev: Evidence
   modelId: string
   userContext?: UserContext

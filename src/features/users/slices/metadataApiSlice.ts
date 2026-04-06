@@ -3,7 +3,7 @@ import { setUsers, setGroups } from "./metadataSlice";
 import { ENVIRONMENT } from "@/@noctua.core/data/constants";
 import type { Contributor, Group } from "../models/contributor";
 
-export const addTagTypes = ['metadata'] as const;
+const addTagTypes = ['metadata'] as const;
 
 export const noctuaDataApi = apiService
   .enhanceEndpoints({
@@ -79,6 +79,5 @@ function getInitials(string: string): string {
 }
 
 export const {
-  useGetUserInfoQuery,
   useGetAllDataQuery
 } = noctuaDataApi;

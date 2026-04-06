@@ -9,7 +9,7 @@ import { referenceAllowedDBs } from '../data/allowedDatabases'
  * Validate reference format — must be in DB:accession format
  * where DB is one of the allowed reference databases (PMID, DOI, GO_REF).
  */
-export const isValidReference = (ref: string): boolean => {
+const isValidReference = (ref: string): boolean => {
   if (!ref?.trim()) return false
   const trimmed = ref.trim()
   const colonIdx = trimmed.indexOf(':')

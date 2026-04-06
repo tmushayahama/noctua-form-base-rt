@@ -4,13 +4,13 @@ export enum ConnectorType {
   MOLECULE_ACTIVITY = 'moleculeActivity',
 };
 
-export interface RelationshipDefinition {
+interface RelationshipDefinition {
   id: string;
   label: string;
   description?: string;
 }
 
-export interface Definitions {
+interface Definitions {
   activityRelationship: Record<ActivityRelationshipId, RelationshipDefinition>;
   activityMoleculeRelationship: Record<ActivityMoleculeRelationshipId, RelationshipDefinition>;
   moleculeActivityRelationship: Record<MoleculeActivityRelationshipId, RelationshipDefinition>;
@@ -71,12 +71,6 @@ type DecisionTree = Partial<
     RelationReference | EffectDirectionMap
   >
 >
-
-export interface Schema {
-  definitions: Definitions
-  decisionTree: DecisionTree
-}
-
 
 export const definitions: Definitions = {
   activityRelationship: {

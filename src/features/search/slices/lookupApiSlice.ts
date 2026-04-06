@@ -35,7 +35,7 @@ function createJsonpScript(url: string): Promise<any> {
   })
 }
 
-export const addTagTypes = ['search'] as const
+const addTagTypes = ['search'] as const
 
 const lookupApi = apiService
   .enhanceEndpoints({

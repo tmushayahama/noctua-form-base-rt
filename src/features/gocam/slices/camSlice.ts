@@ -48,32 +48,6 @@ export const camSlice = createSlice({
       state.selectedConnectionKey = action.payload
       if (action.payload) state.selectedActivityId = null
     },
-    addActivity: (state, action: PayloadAction<Activity>) => {
-      if (state.model) {
-        state.model.activities.push(action.payload)
-      }
-    },
-    addEdge: (state, action: PayloadAction<Edge>) => {
-      if (state.model) {
-        state.model.activityConnections.push(action.payload)
-      }
-    },
-    updateActivity: (state, action: PayloadAction<Activity>) => {
-      if (state.model) {
-        const index = state.model.activities.findIndex(
-          a => a.uid === action.payload.uid
-        )
-        if (index !== -1) {
-          state.model.activities[index] = action.payload
-        }
-      }
-    },
-    setLoading: (state, action: PayloadAction<boolean>) => {
-      state.loading = action.payload
-    },
-    setError: (state, action: PayloadAction<string | null>) => {
-      state.error = action.payload
-    },
   },
 })
 
@@ -81,11 +55,6 @@ export const {
   setModel,
   setSelectedActivity,
   setSelectedConnection,
-  addActivity,
-  addEdge,
-  updateActivity,
-  setLoading,
-  setError,
 } = camSlice.actions
 
 // ── Base selectors ─────────────────────────────────────────────────

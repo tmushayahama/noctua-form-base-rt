@@ -380,14 +380,7 @@ export const selectFormRoot = (state: RootState) => state.activityForm.root
 export const selectFormMode = (state: RootState) => state.activityForm.mode
 export const selectFormType = (state: RootState) => state.activityForm.activityType
 export const selectFormErrors = (state: RootState) => state.activityForm.errors
-export const selectFormIsDirty = (state: RootState) => state.activityForm.isDirty
 export const selectExistingActivityUid = (state: RootState) =>
   state.activityForm.existingActivityUid
-
-export const selectFormIsValid = (state: RootState) => {
-  const { errors, root } = state.activityForm
-  if (!root) return false
-  return errors.length === 0
-}
 
 export default activityFormSlice

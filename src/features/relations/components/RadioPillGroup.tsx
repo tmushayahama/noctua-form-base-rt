@@ -1,6 +1,6 @@
 import type React from 'react'
 
-export interface PillOption {
+interface PillOption {
   value: string
   label: string
   description?: string

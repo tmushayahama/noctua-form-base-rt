@@ -2,7 +2,7 @@ import { Aspect, RootTypes } from '../models/cam'
 import { Relations } from '@/@noctua.core/models/relations'
 import { predicate } from './shapeTerms'
 
-export interface RelationConstraint {
+interface RelationConstraint {
   predicate: { id: string; label: string }
   range: string[]
   multivalued: boolean
@@ -128,8 +128,6 @@ export const plantStage = {
 
 // ── Lookup by ID ────────────────────────────────────────────────────
 
-const BASE_KEYS = new Set(['id', 'label', 'aspect', 'searchClosureIds'])
-
 const ALL_CATEGORIES = [
   molecularFunction,
   biologicalProcess,
@@ -157,38 +155,3 @@ export const getNodeCategory = (id: string): AnyCategory | undefined => {
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
-export interface RelationEntry {
-  key: string
-  constraint: RelationConstraint
-}
-
-function isRelationConstraint(val: unknown): val is RelationConstraint {
-  return (
-    typeof val === 'object' &&
-    val !== null &&
-    'predicate' in val &&
-    'range' in val
-  )
-}
-
-/**
- * Collect all named relation properties from a category.
- * Access: `molecularFunction.hasInput.range` — direct, type-safe.
- * Iteration: `getRelationEntries(molecularFunction)` for menus.
- */
-export const getRelationEntries = (category: AnyCategory): RelationEntry[] => {
-  return Object.entries(category)
-    .filter(([key, val]) => !BASE_KEYS.has(key) && isRelationConstraint(val))
-    .map(([key, val]) => ({ key, constraint: val as RelationConstraint }))
-}
-
-/**
- * Get only extension relations (visible in "add node" menu).
- */
-export const getExtensionRelations = (
-  category: AnyCategory
-): RelationEntry[] => {
-  return getRelationEntries(category).filter(
-    e => !e.constraint.excludeFromExtensions
-  )
-}

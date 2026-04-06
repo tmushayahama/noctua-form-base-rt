@@ -3,7 +3,7 @@ import { ENVIRONMENT } from "@/@noctua.core/data/constants";
 import type { User, UserResponse } from "../user";
 
 
-export const addTagTypes = ['user'] as const;
+const addTagTypes = ['user'] as const;
 
 export const userApi = apiService
   .enhanceEndpoints({

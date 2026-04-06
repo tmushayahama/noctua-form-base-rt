@@ -1,6 +1,6 @@
 import type { Contributor, Group } from "@/features/users/models/contributor";
-import type { Entity, Evidence, ShExViolation } from "../models/cam";
-import { type Edge, type GraphModel, type GraphNode, type Activity, ActivityType, RootTypes, Aspect } from "../models/cam";
+import type { Evidence, ShExViolation } from "../models/cam";
+import { type Edge, type GraphModel, type GraphNode, type Activity, ActivityType, RootTypes } from "../models/cam";
 import { Relations } from "@/@noctua.core/models/relations";
 import { v4 as uuidv4 } from 'uuid';
 import { store } from "@/app/store/store";
@@ -367,20 +367,6 @@ function getGroup(id: string): Group {
   return group ? group : { id } as Group;
 };
 
-
-const rootTypeToAspectMap: Partial<Record<RootTypes, Aspect>> = {
-  [RootTypes.MOLECULAR_FUNCTION]: Aspect.MOLECULAR_FUNCTION,
-  [RootTypes.BIOLOGICAL_PROCESS]: Aspect.BIOLOGICAL_PROCESS,
-  [RootTypes.CELLULAR_COMPONENT]: Aspect.CELLULAR_COMPONENT,
-};
-
-export function getAspect(rootTypes: Entity[]): Aspect | null {
-  for (const rootType of rootTypes) {
-    const aspect = rootTypeToAspectMap[rootType.id as RootTypes];
-    if (aspect) return aspect;
-  }
-  return null;
-}
 
 function parseValidationResults(validationResults: any): ShExViolation[] {
   const violations: ShExViolation[] = [];

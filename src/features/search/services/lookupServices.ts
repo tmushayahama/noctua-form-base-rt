@@ -34,7 +34,7 @@ export const mapGOlrResponse = (response: any): GOlrResponse[] => {
   })
 }
 
-export const makeEntitiesArray = (ids: string[] = [], labels: string[] = []): Entity[] => {
+const makeEntitiesArray = (ids: string[] = [], labels: string[] = []): Entity[] => {
   if (!ids || ids.length === 0) return []
 
   let result: Entity[] = []
@@ -109,7 +109,7 @@ export const processAnnotationsResponse = (response: any): AnnotationsResponse[]
   return Object.values(resultMap)
 }
 
-export const getGroupsFromNames = (names: string[]): Group[] => {
+const getGroupsFromNames = (names: string[]): Group[] => {
   return names.map(name => ({
     id: name,
     name: name,

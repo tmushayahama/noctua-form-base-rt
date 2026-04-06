@@ -1,6 +1,6 @@
 import type { Entity } from '../models/cam'
 
-export interface ShapeTermEntry {
+interface ShapeTermEntry {
   id: string
   label: string
   definition: string

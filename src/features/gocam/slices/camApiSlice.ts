@@ -6,7 +6,7 @@ import { getBaristaApiUrl } from '@/@noctua.core/services/linksService'
 import { AnnotationKey, OperationEntity, OperationType } from '../models/operations'
 import type { Operation } from '../models/operations'
 
-export const addTagTypes = ['graph'] as const
+const addTagTypes = ['graph'] as const
 
 interface GraphQueryArg {
   modelId: string

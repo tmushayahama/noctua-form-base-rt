@@ -59,9 +59,6 @@ export const relationSlice = createSlice({
       state.selected = { ...state.selected, ...action.payload }
       state.relation = determineRelation(state.selected)
     },
-    updateRelationFromId: (state, action: PayloadAction<RelationId>) => {
-      state.relation = action.payload
-    },
     resetSelection: (
       state,
       action: PayloadAction<{
@@ -114,9 +111,6 @@ export const relationSlice = createSlice({
         ev[field] = value as string
       }
     },
-    resetConnectorEvidences: state => {
-      state.connectorEvidences = [createEvidenceForm()]
-    },
     setConnectorEvidences: (state, action: PayloadAction<EvidenceForm[]>) => {
       state.connectorEvidences =
         action.payload.length > 0 ? action.payload : [createEvidenceForm()]
@@ -126,12 +120,10 @@ export const relationSlice = createSlice({
 
 export const {
   updateSelection,
-  updateRelationFromId,
   resetSelection,
   addConnectorEvidence,
   removeConnectorEvidence,
   updateConnectorEvidence,
-  resetConnectorEvidences,
   setConnectorEvidences,
 } = relationSlice.actions
 

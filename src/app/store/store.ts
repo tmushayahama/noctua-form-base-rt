@@ -1,9 +1,8 @@
-import type { Action, Middleware, ThunkAction } from '@reduxjs/toolkit'
+import type { Middleware } from '@reduxjs/toolkit'
 import { combineSlices, configureStore } from '@reduxjs/toolkit'
 import { setupListeners } from '@reduxjs/toolkit/query'
 import apiService from './apiService'
 import { drawerSlice } from '@/@noctua.core/components/drawer/drawerSlice'
-import { searchSlice } from '@/features/search/searchSlice'
 import { camSlice } from '@/features/gocam/slices/camSlice'
 import { activityFormSlice } from '@/features/gocam/slices/activityFormSlice'
 import { metadataSlice } from '@/features/users/slices/metadataSlice'
@@ -18,7 +17,6 @@ const rootReducer = combineSlices({
   activityForm: activityFormSlice.reducer,
   cam: camSlice.reducer,
   relation: relationSlice.reducer,
-  search: searchSlice.reducer,
   drawer: drawerSlice.reducer,
   dialog: dialogSlice.reducer,
   toast: toastSlice.reducer,
@@ -44,9 +42,3 @@ export const store = makeStore()
 
 export type AppStore = typeof store
 export type AppDispatch = AppStore['dispatch']
-export type AppThunk<ThunkReturnType = void> = ThunkAction<
-  ThunkReturnType,
-  RootState,
-  unknown,
-  Action
->

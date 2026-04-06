@@ -1,6 +1,6 @@
 import { ActivityType } from "@/features/gocam/models/cam";
 import type { RelationId } from "../models/decisionTree";
-import { ActivityRelationshipId, ActivityMoleculeRelationshipId, MoleculeActivityRelationshipId, EffectDirectionId, DirectnessId, decisionTree, ConnectorType, ConnectorType } from "../models/decisionTree";
+import { ActivityRelationshipId, ActivityMoleculeRelationshipId, MoleculeActivityRelationshipId, EffectDirectionId, DirectnessId, decisionTree, ConnectorType } from "../models/decisionTree";
 
 
 

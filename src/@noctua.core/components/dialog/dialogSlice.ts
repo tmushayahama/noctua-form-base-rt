@@ -8,7 +8,7 @@ export enum DialogComponent {
   CHEMICAL_CONNECTOR_FORM = 'ChemicalConnectorForm',
 }
 
-export interface DialogState {
+interface DialogState {
   open: boolean;
   title: string;
   size: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
