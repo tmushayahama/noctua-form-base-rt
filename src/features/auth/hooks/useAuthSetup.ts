@@ -18,6 +18,7 @@ export const useAuthSetup = () => {
 
       if (tokenFromUrl) {
         dispatch(setBaristaToken(tokenFromUrl))
+        localStorage.setItem('barista_token', tokenFromUrl)
         removeBaristaTokenFromUrl()
       } else if (!baristaToken) {
         // Check localStorage if no token in URL

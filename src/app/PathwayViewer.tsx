@@ -34,7 +34,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import ActivityDialog from '@/features/gocam/components/dialogs/ActivityFormDialog'
 import ActivityForm from '@/features/gocam/components/forms/ActivityForm'
 import ConnectorForm from '@/features/relations/components/ConnectorForm'
-import { selectAuthUser } from '@/features/auth/slices/authSlice'
+import { selectAuthUser, selectBaristaToken } from '@/features/auth/slices/authSlice'
 
 const PathwayEditor: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -53,6 +53,7 @@ const PathwayEditor: React.FC = () => {
   const [connectorTarget, setConnectorTarget] = useState<Activity | null>(null)
 
   const user = useAppSelector(selectAuthUser)
+  const baristaToken = useAppSelector(selectBaristaToken)
   const isLoggedIn = !!user
 
   const [updateGraphModel] = useUpdateGraphModelMutation()
@@ -62,7 +63,10 @@ const PathwayEditor: React.FC = () => {
     error,
     isLoading,
     isSuccess,
-  } = useGetGraphModelQuery(modelId || '', { skip: !modelId })
+  } = useGetGraphModelQuery(
+    { modelId: modelId || '', baristaToken: baristaToken || '' },
+    { skip: !modelId }
+  )
 
   useEffect(() => {
     if (isSuccess && graphModel?.data) {

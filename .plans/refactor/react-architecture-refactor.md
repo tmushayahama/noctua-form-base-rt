@@ -226,12 +226,12 @@ After any mutation (even changing one term), `camApiSlice` refetches the model a
 - [x] **3.3** Removed all 4 feature imports from `@noctua.core/components/dialog/GlobalDialog.tsx` — core no longer depends on features
 - [x] **3.4** Type-check + lint pass — 0 errors
 
-### Phase 4: RTK Query and auth cleanup
+### Phase 4: RTK Query and auth cleanup ✅ DONE
 
-- [ ] **4.1** Token handling: include barista token in query cache key so RTK Query invalidates on token change. Keep token-in-URL construction in queryFn (Barista API requires it as a URL param, not a header).
-- [ ] **4.2** Granular cache tags: `providesTags: (result, error, modelId) => [{ type: 'graph', id: modelId }]`
-- [ ] **4.3** Move localStorage side effect from authSlice reducers (`setBaristaToken`, `logout`) to RTK listener middleware
-- [ ] **4.4** Type-check pass
+- [x] **4.1** `getGraphModel` arg changed from `string` to `{ modelId, baristaToken }` — token is now part of the cache key. RTK Query will refetch on token change. Token still goes in URL as Barista requires.
+- [x] **4.2** Granular cache tags: `getGraphModel` provides `[{ type: 'graph', id: modelId }]`, `copyGraphModel` invalidates `[{ type: 'graph', id: modelId }]`. `updateGraphModel` stays broad (`['graph']`) since operations can span models.
+- [x] **4.3** localStorage removed from authSlice reducers (pure reducers now). localStorage writes colocated with dispatches in `useAuthSetup.ts` — the only place that calls `setBaristaToken`. No middleware needed.
+- [x] **4.4** Type-check + lint pass — 0 errors
 
 ### Phase 5: Form state ownership (highest impact, highest risk — do last)
 
