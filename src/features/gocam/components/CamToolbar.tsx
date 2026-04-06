@@ -1,6 +1,7 @@
 import type React from 'react'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Button, IconButton, Menu, MenuItem, Tooltip } from '@mui/material'
+import { usePopover } from '@/@noctua.core/hooks/usePopover'
 import {
   FaCalendarDay,
   FaComment,
@@ -29,10 +30,9 @@ const CamToolbar: React.FC = () => {
   const baristaToken = useAppSelector(selectBaristaToken)
   const urls = useModelUrls(cam?.id, baristaToken)
 
-  const [viewMenuAnchor, setViewMenuAnchor] = useState<null | HTMLElement>(null)
-  const [exportMenuAnchor, setExportMenuAnchor] = useState<null | HTMLElement>(null)
-  const [contributorsMenuAnchor, setContributorsMenuAnchor] =
-    useState<null | HTMLElement>(null)
+  const viewMenu = usePopover()
+  const exportMenu = usePopover()
+  const contributorsMenu = usePopover()
 
   const openCamForm = () => {
     dispatch(
@@ -186,19 +186,19 @@ const CamToolbar: React.FC = () => {
             <>
               <button
                 className="flex h-6 cursor-pointer items-center rounded-full border border-slate-400 bg-slate-300 px-2 text-gray-800"
-                onClick={e => setContributorsMenuAnchor(e.currentTarget)}
+                onClick={e => contributorsMenu.open(e.currentTarget)}
               >
                 <span>...</span>
               </button>
               <Menu
-                anchorEl={contributorsMenuAnchor}
-                open={Boolean(contributorsMenuAnchor)}
-                onClose={() => setContributorsMenuAnchor(null)}
+                anchorEl={contributorsMenu.anchor}
+                open={contributorsMenu.isOpen}
+                onClose={contributorsMenu.close}
               >
                 {hiddenContributors.map(contributor => (
                   <MenuItem
                     key={contributor.uri}
-                    onClick={() => setContributorsMenuAnchor(null)}
+                    onClick={contributorsMenu.close}
                   >
                     <div className="flex items-center">
                       <div className="text-2xs mr-1 flex h-6 w-6 items-center justify-center rounded-full bg-slate-400 text-center font-bold text-gray-800">
@@ -221,18 +221,18 @@ const CamToolbar: React.FC = () => {
           variant="outlined"
           size="small"
           color="primary"
-          onClick={e => setViewMenuAnchor(e.currentTarget)}
+          onClick={e => viewMenu.open(e.currentTarget)}
           endIcon={<IoChevronDown size={12} />}
           className="!text-xs !normal-case"
         >
           View In
         </Button>
         <Menu
-          anchorEl={viewMenuAnchor}
-          open={Boolean(viewMenuAnchor)}
-          onClose={() => setViewMenuAnchor(null)}
+          anchorEl={viewMenu.anchor}
+          open={viewMenu.isOpen}
+          onClose={viewMenu.close}
         >
-          <MenuItem onClick={() => setViewMenuAnchor(null)}>
+          <MenuItem onClick={viewMenu.close}>
             <a
               href={urls?.annotationPreview}
               target="_blank"
@@ -242,7 +242,7 @@ const CamToolbar: React.FC = () => {
               Annotation Preview
             </a>
           </MenuItem>
-          <MenuItem onClick={() => setViewMenuAnchor(null)}>
+          <MenuItem onClick={viewMenu.close}>
             <a
               href={urls?.pathwayViewer}
               target="_blank"
@@ -252,7 +252,7 @@ const CamToolbar: React.FC = () => {
               Pathway Viewer
             </a>
           </MenuItem>
-          <MenuItem onClick={() => setViewMenuAnchor(null)}>
+          <MenuItem onClick={viewMenu.close}>
             <a
               href={urls?.graphEditor}
               target="_blank"
@@ -269,18 +269,18 @@ const CamToolbar: React.FC = () => {
           variant="outlined"
           size="small"
           color="primary"
-          onClick={e => setExportMenuAnchor(e.currentTarget)}
+          onClick={e => exportMenu.open(e.currentTarget)}
           endIcon={<IoChevronDown size={12} />}
           className="!text-xs !normal-case"
         >
           Export As
         </Button>
         <Menu
-          anchorEl={exportMenuAnchor}
-          open={Boolean(exportMenuAnchor)}
-          onClose={() => setExportMenuAnchor(null)}
+          anchorEl={exportMenu.anchor}
+          open={exportMenu.isOpen}
+          onClose={exportMenu.close}
         >
-          <MenuItem onClick={() => setExportMenuAnchor(null)}>
+          <MenuItem onClick={exportMenu.close}>
             <a
               href={urls?.gpad}
               target="_blank"
@@ -290,7 +290,7 @@ const CamToolbar: React.FC = () => {
               GPAD
             </a>
           </MenuItem>
-          <MenuItem onClick={() => setExportMenuAnchor(null)}>
+          <MenuItem onClick={exportMenu.close}>
             <a
               href={urls?.owl}
               target="_blank"

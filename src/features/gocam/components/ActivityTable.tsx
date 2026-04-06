@@ -1,5 +1,6 @@
 import type React from 'react'
 import { useState, useCallback, useMemo } from 'react'
+import { usePopover } from '@/@noctua.core/hooks/usePopover'
 import {
   IconButton,
   Menu,
@@ -13,10 +14,10 @@ import {
 import { FaEllipsisV } from 'react-icons/fa'
 import { FiX } from 'react-icons/fi'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
+import { useUserContext } from '@/app/hooks/useUserContext'
 import { selectCamModel } from '../slices/camSlice'
-import { selectAuthUser } from '@/features/auth/slices/authSlice'
 import { ActivityType } from '../models/cam'
-import type { Activity, Edge, UserContext, DisplayTreeNode } from '../models/cam'
+import type { Activity, Edge, DisplayTreeNode } from '../models/cam'
 import { Relations } from '@/@noctua.core/models/relations'
 import { setSelectedActivity } from '../slices/camSlice'
 import { setRightDrawerOpen } from '@/@noctua.core/components/drawer/drawerSlice'
@@ -137,16 +138,11 @@ interface ActivityTableProps {
 const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
   const dispatch = useAppDispatch()
   const model = useAppSelector(selectCamModel)
-  const authUser = useAppSelector(selectAuthUser)
+  const userContext = useUserContext()
   const [updateGraphModel] = useUpdateGraphModelMutation()
 
-  const [headerMenuAnchor, setHeaderMenuAnchor] = useState<HTMLElement | null>(null)
+  const headerMenu = usePopover()
   const [confirmDelete, setConfirmDelete] = useState(false)
-
-  const userContext: UserContext | undefined = useMemo(() => {
-    if (!authUser?.uri || !authUser?.group?.id) return undefined
-    return { orcid: authUser.uri, groupUrl: authUser.group.id }
-  }, [authUser])
 
   const modelId = model?.id ?? ''
   const { gpTree, fdTree } = useMemo(() => buildDisplayTree(activity), [activity])
@@ -184,7 +180,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
             </div>
           )}
         </div>
-        <IconButton size="small" onClick={e => setHeaderMenuAnchor(e.currentTarget)}>
+        <IconButton size="small" onClick={e => headerMenu.open(e.currentTarget)}>
           <FaEllipsisV size={14} />
         </IconButton>
         <IconButton size="small" onClick={handleClose} title="Close">
@@ -237,14 +233,14 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
 
       {/* ── Header menu ── */}
       <Menu
-        anchorEl={headerMenuAnchor}
-        open={Boolean(headerMenuAnchor)}
-        onClose={() => setHeaderMenuAnchor(null)}
+        anchorEl={headerMenu.anchor}
+        open={headerMenu.isOpen}
+        onClose={headerMenu.close}
       >
         <MenuItem
           onClick={() => {
             setConfirmDelete(true)
-            setHeaderMenuAnchor(null)
+            headerMenu.close()
           }}
           className="!text-red-600"
         >

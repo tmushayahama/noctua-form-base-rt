@@ -1,7 +1,12 @@
 import type { PayloadAction } from '@reduxjs/toolkit'
-import { createSlice } from '@reduxjs/toolkit'
-import type { GraphModel, Activity, Edge, GraphNode } from '../models/cam'
+import { createSlice, createSelector } from '@reduxjs/toolkit'
+import type { GraphModel, Activity, Edge } from '../models/cam'
 import type { GOlrResponse } from '@/features/search/models/search'
+
+export interface SelectedConnectionKey {
+  sourceActivityUid: string
+  targetActivityUid: string
+}
 
 export interface SelectedConnection {
   sourceActivity: Activity
@@ -13,16 +18,16 @@ interface CamState {
   model: GraphModel | null
   loading: boolean
   error: string | null
-  selectedActivity: Activity | null
-  selectedConnection: SelectedConnection | null
+  selectedActivityId: string | null
+  selectedConnectionKey: SelectedConnectionKey | null
 }
 
 const initialState: CamState = {
   model: null,
   loading: false,
   error: null,
-  selectedActivity: null,
-  selectedConnection: null,
+  selectedActivityId: null,
+  selectedConnectionKey: null,
 }
 
 export const camSlice = createSlice({
@@ -31,48 +36,17 @@ export const camSlice = createSlice({
   reducers: {
     setModel: (state, action: PayloadAction<GraphModel>) => {
       state.model = action.payload
-      // Keep selectedActivity in sync with the fresh model data
-      if (state.selectedActivity) {
-        const freshActivity = action.payload.activities.find(
-          a => a.rootNode.uid === state.selectedActivity!.rootNode.uid
-        )
-        state.selectedActivity = freshActivity ?? null
-      }
-      // Keep selectedConnection in sync
-      if (state.selectedConnection) {
-        const freshSource = action.payload.activities.find(
-          a => a.rootNode.uid === state.selectedConnection!.sourceActivity.rootNode.uid
-        )
-        const freshTarget = action.payload.activities.find(
-          a => a.rootNode.uid === state.selectedConnection!.targetActivity.rootNode.uid
-        )
-        if (freshSource && freshTarget) {
-          const freshEdge = action.payload.activityConnections.find(
-            c =>
-              c.sourceId === state.selectedConnection!.edge.sourceId &&
-              c.targetId === state.selectedConnection!.edge.targetId
-          )
-          if (freshEdge) {
-            state.selectedConnection = {
-              sourceActivity: freshSource,
-              targetActivity: freshTarget,
-              edge: freshEdge,
-            }
-          } else {
-            state.selectedConnection = null
-          }
-        } else {
-          state.selectedConnection = null
-        }
-      }
     },
-    setSelectedActivity: (state, action: PayloadAction<Activity | null>) => {
-      state.selectedActivity = action.payload
-      if (action.payload) state.selectedConnection = null
+    setSelectedActivity: (state, action: PayloadAction<string | null>) => {
+      state.selectedActivityId = action.payload
+      if (action.payload) state.selectedConnectionKey = null
     },
-    setSelectedConnection: (state, action: PayloadAction<SelectedConnection | null>) => {
-      state.selectedConnection = action.payload
-      if (action.payload) state.selectedActivity = null
+    setSelectedConnection: (
+      state,
+      action: PayloadAction<SelectedConnectionKey | null>
+    ) => {
+      state.selectedConnectionKey = action.payload
+      if (action.payload) state.selectedActivityId = null
     },
     addActivity: (state, action: PayloadAction<Activity>) => {
       if (state.model) {
@@ -86,7 +60,9 @@ export const camSlice = createSlice({
     },
     updateActivity: (state, action: PayloadAction<Activity>) => {
       if (state.model) {
-        const index = state.model.activities.findIndex(a => a.uid === action.payload.uid)
+        const index = state.model.activities.findIndex(
+          a => a.uid === action.payload.uid
+        )
         if (index !== -1) {
           state.model.activities[index] = action.payload
         }
@@ -112,12 +88,102 @@ export const {
   setError,
 } = camSlice.actions
 
-export const selectCamModel = (state: { cam: CamState }) => state.cam.model
-export const selectSelectedActivity = (state: { cam: CamState }) => state.cam.selectedActivity
-export const selectSelectedConnection = (state: { cam: CamState }) => state.cam.selectedConnection
+// ── Base selectors ─────────────────────────────────────────────────
 
-/** Convert a GraphNode to a minimal GOlrResponse for autocomplete prefetch */
-function nodeToOption(node: GraphNode): GOlrResponse {
+export const selectCamModel = (state: { cam: CamState }) => state.cam.model
+const selectSelectedActivityId = (state: { cam: CamState }) =>
+  state.cam.selectedActivityId
+const selectSelectedConnectionKey = (state: { cam: CamState }) =>
+  state.cam.selectedConnectionKey
+
+// ── Derived selectors ──────────────────────────────────────────────
+
+export const selectSelectedActivity = createSelector(
+  [selectCamModel, selectSelectedActivityId],
+  (model, id): Activity | null => {
+    if (!model || !id) return null
+    return model.activities.find(a => a.uid === id) ?? null
+  }
+)
+
+export const selectSelectedConnection = createSelector(
+  [selectCamModel, selectSelectedConnectionKey],
+  (model, key): SelectedConnection | null => {
+    if (!model || !key) return null
+    const source = model.activities.find(a => a.uid === key.sourceActivityUid)
+    const target = model.activities.find(a => a.uid === key.targetActivityUid)
+    if (!source || !target) return null
+    const edge = model.activityConnections.find(
+      c =>
+        (c.sourceId === source.rootNode?.uid &&
+          c.targetId === target.rootNode?.uid) ||
+        (c.sourceId === target.rootNode?.uid &&
+          c.targetId === source.rootNode?.uid)
+    )
+    if (!edge) return null
+    return { sourceActivity: source, targetActivity: target, edge }
+  }
+)
+
+// ── Model data selectors ───────────────────────────────────────────
+
+/** Unique terms from all activities, filtered by rootTypes overlap */
+export const makeSelectModelTerms = () =>
+  createSelector(
+    [selectCamModel, (_state: { cam: CamState }, rootTypeIds: string[]) => rootTypeIds],
+    (model, rootTypeIds): GOlrResponse[] => {
+      if (!model) return []
+      const seen = new Set<string>()
+      const results: GOlrResponse[] = []
+      for (const activity of model.activities) {
+        for (const node of activity.nodes) {
+          if (!node.id || !node.label || seen.has(node.id)) continue
+          if (
+            rootTypeIds.length > 0 &&
+            !node.rootTypes.some(rt => rootTypeIds.includes(rt))
+          )
+            continue
+          seen.add(node.id)
+          results.push(nodeToOption(node))
+        }
+      }
+      return results
+    }
+  )
+
+/** Unique evidence codes from all edges in the model */
+export const selectModelEvidence = createSelector(
+  [selectCamModel],
+  (model): GOlrResponse[] => {
+    if (!model) return []
+    const seen = new Set<string>()
+    const results: GOlrResponse[] = []
+    for (const activity of model.activities) {
+      for (const edge of activity.edges) {
+        if (!edge.evidence) continue
+        for (const ev of edge.evidence) {
+          if (!ev.evidenceCode?.id || seen.has(ev.evidenceCode.id)) continue
+          seen.add(ev.evidenceCode.id)
+          results.push({
+            id: ev.evidenceCode.id,
+            label: ev.evidenceCode.label,
+            link: '',
+            description: '',
+            isObsolete: false,
+            replacedBy: '',
+            rootTypes: [],
+            xref: '',
+            notAnnotatable: true,
+            neighborhoodGraphJson: '',
+          })
+        }
+      }
+    }
+    return results
+  }
+)
+
+function nodeToOption(node: { id: string; label: string }): GOlrResponse {
   return {
     id: node.id,
     label: node.label,
@@ -130,51 +196,6 @@ function nodeToOption(node: GraphNode): GOlrResponse {
     notAnnotatable: true,
     neighborhoodGraphJson: '',
   }
-}
-
-/** Unique terms from all activities, filtered by rootTypes overlap */
-export function getModelTerms(model: GraphModel | null, rootTypeIds: string[]): GOlrResponse[] {
-  if (!model) return []
-  const seen = new Set<string>()
-  const results: GOlrResponse[] = []
-  for (const activity of model.activities) {
-    for (const node of activity.nodes) {
-      if (!node.id || !node.label || seen.has(node.id)) continue
-      if (rootTypeIds.length > 0 && !node.rootTypes.some(rt => rootTypeIds.includes(rt))) continue
-      seen.add(node.id)
-      results.push(nodeToOption(node))
-    }
-  }
-  return results
-}
-
-/** Unique evidence codes from all edges in the model */
-export function getModelEvidence(model: GraphModel | null): GOlrResponse[] {
-  if (!model) return []
-  const seen = new Set<string>()
-  const results: GOlrResponse[] = []
-  for (const activity of model.activities) {
-    for (const edge of activity.edges) {
-      if (!edge.evidence) continue
-      for (const ev of edge.evidence) {
-        if (!ev.evidenceCode?.id || seen.has(ev.evidenceCode.id)) continue
-        seen.add(ev.evidenceCode.id)
-        results.push({
-          id: ev.evidenceCode.id,
-          label: ev.evidenceCode.label,
-          link: '',
-          description: '',
-          isObsolete: false,
-          replacedBy: '',
-          rootTypes: [],
-          xref: '',
-          notAnnotatable: true,
-          neighborhoodGraphJson: '',
-        })
-      }
-    }
-  }
-  return results
 }
 
 export default camSlice.reducer

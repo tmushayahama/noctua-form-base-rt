@@ -4,6 +4,7 @@ import type { GraphModelApiResponse } from '../models/cam';
 import type { RootState } from '@/app/store/store';
 import { getBaristaApiUrl } from '@/@noctua.core/services/linksService';
 import { AnnotationKey, OperationEntity, OperationType } from '../models/operations';
+import type { Operation } from '../models/operations';
 
 export const addTagTypes = ['graph'] as const;
 
@@ -82,7 +83,7 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
       invalidatesTags: ['graph'],
     }),
 
-    updateGraphModel: builder.mutation<GraphModelApiResponse | null, any>({
+    updateGraphModel: builder.mutation<GraphModelApiResponse | null, Operation[]>({
       async queryFn(requests, _queryApi, _extraOptions, baseQuery) {
         const state = _queryApi.getState() as RootState;
         const baristaToken = state.auth.baristaToken || '';

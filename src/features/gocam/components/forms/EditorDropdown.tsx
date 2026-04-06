@@ -1,13 +1,14 @@
 import type React from 'react'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { IconButton, Menu, MenuItem, Popover } from '@mui/material'
+import { usePopover } from '@/@noctua.core/hooks/usePopover'
 import { FaEllipsisV } from 'react-icons/fa'
 import { FaRegCircleXmark, FaRegCircleCheck } from 'react-icons/fa6'
 import { useAppSelector } from '@/app/hooks'
 import { EditorCategory } from '../../models/editorCategory'
 import { RootTypes } from '../../models/cam'
 import { ROOT_NODES, EVIDENCE_AUTO_POPULATE } from '../../data/camConstants'
-import { selectCamModel, getModelTerms, getModelEvidence } from '../../slices/camSlice'
+import { makeSelectModelTerms, selectModelEvidence } from '../../slices/camSlice'
 import TermAutocomplete from '@/features/search/components/Autocomplete'
 import { AutocompleteType } from '@/features/search/models/search'
 import type { GOlrResponse } from '@/features/search/models/search'
@@ -89,22 +90,20 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
 }) => {
   const open = Boolean(anchorEl)
   const sections = getDisplaySections(category)
-  const model = useAppSelector(selectCamModel)
   const showActionMenu =
     (category === EditorCategory.all || category === EditorCategory.evidenceAll) && hasAspect
 
-  const termInitialOptions = useMemo(
-    () => getModelTerms(model, termRootTypes ?? []),
-    [model, termRootTypes]
-  )
-  const evidenceInitialOptions = useMemo(() => getModelEvidence(model), [model])
+  const selectTerms = useMemo(makeSelectModelTerms, [])
+  const rootTypes = termRootTypes ?? []
+  const termInitialOptions = useAppSelector(state => selectTerms(state, rootTypes))
+  const evidenceInitialOptions = useAppSelector(selectModelEvidence)
 
   // Field state
   const [term, setTerm] = useState<GOlrResponse | null>(null)
   const [evidence, setEvidence] = useState<GOlrResponse | null>(null)
   const [reference, setReference] = useState('')
   const [withVal, setWithVal] = useState('')
-  const [actionMenuAnchor, setActionMenuAnchor] = useState<HTMLElement | null>(null)
+  const actionMenu = usePopover()
 
   useEffect(() => {
     if (open) {
@@ -116,13 +115,13 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
       )
       setReference(initialReference)
       setWithVal(initialWith)
-      setActionMenuAnchor(null)
+      actionMenu.close()
     }
-  }, [open, initialTerm, initialEvidence, initialReference, initialWith])
+  }, [open, initialTerm, initialEvidence, initialReference, initialWith]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClose = useCallback(() => {
-    if (!actionMenuAnchor) onClose()
-  }, [actionMenuAnchor, onClose])
+    if (!actionMenu.isOpen) onClose()
+  }, [actionMenu.isOpen, onClose])
 
   const handleSave = useCallback(() => {
     onSave({
@@ -200,20 +199,20 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
           <>
             <IconButton
               size="small"
-              onClick={e => setActionMenuAnchor(e.currentTarget)}
+              onClick={e => actionMenu.open(e.currentTarget)}
               className="!h-10 !w-10"
             >
               <FaEllipsisV size={12} />
             </IconButton>
             <Menu
-              anchorEl={actionMenuAnchor}
-              open={Boolean(actionMenuAnchor)}
-              onClose={() => setActionMenuAnchor(null)}
+              anchorEl={actionMenu.anchor}
+              open={actionMenu.isOpen}
+              onClose={actionMenu.close}
             >
               {category !== EditorCategory.evidenceAll && onSearchAnnotations && (
                 <MenuItem
                   onClick={() => {
-                    setActionMenuAnchor(null)
+                    actionMenu.close()
                     onSearchAnnotations()
                   }}
                 >
@@ -223,7 +222,7 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
               {category !== EditorCategory.evidenceAll && (
                 <MenuItem
                   onClick={() => {
-                    setActionMenuAnchor(null)
+                    actionMenu.close()
                     handleFillRootTerm()
                   }}
                 >

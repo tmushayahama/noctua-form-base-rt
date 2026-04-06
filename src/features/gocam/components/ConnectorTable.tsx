@@ -2,16 +2,13 @@ import type React from 'react'
 import { IconButton } from '@mui/material'
 import { FiX } from 'react-icons/fi'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
-import type { RootState } from '@/app/store/store'
-import { setSelectedConnection } from '../slices/camSlice'
+import { setSelectedConnection, selectSelectedConnection } from '../slices/camSlice'
 import { setRightDrawerOpen } from '@/@noctua.core/components/drawer/drawerSlice'
 import RelationForm from '@/features/relations/components/RelationForm'
 
 const ConnectorTable: React.FC = () => {
   const dispatch = useAppDispatch()
-  const selectedConnection = useAppSelector(
-    (state: RootState) => state.cam.selectedConnection
-  )
+  const selectedConnection = useAppSelector(selectSelectedConnection)
 
   if (!selectedConnection) return null
 

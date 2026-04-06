@@ -79,28 +79,13 @@ const PathwayEditor: React.FC = () => {
 
   // ── Canvas callbacks ──────────────────────────────────────────
 
-  const handleActivityClick = useCallback(
+  const handleSelectActivity = useCallback(
     (activityId: string) => {
-      const activity = graphModel?.data?.activities.find(a => a.uid === activityId)
-      if (activity) {
-        dispatch(setSelectedActivity(activity))
-        dispatch(setRightPanelTab(RightPanelTab.ACTIVITY_TABLE))
-        dispatch(setRightDrawerOpen(true))
-      }
+      dispatch(setSelectedActivity(activityId))
+      dispatch(setRightPanelTab(RightPanelTab.ACTIVITY_TABLE))
+      dispatch(setRightDrawerOpen(true))
     },
-    [graphModel, dispatch]
-  )
-
-  const handleEditClick = useCallback(
-    (activityId: string) => {
-      const activity = graphModel?.data?.activities.find(a => a.uid === activityId)
-      if (activity) {
-        dispatch(setSelectedActivity(activity))
-        dispatch(setRightPanelTab(RightPanelTab.ACTIVITY_TABLE))
-        dispatch(setRightDrawerOpen(true))
-      }
-    },
-    [graphModel, dispatch]
+    [dispatch]
   )
 
   const handleDeleteClick = useCallback((activityId: string) => {
@@ -157,30 +142,16 @@ const PathwayEditor: React.FC = () => {
 
   const handleLinkClick = useCallback(
     (sourceId: string, targetId: string) => {
-      const source = graphModel?.data?.activities.find(a => a.uid === sourceId)
-      const target = graphModel?.data?.activities.find(a => a.uid === targetId)
-      if (source && target) {
-        const connection = graphModel?.data?.activityConnections.find(
-          c =>
-            (c.sourceId === source.rootNode?.uid &&
-              c.targetId === target.rootNode?.uid) ||
-            (c.sourceId === target.rootNode?.uid &&
-              c.targetId === source.rootNode?.uid)
-        )
-        if (connection) {
-          dispatch(
-            setSelectedConnection({
-              sourceActivity: source,
-              targetActivity: target,
-              edge: connection,
-            })
-          )
-          dispatch(setRightPanelTab(RightPanelTab.CONNECTOR_TABLE))
-          dispatch(setRightDrawerOpen(true))
-        }
-      }
+      dispatch(
+        setSelectedConnection({
+          sourceActivityUid: sourceId,
+          targetActivityUid: targetId,
+        })
+      )
+      dispatch(setRightPanelTab(RightPanelTab.CONNECTOR_TABLE))
+      dispatch(setRightDrawerOpen(true))
     },
-    [graphModel, dispatch]
+    [dispatch]
   )
 
   const handleLinkCreated = useCallback(
@@ -292,8 +263,8 @@ const PathwayEditor: React.FC = () => {
             layoutDetail={layoutDetail}
             spacing={spacing}
             canvasRef={canvasRef}
-            onActivityClick={handleActivityClick}
-            onEditClick={handleEditClick}
+            onActivityClick={handleSelectActivity}
+            onEditClick={handleSelectActivity}
             onDeleteClick={handleDeleteClick}
             onLinkClick={handleLinkClick}
             onLinkCreated={handleLinkCreated}

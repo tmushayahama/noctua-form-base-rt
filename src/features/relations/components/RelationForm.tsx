@@ -2,9 +2,10 @@ import { globalKnownRelations } from '@/@noctua.core/data/relations'
 import SectionRow from './SectionRow'
 import RadioPillGroup from './RadioPillGroup'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
-import type { Activity, UserContext } from '@/features/gocam/models/cam'
+import { useUserContext } from '@/app/hooks/useUserContext'
+import type { Activity } from '@/features/gocam/models/cam'
 import { RootTypes } from '@/features/gocam/models/cam'
-import { useMemo, useEffect, useCallback } from 'react'
+import { useEffect, useCallback } from 'react'
 import {
   EffectDirectionId,
   DirectnessId,
@@ -38,7 +39,6 @@ import {
   selectConnectorEvidences,
 } from '../slices/relationSlice'
 import { selectCamModel } from '@/features/gocam/slices/camSlice'
-import { selectAuthUser } from '@/features/auth/slices/authSlice'
 import { openDialog, DialogComponent } from '@/@noctua.core/components/dialog/dialogSlice'
 import { showToast } from '@/@noctua.core/components/toast/toastSlice'
 
@@ -71,16 +71,10 @@ const RelationForm: React.FC<Props> = ({
   const relation = useAppSelector(selectRelation)
   const connectorEvidences = useAppSelector(selectConnectorEvidences)
   const model = useAppSelector(selectCamModel)
-  const authUser = useAppSelector(selectAuthUser)
+  const userContext = useUserContext()
   const [updateGraphModel, { isLoading: isSaving }] = useUpdateGraphModelMutation()
 
-  const userContext: UserContext | undefined = useMemo(() => {
-    if (!authUser?.uri || !authUser?.group?.id) return undefined
-    return { orcid: authUser.uri, groupUrl: authUser.group.id }
-  }, [authUser])
-
   const {
-    connectorType,
     relationshipOptions,
     definitionMap,
     shouldShowDirection,

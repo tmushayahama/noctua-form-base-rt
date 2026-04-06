@@ -1,15 +1,12 @@
 import type React from 'react'
 import { useAppDispatch, useAppSelector } from '../hooks'
 import {
-  setRightDrawerOpen,
   setRightPanelTab,
   selectRightPanelTab,
   RightPanelTab,
 } from '@/@noctua.core/components/drawer/drawerSlice'
 import Button from '@mui/material/Button'
 import {
-  setSelectedActivity,
-  setSelectedConnection,
   selectSelectedActivity,
   selectSelectedConnection,
   selectCamModel,
@@ -24,12 +21,6 @@ const RightDrawerContent: React.FC = () => {
   const selectedConnection = useAppSelector(selectSelectedConnection)
   const model = useAppSelector(selectCamModel)
   const activeTab = useAppSelector(selectRightPanelTab)
-
-  const handleClose = () => {
-    dispatch(setRightDrawerOpen(false))
-    dispatch(setSelectedActivity(null))
-    dispatch(setSelectedConnection(null))
-  }
 
   if (activeTab === RightPanelTab.CONNECTOR_TABLE && selectedConnection) {
     return <ConnectorTable />

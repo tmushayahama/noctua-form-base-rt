@@ -1,6 +1,6 @@
 import type React from 'react'
-import { useState } from 'react'
 import { Button, IconButton, Menu, MenuItem } from '@mui/material'
+import { usePopover } from '@/@noctua.core/hooks/usePopover'
 import { FaGithub } from 'react-icons/fa'
 import { IoChevronDown } from 'react-icons/io5'
 import { useAuth } from '@/features/auth/authProvider'
@@ -9,8 +9,8 @@ import { selectAuthUser } from '@/features/auth/slices/authSlice'
 import { ENVIRONMENT, EXTERNAL_LINKS } from '@/@noctua.core/data/constants'
 
 const Toolbar: React.FC = () => {
-  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
-  const [helpMenuAnchor, setHelpMenuAnchor] = useState<null | HTMLElement>(null)
+  const userMenu = usePopover()
+  const helpMenu = usePopover()
 
   const { isLoggedIn, loginUrl, logoutUrl, noctuaUrl } = useAuth()
   const user = useAppSelector(selectAuthUser)
@@ -63,13 +63,13 @@ const Toolbar: React.FC = () => {
 
         {/* Help */}
         <div className="flex flex-row items-center border-r border-gray-300 pl-3 pr-3">
-          <Button onClick={e => setHelpMenuAnchor(e.currentTarget)}>Help</Button>
+          <Button onClick={e => helpMenu.open(e.currentTarget)}>Help</Button>
           <Menu
-            anchorEl={helpMenuAnchor}
-            open={Boolean(helpMenuAnchor)}
-            onClose={() => setHelpMenuAnchor(null)}
+            anchorEl={helpMenu.anchor}
+            open={helpMenu.isOpen}
+            onClose={helpMenu.close}
           >
-            <MenuItem onClick={() => setHelpMenuAnchor(null)}>
+            <MenuItem onClick={helpMenu.close}>
               <a
                 href={EXTERNAL_LINKS.NOCTUA_USERS_GUIDE}
                 target="_blank"
@@ -88,7 +88,7 @@ const Toolbar: React.FC = () => {
             <>
               <Button
                 className="!h-10 !text-left !normal-case !text-xs"
-                onClick={e => setUserMenuAnchor(e.currentTarget)}
+                onClick={e => userMenu.open(e.currentTarget)}
               >
                 <div className="flex flex-row items-center">
                   <div className="mr-1.5 flex max-w-[150px] flex-col items-start overflow-hidden leading-5">
@@ -101,9 +101,9 @@ const Toolbar: React.FC = () => {
                 </div>
               </Button>
               <Menu
-                anchorEl={userMenuAnchor}
-                open={Boolean(userMenuAnchor)}
-                onClose={() => setUserMenuAnchor(null)}
+                anchorEl={userMenu.anchor}
+                open={userMenu.isOpen}
+                onClose={userMenu.close}
               >
                 <MenuItem onClick={logout} className="w-full text-red-500">
                   Logout

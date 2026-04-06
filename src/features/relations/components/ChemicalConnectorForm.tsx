@@ -3,11 +3,11 @@ import { Button, Checkbox, CircularProgress, FormControlLabel, IconButton } from
 import { FiPlus, FiX } from 'react-icons/fi'
 import { v4 as uuidv4 } from 'uuid'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
+import { useUserContext } from '@/app/hooks/useUserContext'
 import { closeDialog } from '@/@noctua.core/components/dialog/dialogSlice'
 import { showToast } from '@/@noctua.core/components/toast/toastSlice'
 import { selectCamModel } from '@/features/gocam/slices/camSlice'
-import { selectAuthUser } from '@/features/auth/slices/authSlice'
-import type { Activity, GraphNode, UserContext } from '@/features/gocam/models/cam'
+import type { Activity, GraphNode } from '@/features/gocam/models/cam'
 import { RootTypes } from '@/features/gocam/models/cam'
 import type { EvidenceForm } from '@/features/gocam/models/formModels'
 import { useLazyGetChemicalParticipantsQuery } from '@/features/search/slices/lookupApiSlice'
@@ -31,13 +31,8 @@ interface Props {
 const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity }) => {
   const dispatch = useAppDispatch()
   const model = useAppSelector(selectCamModel)
-  const authUser = useAppSelector(selectAuthUser)
+  const userContext = useUserContext()
   const [updateGraphModel, { isLoading: isSaving }] = useUpdateGraphModelMutation()
-
-  const userContext: UserContext | undefined = useMemo(() => {
-    if (!authUser?.uri || !authUser?.group?.id) return undefined
-    return { orcid: authUser.uri, groupUrl: authUser.group.id }
-  }, [authUser])
 
   // Fetch chemical participants for both activities' MF nodes
   const [fetchSubjectParticipants, subjectQuery] = useLazyGetChemicalParticipantsQuery()

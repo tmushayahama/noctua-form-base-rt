@@ -13,8 +13,8 @@ import {
 } from '@mui/material'
 import { FaExclamationCircle, FaInfoCircle } from 'react-icons/fa'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
+import { useUserContext } from '@/app/hooks/useUserContext'
 import { selectCamModel } from '../../slices/camSlice'
-import { selectAuthUser } from '@/features/auth/slices/authSlice'
 import { Relations } from '@/@noctua.core/models/relations'
 import { DialogComponent, openDialog } from '@/@noctua.core/components/dialog/dialogSlice'
 import {
@@ -38,7 +38,7 @@ import {
 import { FormMode } from '../../models/formModels'
 import type { TermNode, RelationNode, ValidationError, FlatRow } from '../../models/formModels'
 import { ActivityType } from '../../models/cam'
-import type { Evidence, UserContext } from '../../models/cam'
+import type { Evidence } from '../../models/cam'
 import { referenceAllowedDBs, withFromAllowedDBs } from '../../data/allowedDatabases'
 import EntityRow from './EntityRow'
 import CloneEvidenceDialog from './CloneEvidenceDialog'
@@ -90,12 +90,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
   const errors = useAppSelector(selectFormErrors)
   const existingActivityUid = useAppSelector(selectExistingActivityUid)
   const model = useAppSelector(selectCamModel)
-  const authUser = useAppSelector(selectAuthUser)
-
-  const userContext: UserContext | undefined = useMemo(() => {
-    if (!authUser?.uri || !authUser?.group?.id) return undefined
-    return { orcid: authUser.uri, groupUrl: authUser.group.id }
-  }, [authUser])
+  const userContext = useUserContext()
   const [updateGraphModel, { isLoading: isSaving }] = useUpdateGraphModelMutation()
 
   const [showErrorsDialog, setShowErrorsDialog] = useState(false)
@@ -124,10 +119,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
 
   const sectionTitles = useMemo(() => {
     switch (activityType) {
-      case 'molecule':
+      case ActivityType.MOLECULE:
         return { gp: 'Chemical', fd: 'Location (optional)' }
-      case ActivityType.PROTEIN_COMPLEX:
-        return { gp: 'Gene Product', fd: 'Function Description' }
       default:
         return { gp: 'Gene Product', fd: 'Function Description' }
     }

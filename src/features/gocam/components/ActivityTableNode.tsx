@@ -1,8 +1,9 @@
 import type React from 'react'
-import { useState, useCallback, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import { IconButton, Menu, MenuItem } from '@mui/material'
+import { usePopover } from '@/@noctua.core/hooks/usePopover'
 import { FaEllipsisV, FaPencilAlt, FaPlus, FaTrash } from 'react-icons/fa'
-import type { Edge, Evidence, UserContext, DisplayTreeNode } from '../models/cam'
+import type { Edge, UserContext, DisplayTreeNode } from '../models/cam'
 import { RootTypes, Aspect } from '../models/cam'
 import { EditorCategory } from '../models/editorCategory'
 import { ENVIRONMENT } from '@/@noctua.core/data/constants'
@@ -42,6 +43,12 @@ const cellBase =
 const floatingLabel =
   'absolute left-1 -top-1.5 h-3 max-w-[80%] truncate bg-white px-1 text-[8px] leading-3 text-gray-500 group-hover/cell:text-primary-500'
 
+const deleteBtn =
+  'absolute right-0 top-0 hidden h-5 w-5 items-center justify-center text-red-400 hover:bg-red-400 hover:text-white group-hover/cell:flex'
+
+const editBtn =
+  'absolute right-0 bottom-0 hidden h-5 w-5 items-center justify-center text-gray-400 hover:bg-primary-500 hover:text-white group-hover/cell:flex'
+
 // ── Main ActivityTableNode ──────────────────────────────────────────
 
 const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
@@ -59,11 +66,9 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
 
   const termCellRef = useRef<HTMLDivElement>(null)
   const actionCellRef = useRef<HTMLDivElement>(null)
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
-  const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null)
-  const [editorAnchor, setEditorAnchor] = useState<HTMLElement | null>(null)
-  const [editorCategory, setEditorCategory] = useState<EditorCategory>(EditorCategory.term)
-  const [pendingInsert, setPendingInsert] = useState<InsertMenuItem | null>(null)
+  const nodeMenu = usePopover()
+  const addMenu = usePopover()
+  const editor = usePopover<{ category: EditorCategory; insert: InsertMenuItem | null }>()
 
   const {
     updateGraphModel,
@@ -91,6 +96,9 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
       })
     )
   }, [gpNodeId, aspect, dispatch])
+
+  const editorCategory = editor.data?.category ?? EditorCategory.term
+  const pendingInsert = editor.data?.insert ?? null
 
   const handleEditorSave = useCallback(
     async (values: EditorDropdownValues) => {
@@ -137,29 +145,28 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
               { termId: values.term?.id, evidence: ev }
             )
           )
-          setPendingInsert(null)
           break
         }
       }
-      setEditorAnchor(null)
+      editor.close()
     },
-    [editorCategory, node.uid, node.id, edge, modelId, resolvedUserContext, updateGraphModel, pendingInsert]
+    [editorCategory, node.uid, node.id, edge, modelId, resolvedUserContext, updateGraphModel, pendingInsert, editor]
   )
 
   const handleDeleteNode = useCallback(async () => {
     await handleDeleteNodeRaw()
-    setMenuAnchor(null)
-  }, [handleDeleteNodeRaw])
+    nodeMenu.close()
+  }, [handleDeleteNodeRaw, nodeMenu])
 
   const handleInsertNode = useCallback(
     (item: InsertMenuItem) => {
-      setPendingInsert(item)
-      setEditorCategory(EditorCategory.all)
-      setEditorAnchor(actionCellRef.current)
-      setAddMenuAnchor(null)
-      setMenuAnchor(null)
+      if (actionCellRef.current) {
+        editor.open(actionCellRef.current, { category: EditorCategory.all, insert: item })
+      }
+      addMenu.close()
+      nodeMenu.close()
     },
-    []
+    [editor, addMenu, nodeMenu]
   )
 
   return (
@@ -198,8 +205,9 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
           )}
           <button
             onClick={() => {
-              setEditorCategory(EditorCategory.term)
-              setEditorAnchor(termCellRef.current)
+              if (termCellRef.current) {
+                editor.open(termCellRef.current, { category: EditorCategory.term, insert: null })
+              }
             }}
             className={editBtn}
           >
@@ -236,12 +244,12 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
         {/* Action cell */}
         <div ref={actionCellRef} className="flex w-10 shrink-0 flex-col items-center justify-center p-0">
           {showMenu && (
-            <IconButton size="small" onClick={e => setMenuAnchor(e.currentTarget)} className="!h-10 !w-10 !shadow-md">
+            <IconButton size="small" onClick={e => nodeMenu.open(e.currentTarget)} className="!h-10 !w-10 !shadow-md">
               <FaEllipsisV size={12} />
             </IconButton>
           )}
           {showAddButton && insertMenuItems.length > 0 && (
-            <IconButton size="small" onClick={() => setAddMenuAnchor(actionCellRef.current)} className="!h-10 !w-10 !shadow-md">
+            <IconButton size="small" onClick={() => { if (actionCellRef.current) addMenu.open(actionCellRef.current) }} className="!h-10 !w-10 !shadow-md">
               <FaPlus size={12} />
             </IconButton>
           )}
@@ -249,12 +257,9 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
       </div>
 
       <EditorDropdown
-        anchorEl={editorAnchor}
+        anchorEl={editor.anchor}
         category={editorCategory}
-        onClose={() => {
-          setEditorAnchor(null)
-          setPendingInsert(null)
-        }}
+        onClose={editor.close}
         onSave={handleEditorSave}
         termLabel={pendingInsert?.label ?? treeNode.floatingLabel}
         termRootTypes={pendingInsert ? [pendingInsert.targetType] : node.rootTypes}
@@ -278,14 +283,14 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
         />
       ))}
 
-      <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
+      <Menu anchorEl={nodeMenu.anchor} open={nodeMenu.isOpen} onClose={nodeMenu.close}>
         {insertMenuItems.length > 0 && (
-          <MenuItem onClick={() => { setAddMenuAnchor(actionCellRef.current); setMenuAnchor(null) }}>
+          <MenuItem onClick={() => { if (actionCellRef.current) addMenu.open(actionCellRef.current); nodeMenu.close() }}>
             Add
           </MenuItem>
         )}
         {edge && (
-          <MenuItem onClick={() => { setEditorCategory(EditorCategory.evidenceAll); setEditorAnchor(actionCellRef.current); setMenuAnchor(null) }}>
+          <MenuItem onClick={() => { if (actionCellRef.current) editor.open(actionCellRef.current, { category: EditorCategory.evidenceAll, insert: null }); nodeMenu.close() }}>
             Add Evidence
           </MenuItem>
         )}
@@ -295,9 +300,9 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
       </Menu>
 
       <Menu
-        anchorEl={addMenuAnchor}
-        open={Boolean(addMenuAnchor)}
-        onClose={() => setAddMenuAnchor(null)}
+        anchorEl={addMenu.anchor}
+        open={addMenu.isOpen}
+        onClose={addMenu.close}
         slotProps={{ paper: { className: '!bg-blue-100', sx: { maxWidth: 'none' } } }}
       >
         {insertMenuItems.map(item => (

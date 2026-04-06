@@ -1,19 +1,13 @@
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
-import { closeDialog, DialogComponent, selectDialogState } from '@/@noctua.core/components/dialog/dialogSlice'
+import { closeDialog, selectDialogState } from '@/@noctua.core/components/dialog/dialogSlice'
+import type { DialogComponent } from '@/@noctua.core/components/dialog/dialogSlice'
 import SimpleDialog from './SimpleDialog'
-import SearchAnnotations from '@/features/gocam/components/forms/SearchAnnotations'
-import CamMetadataForm from '@/features/gocam/components/CamMetadataForm'
-import CopyModelDialog from '@/features/gocam/components/CopyModelDialog'
-import ChemicalConnectorForm from '@/features/relations/components/ChemicalConnectorForm'
 
-const COMPONENT_MAP: Record<DialogComponent, React.ComponentType<any>> = {
-  [DialogComponent.SEARCH_ANNOTATIONS]: SearchAnnotations,
-  [DialogComponent.CAM_METADATA_FORM]: CamMetadataForm,
-  [DialogComponent.COPY_MODEL_DIALOG]: CopyModelDialog,
-  [DialogComponent.CHEMICAL_CONNECTOR_FORM]: ChemicalConnectorForm,
+interface GlobalDialogProps {
+  componentMap: Partial<Record<DialogComponent, React.ComponentType<any>>>
 }
 
-const GlobalDialog: React.FC = () => {
+const GlobalDialog: React.FC<GlobalDialogProps> = ({ componentMap }) => {
   const dispatch = useAppDispatch()
   const {
     open,
@@ -27,9 +21,9 @@ const GlobalDialog: React.FC = () => {
     customProps,
   } = useAppSelector(selectDialogState)
 
-  if (!open || !component || !(component in COMPONENT_MAP)) return null
+  if (!open || !component || !(component in componentMap)) return null
 
-  const DialogContent = COMPONENT_MAP[component]
+  const DialogContent = componentMap[component]!
 
   return (
     <SimpleDialog

@@ -1,6 +1,7 @@
 import type React from 'react'
-import { useState, useCallback, useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { IconButton, Menu, MenuItem } from '@mui/material'
+import { usePopover } from '@/@noctua.core/hooks/usePopover'
 import { FaEllipsisV, FaPlus } from 'react-icons/fa'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import TermAutocomplete from '@/features/search/components/Autocomplete'
@@ -21,7 +22,7 @@ import {
   clearNodeValues,
   fillRootTerm,
 } from '../../slices/activityFormSlice'
-import { selectCamModel, getModelTerms, getModelEvidence } from '../../slices/camSlice'
+import { makeSelectModelTerms, selectModelEvidence } from '../../slices/camSlice'
 import { getNodeCategory } from '../../data/nodeCategories'
 import { getInsertMenuItems } from '../../data/insertMenuConfig'
 import type { InsertMenuItem } from '../../data/insertMenuConfig'
@@ -51,18 +52,14 @@ const EntityRow: React.FC<EntityRowProps> = ({
   onCloneEvidence,
 }) => {
   const dispatch = useAppDispatch()
-  const model = useAppSelector(selectCamModel)
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
-  const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null)
-  const [evidenceMenuAnchor, setEvidenceMenuAnchor] = useState<HTMLElement | null>(null)
+  const selectTerms = useMemo(makeSelectModelTerms, [])
+  const termInitialOptions = useAppSelector(state => selectTerms(state, node.rootTypes))
+  const evidenceInitialOptions = useAppSelector(selectModelEvidence)
+  const entityMenu = usePopover()
+  const addMenu = usePopover()
+  const evidenceMenu = usePopover()
 
   const evidence = relation?.evidence ?? []
-
-  const termInitialOptions = useMemo(
-    () => getModelTerms(model, node.rootTypes),
-    [model, node.rootTypes]
-  )
-  const evidenceInitialOptions = useMemo(() => getModelEvidence(model), [model])
 
   const handleTermChange = useCallback(
     (value: GOlrResponse | null | string) => {
@@ -106,9 +103,9 @@ const EntityRow: React.FC<EntityRowProps> = ({
   )
 
   const closeAllMenus = () => {
-    setMenuAnchor(null)
-    setAddMenuAnchor(null)
-    setEvidenceMenuAnchor(null)
+    entityMenu.close()
+    addMenu.close()
+    evidenceMenu.close()
   }
 
   const handleToggleComplement = () => {
@@ -288,7 +285,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
           <div className="flex flex-shrink-0 items-center justify-center px-2">
             <IconButton
               size="small"
-              onClick={e => setMenuAnchor(e.currentTarget)}
+              onClick={e => entityMenu.open(e.currentTarget)}
             >
               <FaEllipsisV size={14} />
             </IconButton>
@@ -300,7 +297,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
       {displayAddButton && insertMenuItems.length > 0 && (
         <IconButton
           size="small"
-          onClick={e => setAddMenuAnchor(e.currentTarget)}
+          onClick={e => addMenu.open(e.currentTarget)}
           className="mt-2 shadow"
         >
           <FaPlus size={14} />
@@ -309,9 +306,9 @@ const EntityRow: React.FC<EntityRowProps> = ({
 
       {/* Entity menu */}
       <Menu
-        anchorEl={menuAnchor}
-        open={Boolean(menuAnchor)}
-        onClose={() => setMenuAnchor(null)}
+        anchorEl={entityMenu.anchor}
+        open={entityMenu.isOpen}
+        onClose={entityMenu.close}
       >
         {node.aspect && (
           <MenuItem onClick={handleSearchAnnotations}>
@@ -322,8 +319,8 @@ const EntityRow: React.FC<EntityRowProps> = ({
         {insertMenuItems.length > 0 && (
           <MenuItem
             onClick={e => {
-              setAddMenuAnchor(e.currentTarget)
-              setMenuAnchor(null)
+              addMenu.open(e.currentTarget)
+              entityMenu.close()
             }}
           >
             Add
@@ -332,8 +329,8 @@ const EntityRow: React.FC<EntityRowProps> = ({
         {relation && (
           <MenuItem
             onClick={e => {
-              setEvidenceMenuAnchor(e.currentTarget)
-              setMenuAnchor(null)
+              evidenceMenu.open(e.currentTarget)
+              entityMenu.close()
             }}
           >
             Evidence
@@ -353,9 +350,9 @@ const EntityRow: React.FC<EntityRowProps> = ({
 
       {/* Add submenu */}
       <Menu
-        anchorEl={addMenuAnchor}
-        open={Boolean(addMenuAnchor)}
-        onClose={() => setAddMenuAnchor(null)}
+        anchorEl={addMenu.anchor}
+        open={addMenu.isOpen}
+        onClose={addMenu.close}
       >
         {insertMenuItems.map(item => (
           <MenuItem
@@ -372,9 +369,9 @@ const EntityRow: React.FC<EntityRowProps> = ({
 
       {/* Evidence submenu */}
       <Menu
-        anchorEl={evidenceMenuAnchor}
-        open={Boolean(evidenceMenuAnchor)}
-        onClose={() => setEvidenceMenuAnchor(null)}
+        anchorEl={evidenceMenu.anchor}
+        open={evidenceMenu.isOpen}
+        onClose={evidenceMenu.close}
       >
         <MenuItem onClick={handleAddEvidence}>Add Evidence</MenuItem>
         {evidence.length > 0 && (
