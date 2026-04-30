@@ -41,7 +41,6 @@ import { ActivityType } from '../../models/cam'
 import type { Evidence } from '../../models/cam'
 import { referenceAllowedDBs, withFromAllowedDBs } from '../../data/allowedDatabases'
 import EntityRow from './EntityRow'
-import NestedNodeGroups from './NestedNodeGroups'
 import CloneEvidenceDialog from './CloneEvidenceDialog'
 import AllowedDatabasesPopover from './AllowedDatabasesPopover'
 import { v4 as uuidv4 } from 'uuid'
@@ -304,8 +303,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
         {/* FD Section */}
         <div className="flex flex-col items-stretch justify-start">
           <div className="flex h-[30px] items-center bg-[rgba(121,143,184,0.3)] px-3">
-            <span className="flex-1 text-xs text-gray-600">{sectionTitles.fd}</span>
-            <div className="flex basis-[65%] items-center">
+            <span className="w-[250px] shrink-0 text-xs text-gray-600">{sectionTitles.fd}</span>
+            <div className="flex flex-1 items-center">
               <span className="w-1/2" />
               <div className="flex w-1/4 justify-center">
                 <IconButton
@@ -329,43 +328,30 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
             <span className="w-10 flex-shrink-0" />
           </div>
           <div className="flex flex-col items-stretch justify-start px-2 py-1">
-            {fdRows.map(row => {
-              const isNodeGroup = row.treeLevel <= 2
-              if (isNodeGroup) {
-                return (
-                  <div
-                    key={row.termNode.uid}
-                    className={`mb-1 flex flex-row items-stretch justify-start bg-white ${getAspectBorderClass(row.termNode)}`}
-                  >
-                    {row.termNode.isComplement && (
-                      <div className="flex w-[50px] flex-col items-center justify-center bg-gray-300 text-center text-[10px]">
-                        <div>IS NOT</div>
-                      </div>
-                    )}
-                    <div className="w-full">
-                      <EntityRow
-                        node={row.termNode}
-                        relation={row.relation}
-                        parentTermUid={row.parentTermUid}
-                        treeLevel={1}
-                        errors={errors}
-                        displayMenuButton={true}
-                        onSearchAnnotations={handleSearchAnnotations}
-                        onCloneEvidence={handleCloneEvidence}
-                      />
-                    </div>
+            {fdRows.map(row => (
+              <div
+                key={row.termNode.uid}
+                className={`mb-2 flex flex-row items-stretch justify-start bg-white ${getAspectBorderClass(row.termNode)}`}
+              >
+                {row.termNode.isComplement && (
+                  <div className="flex w-[50px] flex-col items-center justify-center bg-gray-300 text-center text-[10px]">
+                    <div>IS NOT</div>
                   </div>
-                )
-              }
-              return null
-            })}
-
-            <NestedNodeGroups
-              root={root}
-              errors={errors}
-              onSearchAnnotations={handleSearchAnnotations}
-              onCloneEvidence={handleCloneEvidence}
-            />
+                )}
+                <div className="w-full">
+                  <EntityRow
+                    node={row.termNode}
+                    relation={row.relation}
+                    parentTermUid={row.parentTermUid}
+                    treeLevel={row.treeLevel}
+                    errors={errors}
+                    displayMenuButton={true}
+                    onSearchAnnotations={handleSearchAnnotations}
+                    onCloneEvidence={handleCloneEvidence}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

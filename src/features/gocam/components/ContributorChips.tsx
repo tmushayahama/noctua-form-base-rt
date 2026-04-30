@@ -21,9 +21,9 @@ const ContributorChips: React.FC<ContributorChipsProps> = ({ contributors }) => 
         {visible.map(contributor => (
           <div
             key={contributor.uri}
-            className="mr-2 flex h-6 max-w-[180px] items-center truncate rounded-full border border-slate-400 bg-slate-300 pr-2 text-xs text-gray-800"
+            className="mr-2 flex h-6 max-w-[180px] items-center truncate rounded-full border border-gray-400 bg-gray-100 pr-2 text-xs"
           >
-            <div className="text-2xs mr-1 flex h-full min-w-6 items-center justify-center rounded-full bg-slate-400 text-center font-bold text-gray-800">
+            <div className="text-2xs mr-1 flex h-full min-w-6 items-center justify-center rounded-full border-r border-slate-300 bg-slate-50 text-center font-bold text-slate-600">
               {contributor.initials}
             </div>
             <span className="flex-grow truncate">{contributor.name}</span>
@@ -33,7 +33,7 @@ const ContributorChips: React.FC<ContributorChipsProps> = ({ contributors }) => 
         {hidden.length > 0 && (
           <>
             <button
-              className="flex h-6 cursor-pointer items-center rounded-full border border-slate-400 bg-slate-300 px-2 text-gray-800"
+              className="flex h-6 cursor-pointer items-center rounded-full border border-gray-400 bg-gray-100 px-2"
               onClick={e => overflowMenu.open(e.currentTarget)}
             >
               <span>...</span>
@@ -46,7 +46,7 @@ const ContributorChips: React.FC<ContributorChipsProps> = ({ contributors }) => 
               {hidden.map(contributor => (
                 <MenuItem key={contributor.uri} onClick={overflowMenu.close}>
                   <div className="flex items-center">
-                    <div className="text-2xs mr-1 flex h-6 w-6 items-center justify-center rounded-full bg-slate-400 text-center font-bold text-gray-800">
+                    <div className="text-2xs mr-1 flex h-6 w-6 items-center justify-center rounded-full bg-grey-400 text-center font-bold">
                       {contributor.initials}
                     </div>
                     <span>{contributor.name}</span>

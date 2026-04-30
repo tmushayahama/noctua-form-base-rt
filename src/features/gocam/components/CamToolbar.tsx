@@ -96,9 +96,11 @@ const CamToolbar: React.FC = () => {
         <div className="flex items-center px-2">
           <button
             onClick={openCamErrors}
-            className="flex h-[25px] items-center gap-1.5 rounded-full bg-red-100 px-2.5 text-xs font-medium text-red-700 hover:bg-red-200"
+            className="flex h-6 cursor-pointer items-center rounded-full border border-gray-400 bg-gray-100 pr-2 text-xs hover:bg-gray-200"
           >
-            <FaExclamationTriangle size={12} />
+            <div className="mr-1 flex h-full w-6 items-center justify-center rounded-full border-r border-red-300 bg-red-200 text-red-600">
+              <FaExclamationTriangle size={12} />
+            </div>
             <span>{totalErrors} Error(s) Found</span>
           </button>
         </div>
@@ -145,18 +147,28 @@ const CamToolbar: React.FC = () => {
       {/* State */}
       {cam.state && (
         <div className="flex h-full max-w-[150px] items-center border-r border-gray-300 px-2">
-          <div
-            className={`flex h-6 items-center rounded-full border px-2 ${getStateColor(cam.state)}`}
-          >
-            <FaTasks size={12} className="mr-1" />
-            <span>{cam.state}</span>
-            <button
-              className="ml-1 text-gray-500 hover:text-gray-700 focus:outline-none"
-              onClick={openCamForm}
-            >
-              <FaPen size={10} />
-            </button>
-          </div>
+          {(() => {
+            const stateColor = getStateColor(cam.state)
+            return (
+              <div
+                className="flex h-6 cursor-pointer items-center rounded-full border border-gray-400 bg-gray-100 pr-2 text-xs"
+                onClick={openCamForm}
+              >
+                <div
+                  className={`mr-1 flex h-full w-6 items-center justify-center rounded-full border-r ${stateColor.circle}`}
+                >
+                  <FaTasks size={12} />
+                </div>
+                <span>{cam.state}</span>
+                <button
+                  className="ml-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  onClick={openCamForm}
+                >
+                  <FaPen size={10} />
+                </button>
+              </div>
+            )
+          })()}
         </div>
       )}
 
@@ -164,10 +176,10 @@ const CamToolbar: React.FC = () => {
       {cam.date && (
         <div className="flex items-center border-r border-gray-300 px-2">
           <div
-            className="flex h-6 cursor-pointer items-center rounded-full border border-sky-400 bg-sky-200 pr-2 text-xs text-sky-800"
+            className="flex h-6 cursor-pointer items-center rounded-full border border-gray-400 bg-gray-100 pr-2 text-xs"
             onClick={openCamForm}
           >
-            <div className="mr-1 flex h-full w-6 items-center justify-center rounded-full bg-sky-300 text-sky-800">
+            <div className="mr-1 flex h-full w-6 items-center justify-center rounded-full border-r bg-sky-50 border-sky-300 text-sky-400">
               <FaCalendarDay size={12} />
             </div>
             <span>{cam.date}</span>

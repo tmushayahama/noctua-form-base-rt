@@ -194,34 +194,25 @@ const EntityRow: React.FC<EntityRowProps> = ({
   return (
     <>
       <div className="flex w-full flex-row items-stretch justify-start overflow-hidden">
-        {/* Tree level indicators */}
-        {treeLevel > 1 && (
-          <div className="noc-tree-input flex w-5 flex-shrink-0 flex-col items-center justify-center">
-            {treeLevel === 2 && (
-              <div className="grow border-r border-dotted border-gray-400" />
-            )}
-          </div>
-        )}
-        {treeLevel > 2 && (
-          <div className="noc-tree-input flex w-5 flex-shrink-0 flex-col items-center justify-start">
-            {treeLevel === 3 && (
-              <div className="basis-1/2 border-r border-dotted border-gray-400" />
-            )}
-            {treeLevel > 3 && (
-              <div className="grow border-r border-dotted border-gray-400" />
-            )}
-          </div>
-        )}
-        {treeLevel > 3 && (
-          <div className="noc-tree-input flex w-5 flex-shrink-0 flex-col items-center justify-start">
-            {treeLevel === 4 && (
-              <div className="basis-1/2 border-r border-dotted border-gray-400" />
-            )}
-          </div>
-        )}
+        {/* Tree connector lines */}
+        {treeLevel > 1 &&
+          Array.from({ length: treeLevel - 1 }, (_, i) => {
+            const isConnector = i === treeLevel - 2
+            return (
+              <div key={i} className="relative flex w-5 shrink-0 flex-col items-stretch">
+                <div className="ml-2 h-full border-l border-[rgba(121,143,184,0.4)]" />
+                {isConnector && (
+                  <div className="absolute left-2 right-0 top-1/2 border-t border-[rgba(121,143,184,0.4)]" />
+                )}
+              </div>
+            )
+          })}
 
         {/* Term field */}
-        <div className="min-w-0 flex-1 px-2 py-2">
+        <div
+          className="min-w-0 shrink px-2 py-2"
+          style={{ flexBasis: 250 - (treeLevel - 1) * 16 }}
+        >
           <TermAutocomplete
             label={node.label}
             name={`term-${node.uid}`}
@@ -236,7 +227,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
 
         {/* Evidence columns */}
         {node.showEvidence !== false && (
-          <div className="flex min-w-0 basis-[65%] flex-col items-stretch justify-start">
+          <div className="flex min-w-0 flex-1 flex-col items-stretch justify-start">
             {evidence.map(ev => (
               <div
                 key={ev.uid}
