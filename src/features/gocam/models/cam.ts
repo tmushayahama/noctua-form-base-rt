@@ -99,6 +99,8 @@ export interface Activity {
   date: string | null;
   nodes: GraphNode[];
   edges: Edge[];
+  hasViolations: boolean;
+  violations: CamError[];
 }
 
 export interface ShExConstraint {
@@ -126,6 +128,7 @@ export enum ErrorLevel {
 }
 
 export interface ErrorMeta {
+  aspect?: string
   subjectNode?: { label: string }
   edge?: { label: string }
   objectNode?: { label: string }
@@ -136,6 +139,16 @@ export interface CamError {
   type: ErrorType
   message: string
   meta?: ErrorMeta
+}
+
+export interface ValidationErrors {
+  shexViolations: CamError[]
+  orphanedNodes: GraphNode[]
+  orphanedEdges: Edge[]
+  standaloneNodes: GraphNode[]
+  relationNodes: GraphNode[]
+  total: number
+  hasErrors: boolean
 }
 
 export interface GraphModel {
@@ -154,6 +167,7 @@ export interface GraphModel {
   modified: boolean;
   taxon?: string;
   violations: ShExViolation[];
+  validationErrors: ValidationErrors;
 }
 
 export interface GraphModelApiResponse {

@@ -5,6 +5,38 @@ import { Relations } from "@/@noctua.core/models/relations";
 import { v4 as uuidv4 } from 'uuid';
 import { store } from "@/app/store/store";
 import { AnnotationKey } from '../models/operations';
+import { buildValidationErrors, emptyValidationErrors } from './violationService';
+import { canInsertEntity } from '../data/insertMenuConfig';
+
+const SUBJECT_TYPE_PRIORITY: string[] = [
+  RootTypes.MOLECULAR_FUNCTION,
+  RootTypes.BIOLOGICAL_PROCESS,
+  RootTypes.CELLULAR_COMPONENT,
+  RootTypes.CELL_TYPE,
+  RootTypes.PROTEIN_CONTAINING_COMPLEX,
+  RootTypes.MOLECULAR_ENTITY,
+  RootTypes.CHEMICAL_ENTITY,
+  RootTypes.ANATOMICAL_ENTITY,
+];
+
+function getSubjectType(node: GraphNode): string | null {
+  const rootTypes = node.rootTypes ?? [];
+  for (const candidate of SUBJECT_TYPE_PRIORITY) {
+    if (rootTypes.includes(candidate)) return candidate;
+  }
+  return null;
+}
+
+function isEdgeShapeAllowed(edge: Edge, subject: GraphNode, target: GraphNode): boolean {
+  const subjectType = getSubjectType(subject);
+  if (!subjectType) return false;
+  const allowed = canInsertEntity[subjectType] ?? [];
+  for (const entry of allowed) {
+    if (entry.predicate.id !== edge.id) continue;
+    if (target.rootTypes?.includes(entry.targetType)) return true;
+  }
+  return false;
+}
 
 
 export function extractActivities(nodes: GraphNode[], edges: Edge[]): Activity[] {
@@ -63,7 +95,9 @@ export function extractActivities(nodes: GraphNode[], edges: Edge[]): Activity[]
       enabledBy,
       date: latestDate ?? null,
       nodes: activityNodes,
-      edges: activityEdges
+      edges: activityEdges,
+      hasViolations: false,
+      violations: []
     });
   });
 
@@ -121,7 +155,9 @@ export function extractMolecules(nodes: GraphNode[], edges: Edge[], activities: 
       enabledBy: null,
       date: latestDate ?? null,
       nodes: moleculeNodes,
-      edges: moleculeEdges
+      edges: moleculeEdges,
+      hasViolations: false,
+      violations: []
     });
   });
 
@@ -204,10 +240,12 @@ function exploreSubgraph(
 
     if (visited.has(targetNodeId) || boundaryNodeIds.has(targetNodeId)) continue;
 
-    collectedEdges.push(edge);
-
     const targetNode = allNodes.find(node => node.uid === targetNodeId);
     if (!targetNode) continue;
+
+    if (!isEdgeShapeAllowed(edge, currentNode, targetNode)) continue;
+
+    collectedEdges.push(edge);
 
     exploreSubgraph(
       targetNode,
@@ -222,7 +260,7 @@ function exploreSubgraph(
 }
 
 export const transformGraphData = (data: any): GraphModel => {
-  if (!data) return { id: '', nodes: [], edges: [], activities: [], activityConnections: [], contributors: [], groups: [], comments: [], violations: [], modified: false };
+  if (!data) return { id: '', nodes: [], edges: [], activities: [], activityConnections: [], contributors: [], groups: [], comments: [], violations: [], modified: false, validationErrors: emptyValidationErrors() };
 
   const nodes: GraphNode[] = [];
   const edges: Edge[] = [];
@@ -321,6 +359,7 @@ export const transformGraphData = (data: any): GraphModel => {
     comments: [],
     violations: [],
     modified: data['modified-p'] === true,
+    validationErrors: emptyValidationErrors(),
   };
 
   if (data.annotations && Array.isArray(data.annotations)) {
@@ -346,6 +385,7 @@ export const transformGraphData = (data: any): GraphModel => {
   }
 
   graphModel.violations = parseValidationResults(data['validation-results']);
+  graphModel.validationErrors = buildValidationErrors(graphModel);
 
   return graphModel;
 };

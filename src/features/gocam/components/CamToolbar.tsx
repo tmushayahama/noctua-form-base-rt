@@ -18,7 +18,6 @@ import {
   setRightPanelTab,
   RightPanelTab,
 } from '@/@noctua.core/components/drawer/drawerSlice'
-import { processViolations, computeDiffs, computeTotalErrors } from '../services/violationService'
 import { useModelUrls } from '../hooks/useModelUrls'
 import { getStateColor } from '../data/stateColors'
 import ContributorChips from './ContributorChips'
@@ -40,12 +39,7 @@ const CamToolbar: React.FC = () => {
     )
   }
 
-  const totalErrors = useMemo(() => {
-    if (!cam) return 0
-    const violations = processViolations(cam)
-    const { diffNodes, diffEdges } = computeDiffs(cam)
-    return computeTotalErrors(violations, diffNodes, diffEdges)
-  }, [cam])
+  const totalErrors = cam?.validationErrors.total ?? 0
 
   const openCamErrors = () => {
     dispatch(setRightPanelTab(RightPanelTab.CAM_ERRORS))

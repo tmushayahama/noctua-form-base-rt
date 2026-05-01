@@ -30,7 +30,7 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
         )
 
         const result = await baseQuery({
-          url: `${baseUrl}?token=${baristaToken}&intention=query&requests=${requests}`,
+          url: `${baseUrl}?token=${baristaToken}&intention=query&use-reasoner=true&requests=${requests}`,
         })
 
         if (result.error) return { error: result.error }
@@ -105,6 +105,7 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
         bodyParams.append('token', baristaToken)
         bodyParams.append('provided-by', groupId)
         bodyParams.append('intention', 'action')
+        bodyParams.append('use-reasoner', 'true')
         bodyParams.append('requests', JSON.stringify(requests))
 
         const result = await baseQuery({

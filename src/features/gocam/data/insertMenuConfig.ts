@@ -33,6 +33,20 @@ export const canInsertEntity: Record<string, InsertMenuItem[]> = {
 
   [RootTypes.MOLECULAR_FUNCTION]: [
     {
+      label: 'enabled by',
+      rangeLabel: 'Gene Product',
+      targetType: RootTypes.MOLECULAR_ENTITY,
+      predicate: predicate(Relations.ENABLED_BY),
+      showInMenu: false,
+    },
+    {
+      label: 'enabled by',
+      rangeLabel: 'Protein Complex',
+      targetType: RootTypes.PROTEIN_CONTAINING_COMPLEX,
+      predicate: predicate(Relations.ENABLED_BY),
+      showInMenu: false,
+    },
+    {
       label: 'part of',
       rangeLabel: 'Biological Process',
       targetType: RootTypes.BIOLOGICAL_PROCESS,

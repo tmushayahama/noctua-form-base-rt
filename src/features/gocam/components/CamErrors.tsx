@@ -1,8 +1,6 @@
-import { useMemo } from 'react'
 import { FaSitemap, FaLink, FaTimes, FaEyeSlash, FaBan } from 'react-icons/fa'
 import type { GraphModel, CamError, GraphNode, Edge } from '../models/cam'
 import { ErrorType } from '../models/cam'
-import { processViolations, computeDiffs } from '../services/violationService'
 import { useAppDispatch } from '@/app/hooks'
 import { setRightDrawerOpen } from '@/@noctua.core/components/drawer/drawerSlice'
 import { Button } from '@mantine/core'
@@ -79,20 +77,13 @@ function EdgeItem({ edge }: { edge: Edge }) {
 
 const CamErrors: React.FC<CamErrorsProps> = ({ model }) => {
   const dispatch = useAppDispatch()
-  const violations = useMemo(() => processViolations(model), [model])
-  const { diffNodes, diffEdges } = useMemo(() => computeDiffs(model), [model])
-
-  const { standaloneNodes, relationNodes } = useMemo(() => {
-    const edgeNodeUids = new Set<string>()
-    for (const edge of diffEdges) {
-      edgeNodeUids.add(edge.sourceId)
-      edgeNodeUids.add(edge.targetId)
-    }
-    return {
-      standaloneNodes: diffNodes.filter(node => !edgeNodeUids.has(node.uid)),
-      relationNodes: diffNodes.filter(node => edgeNodeUids.has(node.uid)),
-    }
-  }, [diffNodes, diffEdges])
+  const {
+    shexViolations: violations,
+    orphanedNodes: diffNodes,
+    orphanedEdges: diffEdges,
+    standaloneNodes,
+    relationNodes,
+  } = model.validationErrors
 
   return (
     <div className="flex h-full w-full flex-col">
