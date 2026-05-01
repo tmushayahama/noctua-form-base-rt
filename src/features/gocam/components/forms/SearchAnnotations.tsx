@@ -1,6 +1,6 @@
 import { useAppDispatch } from '@/app/hooks'
 import type { AnnotationsResponse } from '@/features/search/models/search'
-import { Checkbox, Button } from '@mui/material'
+import { Button, Checkbox } from '@mantine/core'
 import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { FaCheckCircle } from 'react-icons/fa'
@@ -228,14 +228,14 @@ const SearchAnnotations: React.FC<SearchAnnotationsProps> = ({
         <div className="mt-4 flex justify-end space-x-2">
           <Button
             onClick={() => dispatch(closeDialog())}
-            variant="outlined"
+            variant="outline"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             disabled={!selectedTerm || selectedEvidences.length === 0}
-            variant="contained"
+            variant="filled"
           >
             Use Selected Evidence
           </Button>

@@ -1,9 +1,9 @@
 import React from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Layout from './app/layout/Layout'
-import { ThemeProvider } from '@emotion/react'
-import CssBaseline from '@mui/material/CssBaseline'
-import theme from './@noctua.core/theme/theme'
+import { MantineProvider } from '@mantine/core'
+import { Notifications } from '@mantine/notifications'
+import { mantineTheme } from './@noctua.core/theme/mantineTheme'
 import PathwayEditor from './app/PathwayViewer'
 import SplashScreen from './features/users/components/SplashScreen'
 import { AuthProvider } from './features/auth/authProvider'
@@ -38,8 +38,8 @@ const router = createBrowserRouter(routes, {
 const App: React.FC = () => {
   return (
     <React.StrictMode>
-      <CssBaseline />
-      <ThemeProvider theme={theme}>
+      <MantineProvider theme={mantineTheme}>
+        <Notifications />
         <AuthProvider>
           <SplashScreen>
             <RouterProvider router={router} />
@@ -47,7 +47,7 @@ const App: React.FC = () => {
             <GlobalToast />
           </SplashScreen>
         </AuthProvider>
-      </ThemeProvider>
+      </MantineProvider>
     </React.StrictMode>
   )
 }

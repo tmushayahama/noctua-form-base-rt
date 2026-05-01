@@ -1,16 +1,10 @@
 import type React from 'react'
 import { useState, useCallback, useMemo } from 'react'
 import { usePopover } from '@/@noctua.core/hooks/usePopover'
-import {
-  IconButton,
-  Menu,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-} from '@mui/material'
+import { ActionIcon, Button, Modal } from '@mantine/core'
+import { resolveModalSize } from '@/@noctua.core/components/dialog/modalSize'
+import DialogHeader from '@/@noctua.core/components/dialog/DialogHeader'
+import AnchoredMenu, { MenuItem } from '@/@noctua.core/components/menu/AnchoredMenu'
 import { FaEllipsisV } from 'react-icons/fa'
 import { FiX } from 'react-icons/fi'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
@@ -180,12 +174,12 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
             </div>
           )}
         </div>
-        <IconButton size="small" onClick={e => headerMenu.open(e.currentTarget)}>
+        <ActionIcon variant="subtle" color="gray" size="md" onClick={e => headerMenu.open(e.currentTarget)}>
           <FaEllipsisV size={14} />
-        </IconButton>
-        <IconButton size="small" onClick={handleClose} title="Close">
+        </ActionIcon>
+        <ActionIcon variant="subtle" color="gray" size="md" onClick={handleClose} title="Close">
           <FiX size={16} />
-        </IconButton>
+        </ActionIcon>
       </div>
 
       {/* ── Body — scrollable ── */}
@@ -232,7 +226,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
       </div>
 
       {/* ── Header menu ── */}
-      <Menu
+      <AnchoredMenu
         anchorEl={headerMenu.anchor}
         open={headerMenu.isOpen}
         onClose={headerMenu.close}
@@ -242,25 +236,31 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
             setConfirmDelete(true)
             headerMenu.close()
           }}
-          className="!text-red-600"
+          className="text-red-600"
         >
           Delete Activity
         </MenuItem>
-      </Menu>
+      </AnchoredMenu>
 
       {/* ── Delete confirmation ── */}
-      <Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)}>
-        <DialogTitle>Delete Activity</DialogTitle>
-        <DialogContent>
+      <Modal
+        opened={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        size={resolveModalSize('sm')}
+      >
+        <DialogHeader title="Delete Activity" onClose={() => setConfirmDelete(false)} />
+        <div className="px-4 py-4 text-sm text-gray-700">
           Are you sure you want to delete this activity? This cannot be undone.
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDelete(false)}>Cancel</Button>
-          <Button onClick={handleDeleteActivity} color="error" variant="contained">
+        </div>
+        <div className="flex justify-end gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3">
+          <Button variant="outline" onClick={() => setConfirmDelete(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteActivity} color="red" variant="filled">
             Delete
           </Button>
-        </DialogActions>
-      </Dialog>
+        </div>
+      </Modal>
 
     </div>
   )

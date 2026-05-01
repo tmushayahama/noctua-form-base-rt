@@ -1,5 +1,6 @@
 import type React from 'react'
-import { Button, IconButton, Menu, MenuItem } from '@mui/material'
+import { ActionIcon, Button } from '@mantine/core'
+import AnchoredMenu, { MenuItem } from '@/@noctua.core/components/menu/AnchoredMenu'
 import { usePopover } from '@/@noctua.core/hooks/usePopover'
 import { FaGithub } from 'react-icons/fa'
 import { IoChevronDown } from 'react-icons/io5'
@@ -50,21 +51,23 @@ const Toolbar: React.FC = () => {
       <div className="flex flex-1 flex-row items-center justify-end">
         {/* GitHub */}
         <div className="flex flex-row items-center border-r border-gray-300 pr-3">
-          <IconButton
+          <ActionIcon
+            component="a"
             href={EXTERNAL_LINKS.GO_ONTOLOGY_ISSUES}
             target="_blank"
             rel="noreferrer"
-            color="inherit"
-            size="small"
+            variant="subtle"
+            color="gray"
+            size="md"
           >
             <FaGithub />
-          </IconButton>
+          </ActionIcon>
         </div>
 
         {/* Help */}
         <div className="flex flex-row items-center border-r border-gray-300 pl-3 pr-3">
-          <Button onClick={e => helpMenu.open(e.currentTarget)}>Help</Button>
-          <Menu
+          <Button variant="subtle" onClick={e => helpMenu.open(e.currentTarget)}>Help</Button>
+          <AnchoredMenu
             anchorEl={helpMenu.anchor}
             open={helpMenu.isOpen}
             onClose={helpMenu.close}
@@ -79,7 +82,7 @@ const Toolbar: React.FC = () => {
                 Noctua User&apos;s Guide
               </a>
             </MenuItem>
-          </Menu>
+          </AnchoredMenu>
         </div>
 
         {/* User / Login */}
@@ -87,6 +90,7 @@ const Toolbar: React.FC = () => {
           {isLoggedIn && user ? (
             <>
               <Button
+                variant="subtle"
                 className="!h-10 !text-left !normal-case !text-xs"
                 onClick={e => userMenu.open(e.currentTarget)}
               >
@@ -100,19 +104,21 @@ const Toolbar: React.FC = () => {
                   <IoChevronDown />
                 </div>
               </Button>
-              <Menu
+              <AnchoredMenu
                 anchorEl={userMenu.anchor}
                 open={userMenu.isOpen}
                 onClose={userMenu.close}
+                placement="bottom-end"
               >
-                <MenuItem onClick={logout} className="w-full text-red-500">
+                <MenuItem onClick={logout} className="text-red-500">
                   Logout
                 </MenuItem>
-              </Menu>
+              </AnchoredMenu>
             </>
           ) : (
             <div>
               <Button
+                component="a"
                 href={loginUrl}
                 className="!bg-[#52a16c] !text-white hover:!bg-green-700"
                 data-pw="noc-login-button"

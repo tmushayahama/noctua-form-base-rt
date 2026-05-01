@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import Button from '@mui/material/Button'
-import Menu from '@mui/material/Menu'
-import MenuItem from '@mui/material/MenuItem'
-import ZoomInIcon from '@mui/icons-material/ZoomIn'
-import ZoomOutIcon from '@mui/icons-material/ZoomOut'
-import YoutubeSearchedForIcon from '@mui/icons-material/YoutubeSearchedFor'
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
+import { Button } from '@mantine/core'
+import AnchoredMenu, { MenuItem } from '@/@noctua.core/components/menu/AnchoredMenu'
+import {
+  MdZoomIn as ZoomInIcon,
+  MdZoomOut as ZoomOutIcon,
+  MdYoutubeSearchedFor as YoutubeSearchedForIcon,
+  MdArrowDropDown as ArrowDropDownIcon,
+} from 'react-icons/md'
 import type { LayoutDetail, LayoutSpacing } from '../graph/camCanvas'
 import { layoutDetailOptions, spacingOptions } from '../data/toolbarOptions'
 
@@ -39,8 +40,8 @@ export default function GraphToolbar({
   return (
     <div className="flex w-full items-center gap-2 border-b border-gray-300 bg-white px-3 py-1">
       <Button
-        variant="outlined"
-        size="small"
+        variant="outline"
+        size="xs"
         onClick={onAutoLayout}
         className="!text-xs !normal-case"
       >
@@ -49,15 +50,15 @@ export default function GraphToolbar({
 
       <span className="ml-2 text-xs font-medium text-gray-600">Layout Detail:</span>
       <Button
-        variant="outlined"
-        size="small"
+        variant="outline"
+        size="xs"
         onClick={e => setDetailAnchor(e.currentTarget)}
-        endIcon={<ArrowDropDownIcon />}
+        rightSection={<ArrowDropDownIcon />}
         className="!text-xs !normal-case"
       >
         {currentDetail}
       </Button>
-      <Menu
+      <AnchoredMenu
         anchorEl={detailAnchor}
         open={Boolean(detailAnchor)}
         onClose={() => setDetailAnchor(null)}
@@ -65,7 +66,7 @@ export default function GraphToolbar({
         {layoutDetailOptions.map(opt => (
           <MenuItem
             key={opt.id}
-            selected={opt.id === layoutDetail}
+            className={opt.id === layoutDetail ? 'bg-blue-50' : ''}
             onClick={() => {
               onLayoutDetailChange(opt.id)
               setDetailAnchor(null)
@@ -74,19 +75,19 @@ export default function GraphToolbar({
             {opt.label}
           </MenuItem>
         ))}
-      </Menu>
+      </AnchoredMenu>
 
       <span className="ml-2 text-xs font-medium text-gray-600">Spacing:</span>
       <Button
-        variant="outlined"
-        size="small"
+        variant="outline"
+        size="xs"
         onClick={e => setSpacingAnchor(e.currentTarget)}
-        endIcon={<ArrowDropDownIcon />}
+        rightSection={<ArrowDropDownIcon />}
         className="!text-xs !normal-case"
       >
         {currentSpacing}
       </Button>
-      <Menu
+      <AnchoredMenu
         anchorEl={spacingAnchor}
         open={Boolean(spacingAnchor)}
         onClose={() => setSpacingAnchor(null)}
@@ -94,7 +95,7 @@ export default function GraphToolbar({
         {spacingOptions.map(opt => (
           <MenuItem
             key={opt.id}
-            selected={opt.id === spacing}
+            className={opt.id === spacing ? 'bg-blue-50' : ''}
             onClick={() => {
               onSpacingChange(opt.id)
               setSpacingAnchor(null)
@@ -103,18 +104,18 @@ export default function GraphToolbar({
             {opt.label}
           </MenuItem>
         ))}
-      </Menu>
+      </AnchoredMenu>
 
       <span className="ml-2 text-xs font-medium text-gray-600">Zoom:</span>
       <div className="flex">
-        <Button variant="outlined" size="small" onClick={onZoomOut} className="!min-w-0 !px-1">
-          <ZoomOutIcon fontSize="small" />
+        <Button variant="outline" size="xs" onClick={onZoomOut} className="!min-w-0 !px-1">
+          <ZoomOutIcon size={18} />
         </Button>
-        <Button variant="outlined" size="small" onClick={onZoomIn} className="!min-w-0 !px-1">
-          <ZoomInIcon fontSize="small" />
+        <Button variant="outline" size="xs" onClick={onZoomIn} className="!min-w-0 !px-1">
+          <ZoomInIcon size={18} />
         </Button>
-        <Button variant="outlined" size="small" onClick={onZoomReset} className="!min-w-0 !px-1">
-          <YoutubeSearchedForIcon fontSize="small" />
+        <Button variant="outline" size="xs" onClick={onZoomReset} className="!min-w-0 !px-1">
+          <YoutubeSearchedForIcon size={18} />
         </Button>
       </div>
     </div>

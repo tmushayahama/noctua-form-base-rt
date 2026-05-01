@@ -1,11 +1,5 @@
 import { useCallback, useState } from 'react'
-import {
-  Button,
-  TextField,
-  Select,
-  MenuItem,
-  IconButton,
-} from '@mui/material'
+import { ActionIcon, Button, Select, TextInput, Textarea } from '@mantine/core'
 import { FiPlus, FiX } from 'react-icons/fi'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
 import { selectCamModel } from '@/features/gocam/slices/camSlice'
@@ -53,64 +47,57 @@ const CamMetadataForm: React.FC = () => {
   if (!cam) return null
 
   return (
-    <div className="flex flex-col gap-4 p-2">
-      <TextField
+    <div className="flex flex-col gap-3 px-4 py-3">
+      <TextInput
         label="Title"
         value={title}
         onChange={e => setTitle(e.target.value)}
-        size="small"
-        fullWidth
+        size="xs"
       />
 
       <Select
         value={state}
-        onChange={e => setState(e.target.value)}
-        size="small"
-        fullWidth
-      >
-        {MODEL_STATES.map(s => (
-          <MenuItem key={s} value={s}>
-            {s}
-          </MenuItem>
-        ))}
-      </Select>
+        onChange={value => value && setState(value)}
+        size="xs"
+        data={MODEL_STATES.map(s => ({ value: s, label: s }))}
+      />
 
       <div>
         <div className="flex items-center justify-between mb-1">
           <span className="text-sm font-medium">Comments</span>
-          <IconButton size="small" onClick={handleAddComment}>
+          <ActionIcon variant="subtle" color="gray" size="md" onClick={handleAddComment}>
             <FiPlus size={14} />
-          </IconButton>
+          </ActionIcon>
         </div>
         {comments.map((comment, i) => (
           <div key={i} className="flex items-center gap-1 mb-1">
-            <TextField
+            <Textarea
               value={comment}
               onChange={e => handleCommentChange(i, e.target.value)}
-              size="small"
-              fullWidth
-              multiline
+              size="xs"
+              autosize
               minRows={1}
               maxRows={3}
+              className="flex-1"
             />
-            <IconButton size="small" onClick={() => handleRemoveComment(i)}>
+            <ActionIcon variant="subtle" color="gray" size="md" onClick={() => handleRemoveComment(i)}>
               <FiX size={14} />
-            </IconButton>
+            </ActionIcon>
           </div>
         ))}
       </div>
 
       <div className="flex justify-end gap-2">
         <Button
-          variant="outlined"
-          size="small"
+          variant="outline"
+          size="xs"
           onClick={() => dispatch(closeDialog())}
         >
           Cancel
         </Button>
         <Button
-          variant="contained"
-          size="small"
+          variant="filled"
+          size="xs"
           onClick={handleSave}
           disabled={isLoading || !title.trim()}
         >

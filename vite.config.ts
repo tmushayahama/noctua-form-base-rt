@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import tsChecker from 'vite-plugin-checker'
 import { loadEnv } from 'vite'
@@ -14,6 +15,7 @@ export default defineConfig(({ command, mode }) => {
     logLevel: 'info',
     plugins: [
       react(),
+      tailwindcss(),
       tsChecker({ typescript: true }),
       visualizer({
         filename: `${outDir}/stats-treemap.html`,
@@ -41,7 +43,7 @@ export default defineConfig(({ command, mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (id.includes('@mui')) return 'mui'
+            if (id.includes('@mantine')) return 'mantine'
             if (id.includes('framer-motion')) return 'framer-motion'
           },
           assetFileNames: (assetInfo) => {

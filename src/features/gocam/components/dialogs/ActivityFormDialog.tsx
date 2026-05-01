@@ -1,10 +1,11 @@
 import type React from 'react'
-import { Dialog, DialogContent, IconButton } from '@mui/material'
-import CloseIcon from '@mui/icons-material/Close'
+import { Modal } from '@mantine/core'
 import { useAppSelector } from '@/app/hooks'
 import { selectFormType, selectFormMode } from '../../slices/activityFormSlice'
 import { ActivityType } from '../../models/cam'
 import { FormMode } from '../../models/formModels'
+import { resolveModalSize } from '@/@noctua.core/components/dialog/modalSize'
+import DialogHeader from '@/@noctua.core/components/dialog/DialogHeader'
 
 interface ActivityFormDialogProps {
   open: boolean
@@ -32,21 +33,15 @@ const ActivityFormDialog: React.FC<ActivityFormDialogProps> = ({ open, onClose, 
   const title = getDialogTitle(mode, activityType)
 
   return (
-    <Dialog
-      open={open}
+    <Modal
+      opened={open}
       onClose={onClose}
-      fullWidth
-      maxWidth="lg"
-      PaperProps={{ className: 'overflow-hidden rounded-lg' }}
+      size={resolveModalSize('lg')}
+      classNames={{ content: 'overflow-hidden' }}
     >
-      <div className="flex h-10 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-3">
-        <span className="text-sm font-bold text-gray-800">{title}</span>
-        <IconButton size="small" onClick={onClose}>
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      </div>
-      <DialogContent className="!p-0">{children}</DialogContent>
-    </Dialog>
+      <DialogHeader title={title} onClose={onClose} />
+      <div>{children}</div>
+    </Modal>
   )
 }
 

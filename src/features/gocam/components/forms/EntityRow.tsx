@@ -1,6 +1,7 @@
 import type React from 'react'
 import { useCallback, useMemo } from 'react'
-import { IconButton, Menu, MenuItem } from '@mui/material'
+import { ActionIcon } from '@mantine/core'
+import AnchoredMenu, { MenuItem } from '@/@noctua.core/components/menu/AnchoredMenu'
 import { usePopover } from '@/@noctua.core/hooks/usePopover'
 import { FaEllipsisV, FaPlus } from 'react-icons/fa'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
@@ -273,30 +274,34 @@ const EntityRow: React.FC<EntityRowProps> = ({
 
         {/* Menu button (ellipsis) */}
         {displayMenuButton && (
-          <div className="flex flex-shrink-0 items-center justify-center px-2">
-            <IconButton
-              size="small"
+          <div className="flex shrink-0 items-center justify-center px-2">
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              size="md"
               onClick={e => entityMenu.open(e.currentTarget)}
             >
               <FaEllipsisV size={14} />
-            </IconButton>
+            </ActionIcon>
           </div>
         )}
       </div>
 
       {/* Add button (shown below row, for GP section) */}
       {displayAddButton && insertMenuItems.length > 0 && (
-        <IconButton
-          size="small"
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          size="md"
           onClick={e => addMenu.open(e.currentTarget)}
-          className="mt-2 shadow"
+          className="mt-2 shadow-sm"
         >
           <FaPlus size={14} />
-        </IconButton>
+        </ActionIcon>
       )}
 
       {/* Entity menu */}
-      <Menu
+      <AnchoredMenu
         anchorEl={entityMenu.anchor}
         open={entityMenu.isOpen}
         onClose={entityMenu.close}
@@ -337,10 +342,10 @@ const EntityRow: React.FC<EntityRowProps> = ({
         {node.canDelete && parentTermUid && (
           <MenuItem onClick={handleRemoveNode}>Remove</MenuItem>
         )}
-      </Menu>
+      </AnchoredMenu>
 
       {/* Add submenu */}
-      <Menu
+      <AnchoredMenu
         anchorEl={addMenu.anchor}
         open={addMenu.isOpen}
         onClose={addMenu.close}
@@ -356,10 +361,10 @@ const EntityRow: React.FC<EntityRowProps> = ({
             </div>
           </MenuItem>
         ))}
-      </Menu>
+      </AnchoredMenu>
 
       {/* Evidence submenu */}
-      <Menu
+      <AnchoredMenu
         anchorEl={evidenceMenu.anchor}
         open={evidenceMenu.isOpen}
         onClose={evidenceMenu.close}
@@ -373,7 +378,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
         {onCloneEvidence && relation && (
           <MenuItem onClick={handleCloneEvidence}>Clone Evidence</MenuItem>
         )}
-      </Menu>
+      </AnchoredMenu>
     </>
   )
 }

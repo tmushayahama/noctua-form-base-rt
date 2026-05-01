@@ -32,7 +32,7 @@ const Footer: React.FC = () => {
       </div>
 
       {/* Spacer */}
-      <span className="flex-grow"></span>
+      <span className="grow"></span>
 
       {/* Right Section */}
       <div className="flex-1 text-right">

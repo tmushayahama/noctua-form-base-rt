@@ -1,14 +1,7 @@
 import type React from 'react'
 import { useState, useEffect } from 'react'
-import {
-  CircularProgress,
-  Popover,
-  TextField,
-  IconButton,
-  MenuItem,
-  Select,
-  type SelectChangeEvent,
-} from '@mui/material'
+import { ActionIcon, Loader, Select, TextInput } from '@mantine/core'
+import AnchoredPopover from '@/@noctua.core/components/popover/AnchoredPopover'
 import { FaRegTimesCircle, FaRegCheckCircle, FaUser, FaCalendarAlt } from 'react-icons/fa'
 import { referenceAllowedDBs } from '../../data/allowedDatabases'
 import { ENVIRONMENT } from '@/@noctua.core/data/constants'
@@ -80,13 +73,12 @@ const ReferenceDropdown: React.FC<ReferenceDropdownProps> = ({
   }
 
   return (
-    <Popover
+    <AnchoredPopover
       open={Boolean(anchorEl)}
       anchorEl={anchorEl}
       onClose={onClose}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      PaperProps={{ className: '!bg-accent-50 !shadow-lg' }}
+      placement="bottom-end"
+      className="!bg-accent-50 !shadow-lg"
     >
       <div
         className="flex w-full flex-col items-stretch justify-start px-2 py-2"
@@ -94,24 +86,18 @@ const ReferenceDropdown: React.FC<ReferenceDropdownProps> = ({
       >
         <div className="flex w-full flex-row items-center justify-start">
           <Select
-            size="small"
-            variant="outlined"
+            size="xs"
             value={db.name}
-            onChange={(e: SelectChangeEvent) => {
-              const found = dbOptions.find(d => d.name === e.target.value)
+            onChange={value => {
+              const found = dbOptions.find(d => d.name === value)
               if (found) setDb(found)
             }}
+            data={dbOptions.map(d => ({ value: d.name, label: d.label }))}
+            allowDeselect={false}
             className="mr-3 w-[100px]"
-          >
-            {dbOptions.map(d => (
-              <MenuItem key={d.name} value={d.name}>
-                {d.label}
-              </MenuItem>
-            ))}
-          </Select>
-          <TextField
-            size="small"
-            variant="outlined"
+          />
+          <TextInput
+            size="xs"
             placeholder="Accession"
             value={accession}
             onChange={e => setAccession(e.target.value)}
@@ -119,18 +105,18 @@ const ReferenceDropdown: React.FC<ReferenceDropdownProps> = ({
             autoFocus
             className="flex-1"
           />
-          <IconButton size="small" onClick={onClose}>
+          <ActionIcon variant="subtle" color="gray" size="md" onClick={onClose}>
             <FaRegTimesCircle />
-          </IconButton>
-          <IconButton size="small" onClick={handleSave}>
+          </ActionIcon>
+          <ActionIcon variant="subtle" color="gray" size="md" onClick={handleSave}>
             <FaRegCheckCircle />
-          </IconButton>
+          </ActionIcon>
         </div>
 
         {/* PubMed article preview */}
         {db.name === 'PMID' && accession.trim() && (
           <div className="mt-2 border-t border-gray-300 pt-2 text-xs">
-            {pubmedLoading && <CircularProgress size={14} />}
+            {pubmedLoading && <Loader size={14} />}
             {!pubmedLoading && pubmedInfo && (
               <div className="flex flex-col gap-1">
                 <a
@@ -158,7 +144,7 @@ const ReferenceDropdown: React.FC<ReferenceDropdownProps> = ({
           </div>
         )}
       </div>
-    </Popover>
+    </AnchoredPopover>
   )
 }
 

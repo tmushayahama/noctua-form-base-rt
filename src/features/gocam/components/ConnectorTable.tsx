@@ -1,5 +1,5 @@
 import type React from 'react'
-import { IconButton } from '@mui/material'
+import { ActionIcon } from '@mantine/core'
 import { FiX } from 'react-icons/fi'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { setSelectedConnection, selectSelectedConnection } from '../slices/camSlice'
@@ -36,9 +36,9 @@ const ConnectorTable: React.FC = () => {
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-gray-800">Causal Relation Form</div>
         </div>
-        <IconButton size="small" onClick={handleClose} title="Close">
+        <ActionIcon variant="subtle" color="gray" size="md" onClick={handleClose} title="Close">
           <FiX size={16} />
-        </IconButton>
+        </ActionIcon>
       </div>
 
       {/* Activity labels */}

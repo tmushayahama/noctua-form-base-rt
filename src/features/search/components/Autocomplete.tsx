@@ -5,7 +5,7 @@ import { FiFile } from 'react-icons/fi'
 import { useSearchTermsQuery } from '../slices/lookupApiSlice'
 import type { GOlrResponse } from '../models/search'
 import { AutocompleteType } from '../models/search'
-import { TextField, Popper, Paper, CircularProgress } from '@mui/material'
+import { Loader, Portal, Textarea } from '@mantine/core'
 import { DEBOUNCE_MS, BLUR_CLOSE_DELAY_MS, MIN_SEARCH_LENGTH } from '@/@noctua.core/data/uiConstants'
 
 interface TermAutocompleteProps {
@@ -142,11 +142,11 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
   return (
     <div className="w-full">
       <div ref={anchorRef} onKeyDown={handleKeyDown}>
-        <TextField
+        <Textarea
           id={`autocomplete-${name}`}
           name={name}
           label={label}
-          size="small"
+          size="xs"
           value={inputValue}
           onChange={e => {
             setInputValue(e.target.value)
@@ -158,27 +158,26 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
             onBlur?.()
           }}
           disabled={disabled}
-          variant={variant}
-          multiline
           rows={2}
-          fullWidth
-          InputProps={{
-            className: 'bg-white rounded',
-            endAdornment: searching && <CircularProgress size={20} />,
-          }}
+          classNames={{ input: 'bg-white rounded' }}
+          rightSection={searching ? <Loader size={20} /> : null}
         />
       </div>
 
-      <Popper
-        open={open}
-        anchorEl={anchorRef.current}
-        placement="bottom-start"
-        style={{ zIndex: 1300 }}
-      >
-        <Paper
-          className="!bg-accent-50 mt-1 max-h-60 w-[400px] overflow-y-auto shadow-lg"
-          ref={listRef}
-        >
+      {open && anchorRef.current && (
+        <Portal>
+          <div
+            ref={listRef}
+            className="!bg-accent-50 fixed z-[1300] mt-1 max-h-60 w-[400px] overflow-y-auto rounded-md bg-white shadow-lg"
+            style={{
+              top:
+                anchorRef.current.getBoundingClientRect().bottom +
+                window.scrollY,
+              left:
+                anchorRef.current.getBoundingClientRect().left +
+                window.scrollX,
+            }}
+          >
           {!searching && displayOptions.length === 0 && (
             <div className="p-4 text-center text-xs text-gray-500">
               {inputValue.length < MIN_SEARCH_LENGTH
@@ -229,8 +228,9 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
               )}
             </div>
           ))}
-        </Paper>
-      </Popper>
+          </div>
+        </Portal>
+      )}
     </div>
   )
 }

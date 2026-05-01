@@ -5,7 +5,7 @@ import { ErrorType } from '../models/cam'
 import { processViolations, computeDiffs } from '../services/violationService'
 import { useAppDispatch } from '@/app/hooks'
 import { setRightDrawerOpen } from '@/@noctua.core/components/drawer/drawerSlice'
-import Button from '@mui/material/Button'
+import { Button } from '@mantine/core'
 
 interface CamErrorsProps {
   model: GraphModel
@@ -51,7 +51,7 @@ function CardinalityViz({ error }: { error: CamError }) {
 function NodeItem({ node }: { node: GraphNode }) {
   return (
     <div className="flex items-center gap-3 rounded-md border border-slate-300 bg-gray-50 p-3 hover:border-slate-400 hover:bg-white">
-      <div className="min-w-[40px] rounded bg-blue-700 px-2 py-1" />
+      <div className="min-w-[40px] rounded-sm bg-blue-700 px-2 py-1" />
       <div className="flex-1">
         <div className="text-sm font-semibold">{node.label}</div>
         <div className="font-mono text-xs text-gray-500">{node.id}</div>
@@ -63,7 +63,7 @@ function NodeItem({ node }: { node: GraphNode }) {
 function EdgeItem({ edge }: { edge: Edge }) {
   return (
     <div className="flex items-center gap-3 rounded-md border border-slate-300 bg-gray-50 p-3 hover:border-slate-400 hover:bg-white">
-      <span className="min-w-[24px] rounded bg-slate-400 px-2 py-1 text-center text-xs font-semibold text-white">
+      <span className="min-w-[24px] rounded-sm bg-slate-400 px-2 py-1 text-center text-xs font-semibold text-white">
         &rarr;
       </span>
       <div className="flex-1 font-mono text-sm text-gray-500">
@@ -96,21 +96,14 @@ const CamErrors: React.FC<CamErrorsProps> = ({ model }) => {
 
   return (
     <div className="flex h-full w-full flex-col">
-      <div className="flex h-10 shrink-0 items-center justify-between bg-white px-6 shadow">
+      <div className="flex h-10 shrink-0 items-center justify-between bg-white px-6 shadow-sm">
         <span className="text-base font-semibold text-slate-800">Validation Errors</span>
         <Button
-          variant="outlined"
-          size="small"
+          variant="outline"
+          size="xs"
           onClick={() => dispatch(setRightDrawerOpen(false))}
-          startIcon={<FaTimes size={10} />}
-          sx={{
-            fontSize: 12,
-            minHeight: 26,
-            textTransform: 'none',
-            borderColor: 'rgba(0,0,0,0.23)',
-            color: '#3b5998',
-            '&:hover': { borderColor: '#3b5998' },
-          }}
+          leftSection={<FaTimes size={10} />}
+          className="!min-h-[26px] !text-xs !normal-case !text-[#3b5998] !border-gray-300 hover:!border-[#3b5998]"
         >
           Close
         </Button>

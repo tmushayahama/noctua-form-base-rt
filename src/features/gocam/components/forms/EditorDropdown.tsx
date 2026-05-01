@@ -1,6 +1,8 @@
 import type React from 'react'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { IconButton, Menu, MenuItem, Popover } from '@mui/material'
+import { ActionIcon } from '@mantine/core'
+import AnchoredMenu, { MenuItem } from '@/@noctua.core/components/menu/AnchoredMenu'
+import AnchoredPopover from '@/@noctua.core/components/popover/AnchoredPopover'
 import { usePopover } from '@/@noctua.core/hooks/usePopover'
 import { FaEllipsisV } from 'react-icons/fa'
 import { FaRegCircleXmark, FaRegCircleCheck } from 'react-icons/fa6'
@@ -143,13 +145,12 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
   }, [termRootTypes])
 
   return (
-    <Popover
+    <AnchoredPopover
       open={open}
       anchorEl={anchorEl}
       onClose={handleClose}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      PaperProps={{ className: '!bg-accent-50 !shadow-lg', style: { minWidth: 400 } }}
+      placement="bottom-end"
+      className="!bg-accent-50 !shadow-lg !min-w-[400px]"
     >
       <div className="flex w-full flex-row items-stretch justify-start pb-1 pt-2">
         {sections.term && (
@@ -197,14 +198,16 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
 
         {showActionMenu && (
           <>
-            <IconButton
-              size="small"
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              size="md"
               onClick={e => actionMenu.open(e.currentTarget)}
               className="!h-10 !w-10"
             >
               <FaEllipsisV size={12} />
-            </IconButton>
-            <Menu
+            </ActionIcon>
+            <AnchoredMenu
               anchorEl={actionMenu.anchor}
               open={actionMenu.isOpen}
               onClose={actionMenu.close}
@@ -229,18 +232,18 @@ const EditorDropdown: React.FC<EditorDropdownProps> = ({
                   Fill with root term
                 </MenuItem>
               )}
-            </Menu>
+            </AnchoredMenu>
           </>
         )}
 
-        <IconButton size="small" onClick={onClose} title="Cancel" className="!text-red-400">
+        <ActionIcon variant="subtle" color="gray" size="md" onClick={onClose} title="Cancel" className="!text-red-400">
           <FaRegCircleXmark size={18} />
-        </IconButton>
-        <IconButton size="small" onClick={handleSave} title="Save" className="!text-green-600">
+        </ActionIcon>
+        <ActionIcon variant="subtle" color="gray" size="md" onClick={handleSave} title="Save" className="!text-green-600">
           <FaRegCircleCheck size={18} />
-        </IconButton>
+        </ActionIcon>
       </div>
-    </Popover>
+    </AnchoredPopover>
   )
 }
 

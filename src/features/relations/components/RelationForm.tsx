@@ -30,8 +30,7 @@ import TermAutocomplete from '@/features/search/components/Autocomplete'
 import { AutocompleteType } from '@/features/search/models/search'
 import type { GOlrResponse } from '@/features/search/models/search'
 import DatabaseField from '@/features/gocam/components/forms/DatabaseField'
-import Button from '@mui/material/Button'
-import IconButton from '@mui/material/IconButton'
+import { ActionIcon, Button } from '@mantine/core'
 import { FiX, FiPlus } from 'react-icons/fi'
 import {
   selectRelationSelected,
@@ -301,10 +300,9 @@ const RelationForm: React.FC<Props> = ({
             Chemical Intermediate
           </span>
           <Button
-            variant="contained"
+            variant="filled"
             onClick={handleOpenChemicalConnector}
-            className="!normal-case"
-            sx={{ backgroundColor: '#15803d', '&:hover': { backgroundColor: '#166534' } }}
+            className="!bg-green-700 hover:!bg-green-800 !normal-case"
           >
             Connect via Chemical Intermediate
           </Button>
@@ -342,18 +340,21 @@ const RelationForm: React.FC<Props> = ({
                 onChange={value => handleEvidenceFieldChange(index, 'withFrom', value)}
               />
             </div>
-            <IconButton
-              size="small"
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              size="md"
               onClick={() => dispatch(removeConnectorEvidence(index))}
               className="!text-gray-400 hover:!text-red-500"
             >
               <FiX size={14} />
-            </IconButton>
+            </ActionIcon>
           </div>
         ))}
         <Button
-          size="small"
-          startIcon={<FiPlus />}
+          variant="subtle"
+          size="xs"
+          leftSection={<FiPlus />}
           onClick={() => dispatch(addConnectorEvidence())}
           className="!text-xs !normal-case"
         >
@@ -368,15 +369,15 @@ const RelationForm: React.FC<Props> = ({
       >
         <div>
           {!relation && (
-            <Button variant="text" color="warning" size="small">
+            <Button variant="subtle" color="yellow" size="xs">
               Why is the &quot;Save&quot; button disabled?
             </Button>
           )}
           {existingEdgeId && (
             <Button
-              variant="outlined"
-              size="small"
-              color="error"
+              variant="outline"
+              size="xs"
+              color="red"
               onClick={handleDelete}
               disabled={isSaving}
             >
@@ -386,13 +387,13 @@ const RelationForm: React.FC<Props> = ({
         </div>
         <div className="flex gap-2">
           {onClose && (
-            <Button variant="outlined" size="small" onClick={onClose} disabled={isSaving}>
+            <Button variant="outline" size="xs" onClick={onClose} disabled={isSaving}>
               Cancel
             </Button>
           )}
           <Button
-            variant="contained"
-            size="small"
+            variant="filled"
+            size="xs"
             disabled={!relation || isSaving}
             onClick={handleSave}
           >

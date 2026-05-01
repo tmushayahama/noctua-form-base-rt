@@ -1,8 +1,15 @@
-import Snackbar from '@mui/material/Snackbar'
-import Alert from '@mui/material/Alert'
+import { useEffect } from 'react'
+import { notifications } from '@mantine/notifications'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import type { RootState } from '@/app/store/store'
 import { hideToast } from './toastSlice'
+
+const SEVERITY_TO_COLOR: Record<string, string> = {
+  success: 'green',
+  error: 'red',
+  warning: 'yellow',
+  info: 'blue',
+}
 
 const GlobalToast: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -10,23 +17,17 @@ const GlobalToast: React.FC = () => {
     (state: RootState) => state.toast
   )
 
-  const handleClose = (_event?: React.SyntheticEvent | Event, reason?: string) => {
-    if (reason === 'clickaway') return
+  useEffect(() => {
+    if (!open) return
+    notifications.show({
+      message,
+      color: SEVERITY_TO_COLOR[severity] ?? 'blue',
+      autoClose: duration,
+    })
     dispatch(hideToast())
-  }
+  }, [open, message, severity, duration, dispatch])
 
-  return (
-    <Snackbar
-      open={open}
-      autoHideDuration={duration}
-      onClose={handleClose}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-    >
-      <Alert onClose={handleClose} severity={severity} variant="filled" sx={{ width: '100%' }}>
-        {message}
-      </Alert>
-    </Snackbar>
-  )
+  return null
 }
 
 export default GlobalToast

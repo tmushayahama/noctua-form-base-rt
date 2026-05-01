@@ -1,5 +1,6 @@
 import type React from 'react'
-import { Button, Menu, MenuItem } from '@mui/material'
+import { Button } from '@mantine/core'
+import AnchoredMenu, { MenuItem } from '@/@noctua.core/components/menu/AnchoredMenu'
 import { IoChevronDown } from 'react-icons/io5'
 import { usePopover } from '@/@noctua.core/hooks/usePopover'
 
@@ -19,16 +20,15 @@ const ToolbarLinkMenu: React.FC<ToolbarLinkMenuProps> = ({ label, items }) => {
   return (
     <>
       <Button
-        variant="outlined"
-        size="small"
-        color="primary"
+        variant="outline"
+        size="xs"
         onClick={e => menu.open(e.currentTarget)}
-        endIcon={<IoChevronDown size={12} />}
+        rightSection={<IoChevronDown size={12} />}
         className="!text-xs !normal-case"
       >
         {label}
       </Button>
-      <Menu anchorEl={menu.anchor} open={menu.isOpen} onClose={menu.close}>
+      <AnchoredMenu anchorEl={menu.anchor} open={menu.isOpen} onClose={menu.close}>
         {items.map(item => (
           <MenuItem key={item.label} onClick={menu.close}>
             <a
@@ -41,7 +41,7 @@ const ToolbarLinkMenu: React.FC<ToolbarLinkMenuProps> = ({ label, items }) => {
             </a>
           </MenuItem>
         ))}
-      </Menu>
+      </AnchoredMenu>
     </>
   )
 }

@@ -1,16 +1,8 @@
 import type React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  Button,
-  IconButton,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-} from '@mui/material'
+import { ActionIcon, Button, Modal } from '@mantine/core'
+import { resolveModalSize } from '@/@noctua.core/components/dialog/modalSize'
+import DialogHeader from '@/@noctua.core/components/dialog/DialogHeader'
 import { FaExclamationCircle, FaInfoCircle } from 'react-icons/fa'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { useUserContext } from '@/app/hooks/useUserContext'
@@ -268,7 +260,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
         {activityType === ActivityType.PROTEIN_COMPLEX && (
-          <div className="mx-3 mt-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs italic text-amber-800">
+          <div className="mx-3 mt-2 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs italic text-amber-800">
             Note that this should be used rarely, and only in the case where the activity cannot be
             ascribed to a single subunit of a complex
           </div>
@@ -307,25 +299,29 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
             <div className="flex flex-1 items-center">
               <span className="w-1/2" />
               <div className="flex w-1/4 justify-center">
-                <IconButton
-                  size="small"
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="md"
                   onClick={e => setRefInfoAnchor(e.currentTarget)}
                   title="Allowed reference databases"
                 >
                   <FaInfoCircle size={12} className="text-gray-500" />
-                </IconButton>
+                </ActionIcon>
               </div>
               <div className="flex w-1/4 justify-center">
-                <IconButton
-                  size="small"
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="md"
                   onClick={e => setWithInfoAnchor(e.currentTarget)}
                   title="Allowed with/from databases"
                 >
                   <FaInfoCircle size={12} className="text-gray-500" />
-                </IconButton>
+                </ActionIcon>
               </div>
             </div>
-            <span className="w-10 flex-shrink-0" />
+            <span className="w-10 shrink-0" />
           </div>
           <div className="flex flex-col items-stretch justify-start px-2 py-1">
             {fdRows.map(row => (
@@ -357,12 +353,12 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
       </div>
 
       {/* Footer */}
-      <div className="flex h-[50px] flex-shrink-0 flex-row items-center justify-start border-t border-gray-300 bg-gray-100 px-3">
+      <div className="flex h-[50px] shrink-0 flex-row items-center justify-start border-t border-gray-300 bg-gray-100 px-3">
         {hasErrors && (
           <Button
-            variant="text"
-            color="warning"
-            size="small"
+            variant="subtle"
+            color="yellow"
+            size="xs"
             onClick={() => setShowErrorsDialog(true)}
           >
             Why is the &quot;Save&quot; button disabled?
@@ -370,7 +366,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
         )}
         <span className="grow" />
         <Button
-          variant="outlined"
+          variant="outline"
           onClick={handleCancel}
           disabled={isSaving}
           className="mr-2"
@@ -378,7 +374,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
           Clear
         </Button>
         <Button
-          variant="contained"
+          variant="filled"
           onClick={handleSave}
           disabled={isSaving || hasErrors}
         >
@@ -387,32 +383,32 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
       </div>
 
       {/* Errors dialog */}
-      <Dialog
-        open={showErrorsDialog}
+      <Modal
+        opened={showErrorsDialog}
         onClose={() => setShowErrorsDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ className: 'overflow-hidden rounded-lg' }}
+        size={resolveModalSize('sm')}
+        classNames={{ content: 'overflow-hidden' }}
       >
-        <div className="flex h-10 flex-shrink-0 items-center border-b border-gray-200 bg-white px-3">
-          <span className="text-sm font-bold text-gray-800">Validation Errors</span>
-        </div>
-        <DialogContent>
-          <List dense>
+        <DialogHeader title="Validation Errors" onClose={() => setShowErrorsDialog(false)} />
+        <div className="p-4">
+          <ul className="flex flex-col gap-1">
             {errors.map((err, i) => (
-              <ListItem key={`${err.uid}-${err.field}-${i}`}>
-                <ListItemIcon className="!min-w-[32px]">
+              <li
+                key={`${err.uid}-${err.field}-${i}`}
+                className="flex items-center gap-2 text-sm"
+              >
+                <span className="flex w-8 shrink-0 items-center justify-center">
                   <FaExclamationCircle className="text-red-500" />
-                </ListItemIcon>
-                <ListItemText primary={err.message} />
-              </ListItem>
+                </span>
+                <span>{err.message}</span>
+              </li>
             ))}
-          </List>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowErrorsDialog(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+          </ul>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3">
+          <Button variant="outline" onClick={() => setShowErrorsDialog(false)}>Close</Button>
+        </div>
+      </Modal>
 
       {/* Clone evidence dialog */}
       <CloneEvidenceDialog

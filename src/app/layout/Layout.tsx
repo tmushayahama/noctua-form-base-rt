@@ -2,17 +2,11 @@ import type React from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Toolbar from './Toolbar'
 import Footer from './Footer'
-import {
-  selectRightDrawerOpen,
-  setRightDrawerOpen,
-} from '@/@noctua.core/components/drawer/drawerSlice'
-import { useAppDispatch, useAppSelector } from '../hooks'
+import { selectRightDrawerOpen } from '@/@noctua.core/components/drawer/drawerSlice'
+import { useAppSelector } from '../hooks'
 import { initGA, trackPageView } from '@/analytics'
 import { useEffect } from 'react'
-import useMediaQuery from '@mui/material/useMediaQuery'
-import useTheme from '@mui/material/styles/useTheme'
-import Box from '@mui/material/Box'
-import Drawer from '@mui/material/Drawer'
+import { useMediaQuery } from '@mantine/hooks'
 import { ENVIRONMENT, EXTERNAL_LINKS } from '@/@noctua.core/data/constants'
 import CamToolbar from '@/features/gocam/components/CamToolbar'
 
@@ -22,15 +16,9 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ rightDrawerContent }) => {
   const isDev = ENVIRONMENT.isDev
   const location = useLocation()
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-  const dispatch = useAppDispatch()
+  const isMobile = useMediaQuery('(max-width: 36em)')
 
   const rightDrawerOpen = useAppSelector(selectRightDrawerOpen)
-
-  const handleRightDrawerClose = () => {
-    dispatch(setRightDrawerOpen(false))
-  }
 
   useEffect(() => {
     initGA('G-LHBLYRN338')
@@ -41,9 +29,9 @@ const Layout: React.FC<LayoutProps> = ({ rightDrawerContent }) => {
   }, [location])
 
   return (
-    <Box className="flex h-screen w-full flex-col bg-gray-300">
+    <div className="flex h-screen w-full flex-col bg-gray-300">
       {isDev && (
-        <div className="flex h-[25px] items-center justify-center bg-orange-300 py-2 text-2xs font-bold uppercase">
+        <div className="text-2xs flex h-[25px] items-center justify-center bg-orange-300 py-2 font-bold uppercase">
           Testing Version. Visit{' '}
           <a
             className="hover:underline"
@@ -66,7 +54,7 @@ const Layout: React.FC<LayoutProps> = ({ rightDrawerContent }) => {
         <CamToolbar />
       </div>
 
-      <Box className="fixed flex w-full flex-1" style={{ top: isDev ? 115 : 90, bottom: 0 }}>
+      <div className="fixed flex w-full flex-1" style={{ top: isDev ? 115 : 90, bottom: 0 }}>
 
         <div className="flex-1 overflow-auto">
           <Outlet />
@@ -74,35 +62,21 @@ const Layout: React.FC<LayoutProps> = ({ rightDrawerContent }) => {
         </div>
 
         {rightDrawerContent && (
-          <Drawer
-            variant="persistent"
-            anchor="right"
-            open={rightDrawerOpen}
-            onClose={handleRightDrawerClose}
-            ModalProps={{
-              keepMounted: false,
-            }}
-            sx={{
-              '& .MuiDrawer-paper': {
-                width: isMobile ? '100%' : 800,
-                top: 120,
-                height: 'calc(100vh - 120px)',
-                overflow: 'hidden',
-                borderLeft: '1px solid #bbb',
-                boxShadow: '-4px 0 12px rgba(0,0,0,0.15)',
-                transition: theme =>
-                  theme.transitions.create('transform', {
-                    easing: theme.transitions.easing.sharp,
-                    duration: theme.transitions.duration.enteringScreen,
-                  }),
-              },
+          <div
+            className={`fixed right-0 overflow-hidden border-l border-gray-300 bg-white shadow-[-4px_0_12px_rgba(0,0,0,0.15)] transition-transform duration-300 ease-out ${
+              rightDrawerOpen ? 'translate-x-0' : 'translate-x-full'
+            }`}
+            style={{
+              top: 120,
+              height: 'calc(100vh - 120px)',
+              width: isMobile ? '100%' : 800,
             }}
           >
             {rightDrawerContent}
-          </Drawer>
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   )
 }
 

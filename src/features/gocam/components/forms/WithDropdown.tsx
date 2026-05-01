@@ -1,14 +1,7 @@
 import type React from 'react'
 import { useState, useEffect } from 'react'
-import {
-  Popover,
-  TextField,
-  Button,
-  IconButton,
-  MenuItem,
-  Select,
-  type SelectChangeEvent,
-} from '@mui/material'
+import { ActionIcon, Button, Select, TextInput } from '@mantine/core'
+import AnchoredPopover from '@/@noctua.core/components/popover/AnchoredPopover'
 import { FaPlus, FaRegTrashAlt } from 'react-icons/fa'
 import { withFromAllowedDBs, DB_NONE } from '../../data/allowedDatabases'
 import type { WithEntity, WithGroup } from '../../models/formModels'
@@ -122,13 +115,12 @@ const WithDropdown: React.FC<WithDropdownProps> = ({
   }
 
   return (
-    <Popover
+    <AnchoredPopover
       open={Boolean(anchorEl)}
       anchorEl={anchorEl}
       onClose={onClose}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      PaperProps={{ className: '!bg-accent-50 !shadow-lg' }}
+      placement="bottom-end"
+      className="!bg-accent-50 !shadow-lg"
     >
       <div
         className="flex w-full flex-col items-stretch justify-start px-2 py-2"
@@ -139,9 +131,9 @@ const WithDropdown: React.FC<WithDropdownProps> = ({
             <div key={gi} className="mb-4 px-3">
               <div className="mb-2 flex flex-row items-center justify-start">
                 <strong className="mr-2 text-sm">With/From</strong>
-                <IconButton size="small" onClick={() => deleteGroup(gi)} title="Delete Group">
+                <ActionIcon variant="subtle" color="gray" size="md" onClick={() => deleteGroup(gi)} title="Delete Group">
                   <FaRegTrashAlt size={12} />
-                </IconButton>
+                </ActionIcon>
               </div>
               {group.entities.map((entity, ei) => (
                 <div
@@ -149,39 +141,33 @@ const WithDropdown: React.FC<WithDropdownProps> = ({
                   className="mb-2 flex flex-row items-center justify-start"
                 >
                   <Select
-                    size="small"
-                    variant="outlined"
+                    size="xs"
                     value={entity.db}
-                    onChange={(e: SelectChangeEvent) =>
-                      updateEntity(gi, ei, 'db', e.target.value)
-                    }
+                    onChange={value => value && updateEntity(gi, ei, 'db', value)}
+                    data={dbOptions.map(d => ({ value: d, label: d }))}
+                    allowDeselect={false}
+                    maxDropdownHeight={300}
                     className="mr-3 w-[120px]"
-                    MenuProps={{ style: { maxHeight: 300 } }}
-                  >
-                    {dbOptions.map(d => (
-                      <MenuItem key={d} value={d}>
-                        {d}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  <TextField
-                    size="small"
-                    variant="outlined"
+                  />
+                  <TextInput
+                    size="xs"
                     placeholder="Accession"
                     value={entity.accession}
                     onChange={e => updateEntity(gi, ei, 'accession', e.target.value)}
                     className="flex-1"
                   />
-                  <IconButton size="small" onClick={() => addEntity(gi)} title="Add Entity">
+                  <ActionIcon variant="subtle" color="gray" size="md" onClick={() => addEntity(gi)} title="Add Entity">
                     <FaPlus size={12} />
-                  </IconButton>
-                  <IconButton
-                    size="small"
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="md"
                     onClick={() => deleteEntity(gi, ei)}
                     title="Delete Entity"
                   >
                     <FaRegTrashAlt size={12} />
-                  </IconButton>
+                  </ActionIcon>
                 </div>
               ))}
               {group.entities.length === 0 && (
@@ -196,20 +182,20 @@ const WithDropdown: React.FC<WithDropdownProps> = ({
               )}
             </div>
           ))}
-          <Button size="small" onClick={addGroup}>
+          <Button variant="subtle" size="xs" onClick={addGroup}>
             Add Group
           </Button>
         </div>
         <div className="flex w-full flex-row items-center justify-end pt-2">
-          <Button size="small" onClick={onClose}>
+          <Button variant="subtle" size="xs" onClick={onClose}>
             Cancel
           </Button>
-          <Button size="small" color="primary" onClick={handleSave}>
+          <Button variant="filled" size="xs" onClick={handleSave}>
             Ok
           </Button>
         </div>
       </div>
-    </Popover>
+    </AnchoredPopover>
   )
 }
 

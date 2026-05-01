@@ -19,13 +19,9 @@ import {
 import type { Activity } from '@/features/gocam/models/cam'
 import type { ActivityFormType } from '@/features/gocam/models/formModels'
 import { resetForm, initCreateForm } from '@/features/gocam/slices/activityFormSlice'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
-import IconButton from '@mui/material/IconButton'
-import CloseIcon from '@mui/icons-material/Close'
+import { Button, Modal } from '@mantine/core'
+import { resolveModalSize } from '@/@noctua.core/components/dialog/modalSize'
+import DialogHeader from '@/@noctua.core/components/dialog/DialogHeader'
 import ActivityDialog from '@/features/gocam/components/dialogs/ActivityFormDialog'
 import ActivityForm from '@/features/gocam/components/forms/ActivityForm'
 import ConnectorForm from '@/features/relations/components/ConnectorForm'
@@ -178,48 +174,45 @@ const PathwayEditor: React.FC = () => {
       </div>
 
       {/* Delete confirmation dialog */}
-      <Dialog open={del.isDeleteOpen} onClose={del.cancelDelete}>
-        <DialogTitle>Confirm Delete?</DialogTitle>
-        <DialogContent>Deleting this activity cannot be undone. Continue?</DialogContent>
-        <DialogActions>
-          <Button onClick={del.cancelDelete}>Cancel</Button>
-          <Button onClick={del.confirmDelete} color="error" variant="contained">
+      <Modal
+        opened={del.isDeleteOpen}
+        onClose={del.cancelDelete}
+        size={resolveModalSize('sm')}
+      >
+        <DialogHeader title="Confirm Delete?" onClose={del.cancelDelete} />
+        <div className="px-4 py-4 text-sm text-gray-700">
+          Deleting this activity cannot be undone. Continue?
+        </div>
+        <div className="flex justify-end gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3">
+          <Button variant="outline" onClick={del.cancelDelete}>
+            Cancel
+          </Button>
+          <Button onClick={del.confirmDelete} color="red" variant="filled">
             Delete
           </Button>
-        </DialogActions>
-      </Dialog>
+        </div>
+      </Modal>
 
       {/* Connector form dialog */}
-      <Dialog
-        open={connector.open}
+      <Modal
+        opened={connector.open}
         onClose={() => setConnector(closedConnector)}
-        fullWidth
-        maxWidth="md"
-        PaperProps={{ className: 'rounded-lg' }}
+        size={resolveModalSize('md')}
+        classNames={{ content: 'overflow-hidden' }}
       >
-        <DialogTitle className="flex items-center justify-between border-b pb-2">
-          <span className="text-lg font-medium">Causal Relation Form</span>
-          <IconButton
-            edge="end"
-            color="inherit"
-            onClick={() => setConnector(closedConnector)}
-            aria-label="close"
-            size="small"
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <div className="p-0">
-          {connector.source && connector.target && (
-            <ConnectorForm
-              sourceActivity={connector.source}
-              targetActivity={connector.target}
-              onClose={() => setConnector(closedConnector)}
-              onSaved={() => setConnector(closedConnector)}
-            />
-          )}
-        </div>
-      </Dialog>
+        <DialogHeader
+          title="Causal Relation Form"
+          onClose={() => setConnector(closedConnector)}
+        />
+        {connector.source && connector.target && (
+          <ConnectorForm
+            sourceActivity={connector.source}
+            targetActivity={connector.target}
+            onClose={() => setConnector(closedConnector)}
+            onSaved={() => setConnector(closedConnector)}
+          />
+        )}
+      </Modal>
 
       {/* Activity form dialog */}
       <ActivityDialog

@@ -1,13 +1,8 @@
 import type React from 'react'
 import { useState } from 'react'
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Checkbox,
-} from '@mui/material'
+import { Modal, Button, Checkbox } from '@mantine/core'
+import { resolveModalSize } from '@/@noctua.core/components/dialog/modalSize'
+import DialogHeader from '@/@noctua.core/components/dialog/DialogHeader'
 import type { Evidence } from '../../models/cam'
 
 interface CloneEvidenceDialogProps {
@@ -53,9 +48,9 @@ const CloneEvidenceDialog: React.FC<CloneEvidenceDialogProps> = ({
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Clone Evidence</DialogTitle>
-      <DialogContent>
+    <Modal opened={open} onClose={onClose} size={resolveModalSize('md')}>
+      <DialogHeader title="Clone Evidence" onClose={onClose} />
+      <div className="px-4 py-3">
         {evidences.length === 0 ? (
           <div className="py-4 text-center text-gray-500">
             No evidence available in this activity
@@ -109,18 +104,18 @@ const CloneEvidenceDialog: React.FC<CloneEvidenceDialogProps> = ({
             </div>
           </>
         )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+      </div>
+      <div className="flex justify-end gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3">
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
         <Button
-          variant="contained"
+          variant="filled"
           onClick={handleSave}
           disabled={selected.size === 0}
         >
           Use Selected ({selected.size})
         </Button>
-      </DialogActions>
-    </Dialog>
+      </div>
+    </Modal>
   )
 }
 

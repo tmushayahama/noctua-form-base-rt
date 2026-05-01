@@ -5,7 +5,7 @@ import {
   selectRightPanelTab,
   RightPanelTab,
 } from '@/@noctua.core/components/drawer/drawerSlice'
-import Button from '@mui/material/Button'
+import { Button } from '@mantine/core'
 import {
   selectSelectedActivity,
   selectSelectedConnection,
@@ -41,8 +41,8 @@ const RightDrawerContent: React.FC = () => {
         <div className="ml-auto">
           {model && (
             <Button
-              variant="text"
-              size="small"
+              variant="subtle"
+              size="xs"
               className="!text-xs !normal-case"
               onClick={() => dispatch(setRightPanelTab(RightPanelTab.CAM_ERRORS))}
             >

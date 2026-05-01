@@ -1,6 +1,7 @@
 import type React from 'react'
 import { useCallback, useRef } from 'react'
-import { IconButton, Menu, MenuItem } from '@mui/material'
+import { ActionIcon } from '@mantine/core'
+import AnchoredMenu, { MenuItem } from '@/@noctua.core/components/menu/AnchoredMenu'
 import { usePopover } from '@/@noctua.core/hooks/usePopover'
 import { FaEllipsisV, FaPencilAlt, FaPlus, FaTrash } from 'react-icons/fa'
 import type { Edge, UserContext, DisplayTreeNode } from '../models/cam'
@@ -244,14 +245,14 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
         {/* Action cell */}
         <div ref={actionCellRef} className="flex w-10 shrink-0 flex-col items-center justify-center p-0">
           {showMenu && (
-            <IconButton size="small" onClick={e => nodeMenu.open(e.currentTarget)} className="!h-10 !w-10 !shadow-md">
+            <ActionIcon variant="subtle" color="gray" size="md" onClick={e => nodeMenu.open(e.currentTarget)} className="!h-10 !w-10 !shadow-md">
               <FaEllipsisV size={12} />
-            </IconButton>
+            </ActionIcon>
           )}
           {showAddButton && insertMenuItems.length > 0 && (
-            <IconButton size="small" onClick={() => { if (actionCellRef.current) addMenu.open(actionCellRef.current) }} className="!h-10 !w-10 !shadow-md">
+            <ActionIcon variant="subtle" color="gray" size="md" onClick={() => { if (actionCellRef.current) addMenu.open(actionCellRef.current) }} className="!h-10 !w-10 !shadow-md">
               <FaPlus size={12} />
-            </IconButton>
+            </ActionIcon>
           )}
         </div>
       </div>
@@ -283,7 +284,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
         />
       ))}
 
-      <Menu anchorEl={nodeMenu.anchor} open={nodeMenu.isOpen} onClose={nodeMenu.close}>
+      <AnchoredMenu anchorEl={nodeMenu.anchor} open={nodeMenu.isOpen} onClose={nodeMenu.close}>
         {insertMenuItems.length > 0 && (
           <MenuItem onClick={() => { if (actionCellRef.current) addMenu.open(actionCellRef.current); nodeMenu.close() }}>
             Add
@@ -295,21 +296,21 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
           </MenuItem>
         )}
         {canDelete && (
-          <MenuItem onClick={handleDeleteNode} className="!text-red-600">Delete</MenuItem>
+          <MenuItem onClick={handleDeleteNode} className="text-red-600">Delete</MenuItem>
         )}
-      </Menu>
+      </AnchoredMenu>
 
-      <Menu
+      <AnchoredMenu
         anchorEl={addMenu.anchor}
         open={addMenu.isOpen}
         onClose={addMenu.close}
-        slotProps={{ paper: { className: '!bg-blue-100', sx: { maxWidth: 'none' } } }}
+        className="!bg-blue-100"
       >
         {insertMenuItems.map(item => (
           <MenuItem
             key={`${item.predicate.id}-${item.targetType}`}
             onClick={() => handleInsertNode(item)}
-            className="!border-b !border-[rgba(59,89,152,0.6)] !py-1 !text-[10px] !leading-3"
+            className="border-b border-[rgba(59,89,152,0.6)] py-1 text-[10px] leading-3"
           >
             <div className="flex w-full flex-col items-start justify-start">
               <span>{item.label}</span>
@@ -317,7 +318,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
             </div>
           </MenuItem>
         ))}
-      </Menu>
+      </AnchoredMenu>
     </>
   )
 }

@@ -1,6 +1,6 @@
 import type React from 'react'
 import { useMemo } from 'react'
-import { IconButton, Tooltip } from '@mui/material'
+import { ActionIcon, Tooltip } from '@mantine/core'
 import {
   FaCalendarDay,
   FaComment,
@@ -78,12 +78,12 @@ const CamToolbar: React.FC = () => {
       {/* Title */}
       {cam.title && (
         <div className="flex h-full max-w-[250px] items-center border-r border-gray-300 px-2">
-          <span className="flex-grow truncate pr-2">
+          <span className="grow truncate pr-2">
             <span className="mr-2 font-bold">Title:</span>
             {cam.title}
           </span>
           <button
-            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+            className="text-gray-500 hover:text-gray-700 focus:outline-hidden"
             onClick={openCamForm}
           >
             <FaPen size={12} />
@@ -109,10 +109,13 @@ const CamToolbar: React.FC = () => {
       {/* Comments */}
       <div className="h-full px-1">
         <Tooltip
-          title={cam.comments.length > 0 ? cam.comments.join(', ') : 'No comments'}
-          placement="top"
+          label={cam.comments.length > 0 ? cam.comments.join(', ') : 'No comments'}
+          position="top"
         >
-          <IconButton
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            size="lg"
             className="text-gray-600 hover:text-gray-800"
             onClick={openCamForm}
           >
@@ -120,14 +123,17 @@ const CamToolbar: React.FC = () => {
             <span className="text-2xs absolute right-0 top-0 rounded-md bg-green-800 px-1 py-px text-white">
               {commentCount}
             </span>
-          </IconButton>
+          </ActionIcon>
         </Tooltip>
       </div>
 
       {/* Clone */}
       <div className="border-r border-gray-300 px-1">
-        <Tooltip title="Make a copy of this model" placement="top">
-          <IconButton
+        <Tooltip label="Make a copy of this model" position="top">
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            size="lg"
             className="text-gray-600 hover:text-gray-800"
             onClick={() =>
               dispatch(
@@ -140,7 +146,7 @@ const CamToolbar: React.FC = () => {
             }
           >
             <FaClone size={16} />
-          </IconButton>
+          </ActionIcon>
         </Tooltip>
       </div>
 
@@ -161,7 +167,7 @@ const CamToolbar: React.FC = () => {
                 </div>
                 <span>{cam.state}</span>
                 <button
-                  className="ml-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  className="ml-1 text-gray-500 hover:text-gray-700 focus:outline-hidden"
                   onClick={openCamForm}
                 >
                   <FaPen size={10} />
@@ -191,7 +197,7 @@ const CamToolbar: React.FC = () => {
       <ContributorChips contributors={cam.contributors || []} />
 
       {/* Right-side action buttons */}
-      <div className="flex flex-shrink-0 items-center justify-end gap-2">
+      <div className="flex shrink-0 items-center justify-end gap-2">
         <ToolbarLinkMenu label="View In" items={viewInItems} />
         <ToolbarLinkMenu label="Export As" items={exportItems} />
       </div>

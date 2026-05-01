@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Button, Checkbox, CircularProgress, FormControlLabel, IconButton } from '@mui/material'
+import { ActionIcon, Button, Checkbox, Loader } from '@mantine/core'
 import { FiPlus, FiX } from 'react-icons/fi'
 import { v4 as uuidv4 } from 'uuid'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
@@ -165,15 +165,11 @@ const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity
         </div>
         <div className="flex flex-col items-stretch justify-start px-4 py-1">
           {items.map(item => (
-            <FormControlLabel
+            <Checkbox
               key={item.id}
-              control={
-                <Checkbox
-                  checked={item.selected}
-                  onChange={() => toggleItem(item.id)}
-                  size="small"
-                />
-              }
+              checked={item.selected}
+              onChange={() => toggleItem(item.id)}
+              size="sm"
               label={
                 <span className="text-sm">
                   {item.label} ({item.id})
@@ -189,7 +185,7 @@ const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <CircularProgress size={24} />
+        <Loader size={24} />
         <span className="ml-2 text-sm text-gray-500">Loading chemical participants...</span>
       </div>
     )
@@ -268,18 +264,21 @@ const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity
                       onChange={value => updateEvidence(ev.uid, 'withFrom', value)}
                     />
                   </div>
-                  <IconButton
-                    size="small"
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="md"
                     onClick={() => removeEvidence(ev.uid)}
                     className="!text-gray-400 hover:!text-red-500"
                   >
                     <FiX size={14} />
-                  </IconButton>
+                  </ActionIcon>
                 </div>
               ))}
               <Button
-                size="small"
-                startIcon={<FiPlus />}
+                variant="subtle"
+                size="xs"
+                leftSection={<FiPlus />}
                 onClick={addEvidence}
                 className="!text-xs !normal-case"
               >
@@ -293,8 +292,8 @@ const ChemicalConnectorForm: React.FC<Props> = ({ sourceActivity, targetActivity
       {/* Footer */}
       <div className="flex items-center justify-end gap-2 border-t border-gray-200 bg-gray-100 px-4 py-3">
         <Button
-          variant="contained"
-          size="small"
+          variant="filled"
+          size="xs"
           disabled={selectedItems.length === 0 || isSaving}
           onClick={handleSave}
         >
