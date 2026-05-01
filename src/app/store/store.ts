@@ -10,6 +10,8 @@ import { authSlice } from '@/features/auth/slices/authSlice'
 import { relationSlice } from '@/features/relations/slices/relationSlice'
 import { dialogSlice } from '@/@noctua.core/components/dialog/dialogSlice'
 import { toastSlice } from '@/@noctua.core/components/toast/toastSlice'
+import { loadingOverlaySlice } from '@/@noctua.core/components/loading-overlay/loadingOverlaySlice'
+import { loadingOverlayMiddleware } from '@/@noctua.core/components/loading-overlay/loadingOverlayMiddleware'
 
 const rootReducer = combineSlices({
   auth: authSlice.reducer,
@@ -20,10 +22,11 @@ const rootReducer = combineSlices({
   drawer: drawerSlice.reducer,
   dialog: dialogSlice.reducer,
   toast: toastSlice.reducer,
+  loadingOverlay: loadingOverlaySlice.reducer,
   [apiService.reducerPath]: apiService.reducer,
 })
 
-const middlewares: Middleware[] = [apiService.middleware]
+const middlewares: Middleware[] = [apiService.middleware, loadingOverlayMiddleware]
 export type RootState = ReturnType<typeof rootReducer>
 
 export const makeStore = (preloadedState?: Partial<RootState>) => {

@@ -9,6 +9,7 @@ import { useEffect } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
 import { ENVIRONMENT, EXTERNAL_LINKS } from '@/@noctua.core/data/constants'
 import CamToolbar from '@/features/gocam/components/CamToolbar'
+import LoadingOverlay from '@/@noctua.core/components/loading-overlay/LoadingOverlay'
 
 interface LayoutProps {
   rightDrawerContent?: React.ReactNode
@@ -30,6 +31,7 @@ const Layout: React.FC<LayoutProps> = ({ rightDrawerContent }) => {
 
   return (
     <div className="flex h-screen w-full flex-col bg-gray-300">
+      <LoadingOverlay />
       {isDev && (
         <div className="text-2xs flex h-[25px] items-center justify-center bg-orange-300 py-2 font-bold uppercase">
           Testing Version. Visit{' '}
