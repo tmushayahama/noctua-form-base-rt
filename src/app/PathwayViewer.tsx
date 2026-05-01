@@ -28,6 +28,7 @@ import ConnectorForm from '@/features/relations/components/ConnectorForm'
 import { selectAuthUser, selectBaristaToken } from '@/features/auth/slices/authSlice'
 import { usePathwayCanvas } from './hooks/usePathwayCanvas'
 import { useDeleteConfirmation } from './hooks/useDeleteConfirmation'
+import { useBaristaModelWatch } from './hooks/useBaristaModelWatch'
 
 interface ConnectorDialog {
   open: boolean
@@ -55,10 +56,18 @@ const PathwayEditor: React.FC = () => {
     error,
     isLoading,
     isSuccess,
+    refetch,
   } = useGetGraphModelQuery(
     { modelId: modelId || '', baristaToken: baristaToken || '' },
     { skip: !modelId }
   )
+
+  const { externalChangePending, acknowledge } = useBaristaModelWatch(modelId)
+
+  const handleRefreshModel = useCallback(() => {
+    acknowledge()
+    refetch()
+  }, [acknowledge, refetch])
 
   const del = useDeleteConfirmation(graphModel?.data ?? null)
 
@@ -172,6 +181,28 @@ const PathwayEditor: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* External update notification */}
+      <Modal
+        opened={externalChangePending}
+        onClose={() => {}}
+        withCloseButton={false}
+        closeOnClickOutside={false}
+        closeOnEscape={false}
+        size={resolveModalSize('sm')}
+      >
+        <div className="flex h-11 shrink-0 items-center border-b border-gray-200 bg-white px-4">
+          <span className="text-sm font-semibold text-gray-800">Model Updated</span>
+        </div>
+        <div className="px-4 py-4 text-sm text-gray-700">
+          This model has been modified. Please refresh to get the latest version.
+        </div>
+        <div className="flex justify-end gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3">
+          <Button onClick={handleRefreshModel} variant="filled">
+            Refresh
+          </Button>
+        </div>
+      </Modal>
 
       {/* Delete confirmation dialog */}
       <Modal

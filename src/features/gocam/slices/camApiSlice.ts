@@ -5,6 +5,14 @@ import type { RootState } from '@/app/store/store'
 import { getBaristaApiUrl } from '@/@noctua.core/services/linksService'
 import { AnnotationKey, OperationEntity, OperationType } from '../models/operations'
 import type { Operation } from '../models/operations'
+import { baristaSocketService } from '../services/baristaSocketService'
+
+const extractPacketId = (raw: unknown): string | undefined => {
+  if (!raw || typeof raw !== 'object') return undefined
+  const r = raw as Record<string, unknown>
+  const v = r['packet-id'] ?? r['packet_id']
+  return typeof v === 'string' ? v : undefined
+}
 
 const addTagTypes = ['graph'] as const
 
@@ -118,6 +126,8 @@ const graphApi = apiService.enhanceEndpoints({ addTagTypes }).injectEndpoints({
         })
 
         if (result.error) return { error: result.error }
+
+        baristaSocketService.recordOwnPacket(extractPacketId(result.data))
 
         return {
           data: result.data?.data
