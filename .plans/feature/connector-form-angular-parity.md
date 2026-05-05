@@ -308,18 +308,18 @@ The autocomplete dropdown panel has several differences between Angular and Reac
 
 **Specific differences:**
 
-| Property | Angular | React | Match? |
-|----------|---------|-------|--------|
-| Panel background | `#fbf9de` (cream) | `bg-amber-100` (~#fef3c7) | Close but different shade |
-| Panel max-width | `600px` | None | Missing |
-| Label clamping | None (`white-space: normal`, wraps freely) | `line-clamp-2` (clamps at 2 lines) | WRONG |
-| Label flex | `flex-shrink: 1; min-width: 0` | `flex-grow; line-clamp-2` | Different approach |
-| ID font-size | `10px` | Inherits `text-xs` (12px) | Different |
-| ID color | `rgba(0,0,0,0.6)` | `text-gray-500` (#6b7280) | Close |
-| Option separator | `border-bottom: 1px rgba(primary, 0.3)` | None | Missing |
-| Option padding | `8px 16px` | `12px` all sides (p-3) | Different |
-| Option min-height | `40px` | Not set | Missing |
-| Evidence badge | None | Bold badge before label | Extra in React |
+| Property          | Angular                                    | React                              | Match?                    |
+| ----------------- | ------------------------------------------ | ---------------------------------- | ------------------------- |
+| Panel background  | `#fbf9de` (cream)                          | `bg-amber-100` (~#fef3c7)          | Close but different shade |
+| Panel max-width   | `600px`                                    | None                               | Missing                   |
+| Label clamping    | None (`white-space: normal`, wraps freely) | `line-clamp-2` (clamps at 2 lines) | WRONG                     |
+| Label flex        | `flex-shrink: 1; min-width: 0`             | `flex-grow; line-clamp-2`          | Different approach        |
+| ID font-size      | `10px`                                     | Inherits `text-xs` (12px)          | Different                 |
+| ID color          | `rgba(0,0,0,0.6)`                          | `text-gray-500` (#6b7280)          | Close                     |
+| Option separator  | `border-bottom: 1px rgba(primary, 0.3)`    | None                               | Missing                   |
+| Option padding    | `8px 16px`                                 | `12px` all sides (p-3)             | Different                 |
+| Option min-height | `40px`                                     | Not set                            | Missing                   |
+| Evidence badge    | None                                       | Bold badge before label            | Extra in React            |
 
 **Fix:**
 - Remove `line-clamp-2` from label — replace with `flex-shrink min-w-0` to allow natural flex wrapping (no clamping)
@@ -328,33 +328,33 @@ The autocomplete dropdown panel has several differences between Angular and Reac
 - Add border-bottom between options: `border-b border-[rgba(59,89,152,0.3)]`
 - Change option padding to `px-4 py-2` (16px horizontal, 8px vertical)
 - Add `min-h-[40px]` to options
-- Change ID to `text-[10px] text-black/60 shrink-0`
+- Change ID to `text-2xs text-black/60 shrink-0`
 - Remove bold evidence badge (Angular doesn't have it)
 
 ---
 
 ## Summary Priority Table
 
-| # | Gap | Severity | Files Affected |
-|---|-----|----------|----------------|
-| 1 | "Effect/Direction" → "Effect Direction" | Low | RelationForm.tsx |
-| 2 | Section headers: wrong color (#3b5998 → #555) + remove uppercase | Medium | RelationForm.tsx, ChemicalConnectorForm.tsx |
-| 3 | "Suggested Causal Relation" layout (remove "Relation" label, fix styling) | Medium | RelationForm.tsx |
-| 4 | Chemical button color (blue → green #337d33) | Low | RelationForm.tsx |
-| 5 | Effect Direction hint text & position (below → right) | Medium | RelationForm.tsx |
-| 6 | Radio row borders (missing between rows) | Low | RelationForm.tsx |
-| 7 | Radio description placement (below → inline right) | Medium | RelationForm.tsx |
-| 8 | Evidence label "Evidence Code" → "Evidence" | Low | RelationForm.tsx, ChemicalConnectorForm.tsx |
-| 9 | Evidence widths: fixed px → percentage | Medium | RelationForm.tsx, ChemicalConnectorForm.tsx |
-| 10 | Evidence fields: verify textarea rendering | Low | Check ReferenceField, WithField, TermAutocomplete |
-| 11 | "Why is Save disabled?" warning button | Medium | RelationForm.tsx |
-| 12 | Footer box-shadow | Low | RelationForm.tsx |
-| 13 | Toast messages on save | Medium | RelationForm.tsx, ChemicalConnectorForm.tsx |
-| 14 | Chemical connector header style | Low | ChemicalConnectorForm.tsx |
-| 15 | Chemical connector section headers (same as #2) | Medium | ChemicalConnectorForm.tsx |
-| 16 | Chemical connector empty state (12px → 30px) | Low | ChemicalConnectorForm.tsx |
-| 17 | Dialog title "Causal Relation" → "Causal Relation Form" | Low | PathwayViewer.tsx |
-| 18 | Autocomplete panel: clamping, background, separators, sizing | High | Autocomplete2.tsx |
+| #   | Gap                                                                       | Severity | Files Affected                                    |
+| --- | ------------------------------------------------------------------------- | -------- | ------------------------------------------------- |
+| 1   | "Effect/Direction" → "Effect Direction"                                   | Low      | RelationForm.tsx                                  |
+| 2   | Section headers: wrong color (#3b5998 → #555) + remove uppercase          | Medium   | RelationForm.tsx, ChemicalConnectorForm.tsx       |
+| 3   | "Suggested Causal Relation" layout (remove "Relation" label, fix styling) | Medium   | RelationForm.tsx                                  |
+| 4   | Chemical button color (blue → green #337d33)                              | Low      | RelationForm.tsx                                  |
+| 5   | Effect Direction hint text & position (below → right)                     | Medium   | RelationForm.tsx                                  |
+| 6   | Radio row borders (missing between rows)                                  | Low      | RelationForm.tsx                                  |
+| 7   | Radio description placement (below → inline right)                        | Medium   | RelationForm.tsx                                  |
+| 8   | Evidence label "Evidence Code" → "Evidence"                               | Low      | RelationForm.tsx, ChemicalConnectorForm.tsx       |
+| 9   | Evidence widths: fixed px → percentage                                    | Medium   | RelationForm.tsx, ChemicalConnectorForm.tsx       |
+| 10  | Evidence fields: verify textarea rendering                                | Low      | Check ReferenceField, WithField, TermAutocomplete |
+| 11  | "Why is Save disabled?" warning button                                    | Medium   | RelationForm.tsx                                  |
+| 12  | Footer box-shadow                                                         | Low      | RelationForm.tsx                                  |
+| 13  | Toast messages on save                                                    | Medium   | RelationForm.tsx, ChemicalConnectorForm.tsx       |
+| 14  | Chemical connector header style                                           | Low      | ChemicalConnectorForm.tsx                         |
+| 15  | Chemical connector section headers (same as #2)                           | Medium   | ChemicalConnectorForm.tsx                         |
+| 16  | Chemical connector empty state (12px → 30px)                              | Low      | ChemicalConnectorForm.tsx                         |
+| 17  | Dialog title "Causal Relation" → "Causal Relation Form"                   | Low      | PathwayViewer.tsx                                 |
+| 18  | Autocomplete panel: clamping, background, separators, sizing              | High     | Autocomplete2.tsx                                 |
 
 ---
 
@@ -408,14 +408,14 @@ The autocomplete dropdown panel has several differences between Angular and Reac
 ## Failed Approaches
 
 | What was tried | Why it failed | Date |
-|----------------|---------------|------|
-| | | |
+| -------------- | ------------- | ---- |
+|                |               |      |
 
 ## Files Modified
 
-| File | Action | Status |
-|------|--------|--------|
-| `.plans/feature/connector-form-angular-parity.md` | Updated plan | Done |
+| File                                              | Action       | Status |
+| ------------------------------------------------- | ------------ | ------ |
+| `.plans/feature/connector-form-angular-parity.md` | Updated plan | Done   |
 
 ## Blockers
 - None — all decisions resolved

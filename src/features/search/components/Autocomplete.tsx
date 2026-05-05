@@ -201,56 +201,56 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
             className="!bg-accent-50 z-[1300] max-h-60 w-[400px] overflow-y-auto rounded-md bg-white shadow-lg"
             style={{ position: 'fixed', visibility: 'hidden' }}
           >
-          {!searching && displayOptions.length === 0 && (
-            <div className="p-4 text-center text-xs text-gray-500">
-              {inputValue.length < MIN_SEARCH_LENGTH
-                ? 'Type at least 3 characters to search'
-                : 'No results found'}
-            </div>
-          )}
+            {!searching && displayOptions.length === 0 && (
+              <div className="p-4 text-center text-xs text-gray-500">
+                {inputValue.length < MIN_SEARCH_LENGTH
+                  ? 'Type at least 3 characters to search'
+                  : 'No results found'}
+              </div>
+            )}
 
-          {displayOptions.map((option, index) => (
-            <div
-              key={option.id}
-              className={`flex min-h-[40px] cursor-pointer items-center border-b px-4 py-2 text-xs ${option.isObsolete ? 'pointer-events-none line-through opacity-40' : ''} ${index === highlightedIndex ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
-              style={{ borderColor: 'rgba(59,89,152,0.3)' }}
-              onClick={() => !option.isObsolete && handleOptionSelect(option)}
-              onMouseEnter={() => setHighlightedIndex(index)}
-            >
-              <div className="min-w-0 shrink font-normal">{option.label}</div>
-              <span className="grow" />
-              {autocompleteType === AutocompleteType.EVIDENCE_CODE && option.xref && (
-                <div className="ml-2 shrink-0 font-bold">{option.xref}</div>
-              )}
-              <div className="ml-2 shrink-0 text-[10px]" style={{ color: 'rgba(0,0,0,0.6)' }}>
-                {option.link ? (
-                  <a
-                    href={option.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={e => e.stopPropagation()}
-                    className="flex items-center hover:text-blue-500"
+            {displayOptions.map((option, index) => (
+              <div
+                key={option.id}
+                className={`flex min-h-[40px] cursor-pointer items-center border-b px-4 py-2 text-xs ${option.isObsolete ? 'pointer-events-none line-through opacity-40' : ''} ${index === highlightedIndex ? 'bg-blue-100' : 'hover:bg-blue-50'}`}
+                style={{ borderColor: 'rgba(59,89,152,0.3)' }}
+                onClick={() => !option.isObsolete && handleOptionSelect(option)}
+                onMouseEnter={() => setHighlightedIndex(index)}
+              >
+                <div className="min-w-0 shrink font-normal">{option.label}</div>
+                <span className="grow" />
+                {autocompleteType === AutocompleteType.EVIDENCE_CODE && option.xref && (
+                  <div className="ml-2 shrink-0 font-bold">{option.xref}</div>
+                )}
+                <div className="ml-2 shrink-0 text-2xs" style={{ color: 'rgba(0,0,0,0.6)' }}>
+                  {option.link ? (
+                    <a
+                      href={option.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      className="flex items-center hover:text-blue-500"
+                    >
+                      {option.id}
+                    </a>
+                  ) : (
+                    <span>{option.id}</span>
+                  )}
+                </div>
+
+                {onOpenTermDetails && (
+                  <button
+                    className="ml-2 shrink-0 rounded-full border p-1 hover:bg-gray-200"
+                    onClick={e => {
+                      e.stopPropagation()
+                      onOpenTermDetails(e, option)
+                    }}
                   >
-                    {option.id}
-                  </a>
-                ) : (
-                  <span>{option.id}</span>
+                    <FiFile className="ml-1" />
+                  </button>
                 )}
               </div>
-
-              {onOpenTermDetails && (
-                <button
-                  className="ml-2 shrink-0 rounded-full border p-1 hover:bg-gray-200"
-                  onClick={e => {
-                    e.stopPropagation()
-                    onOpenTermDetails(e, option)
-                  }}
-                >
-                  <FiFile className="ml-1" />
-                </button>
-              )}
-            </div>
-          ))}
+            ))}
           </div>
         </Portal>
       )}

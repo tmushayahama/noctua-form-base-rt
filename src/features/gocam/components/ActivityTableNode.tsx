@@ -130,11 +130,11 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
           if (!pendingInsert) break
           const ev = values.evidence
             ? {
-                ...createEvidenceForm(),
-                evidenceCode: { id: values.evidence.id, label: values.evidence.label },
-                reference: values.reference || '',
-                withFrom: values.with || '',
-              }
+              ...createEvidenceForm(),
+              evidenceCode: { id: values.evidence.id, label: values.evidence.label },
+              reference: values.reference || '',
+              withFrom: values.with || '',
+            }
             : undefined
           await updateGraphModel(
             buildAddNodeOperations(
@@ -233,7 +233,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
                 ) : null
               )
             ) : (
-              <div className="flex items-center px-2 py-1 text-[10px] italic text-gray-400">
+              <div className="flex items-center px-2 py-1 text-2xs italic text-gray-400">
                 no evidence present.
               </div>
             )}
@@ -310,7 +310,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
           <MenuItem
             key={`${item.predicate.id}-${item.targetType}`}
             onClick={() => handleInsertNode(item)}
-            className="border-b border-[rgba(59,89,152,0.6)] py-1 text-[10px] leading-3"
+            className="border-b border-[rgba(59,89,152,0.6)] py-1 text-2xs leading-3"
           >
             <div className="flex w-full flex-col items-start justify-start">
               <span>{item.label}</span>

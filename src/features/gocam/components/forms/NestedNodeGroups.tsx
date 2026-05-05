@@ -44,7 +44,7 @@ const NestedNodeGroups: React.FC<NestedNodeGroupsProps> = ({
           className={`mb-1 flex flex-row items-stretch justify-start bg-white ${getAspectBorderClass(row.termNode)}`}
         >
           {row.termNode.isComplement && (
-            <div className="flex w-[50px] flex-col items-center justify-center bg-gray-300 text-center text-[10px]">
+            <div className="flex w-[50px] flex-col items-center justify-center bg-gray-300 text-center text-2xs">
               <div>IS NOT</div>
             </div>
           )}

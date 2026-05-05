@@ -23,28 +23,46 @@ const Toolbar: React.FC = () => {
   }
 
   return (
-    <div className="relative flex h-full items-center py-0 pl-1 pr-3">
+    <div
+      className={`relative flex h-full items-center py-0 px-4 ${isDev ? 'bg-accent-500' : 'bg-white'}`}
+    >
       {/* Logo / Branding — left side */}
-      <div className="flex h-full flex-row items-center justify-start py-1">
-        <a
-          className="mr-1 text-xl font-bold text-gray-900 no-underline hover:text-black"
-          href={noctuaUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Noctua
-        </a>
-        <a
-          className="mr-1 text-xl text-gray-900 no-underline hover:text-black"
-          href="/"
-          onClick={e => {
-            e.preventDefault()
-            window.location.reload()
-          }}
-        >
-          Pathway Editor
-        </a>
-        {isDev && <small className="text-xs text-gray-900">(dev)</small>}
+      <div className="flex h-full flex-col items-start justify-center py-2">
+        <div className="flex flex-row items-center">
+          <a
+            className="mr-2 text-xl font-bold no-underline hover:text-black"
+            href={noctuaUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Noctua
+          </a>
+          <a
+            className="mr-1 text-xl text-gray-900 no-underline hover:text-black"
+            href="/"
+            onClick={e => {
+              e.preventDefault()
+              window.location.reload()
+            }}
+          >
+            Pathway Editor
+          </a>
+          {isDev && <span className="text-xl text-gray-700">(dev)</span>}
+        </div>
+        {isDev && (
+          <div className="text-2xs italic font-bold text-gray-700">
+            Testing Version. Visit{' '}
+            <a
+              className="underline hover:text-black"
+              href={EXTERNAL_LINKS.NOCTUA_PRODUCTION}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Noctua
+            </a>{' '}
+            for production version
+          </div>
+        )}
       </div>
 
       {/* Right-aligned section */}
@@ -97,7 +115,7 @@ const Toolbar: React.FC = () => {
                 <div className="flex flex-row items-center">
                   <div className="mr-1.5 flex max-w-[150px] flex-col items-start overflow-hidden leading-5">
                     <div className="truncate">{user.name}</div>
-                    <div className="truncate text-[10px] text-gray-500">
+                    <div className="truncate text-2xs text-gray-500">
                       {user.group?.label}
                     </div>
                   </div>

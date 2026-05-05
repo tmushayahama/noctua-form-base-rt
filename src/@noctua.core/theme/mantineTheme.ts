@@ -44,7 +44,7 @@ export const mantineTheme = createTheme({
   colors: { primary, accent },
   defaultRadius: 'sm',
   fontFamily:
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
+    'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", Oxygen, Ubuntu, Cantarell, sans-serif',
   fontSizes: {
     xs: '0.75rem',
     sm: '0.875rem',

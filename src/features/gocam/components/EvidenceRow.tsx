@@ -14,7 +14,7 @@ import EditorDropdown from './forms/EditorDropdown'
 import type { EditorDropdownValues } from './forms/EditorDropdown'
 
 const cellBase =
-  'group/cell relative min-h-[38px] border border-blue-800/30 px-2 py-1 text-[10px] leading-tight'
+  'group/cell relative min-h-[38px] border border-blue-800/30 px-2 py-1 text-2xs leading-tight'
 
 const floatingLabel =
   'pointer-events-none absolute -top-2 left-1.5 z-10 bg-white px-0.5 text-[9px] font-semibold text-gray-500'
