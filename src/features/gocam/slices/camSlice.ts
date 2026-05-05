@@ -1,25 +1,13 @@
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { createSlice, createSelector } from '@reduxjs/toolkit'
-import type { GraphModel, Activity, Edge } from '../models/cam'
+import type { GraphModel, Activity } from '../models/cam'
 import type { GOlrResponse } from '@/features/search/models/search'
-
-export interface SelectedConnectionKey {
-  sourceActivityUid: string
-  targetActivityUid: string
-}
-
-export interface SelectedConnection {
-  sourceActivity: Activity
-  targetActivity: Activity
-  edge: Edge
-}
 
 interface CamState {
   model: GraphModel | null
   loading: boolean
   error: string | null
   selectedActivityId: string | null
-  selectedConnectionKey: SelectedConnectionKey | null
 }
 
 const initialState: CamState = {
@@ -27,7 +15,6 @@ const initialState: CamState = {
   loading: false,
   error: null,
   selectedActivityId: null,
-  selectedConnectionKey: null,
 }
 
 export const camSlice = createSlice({
@@ -39,14 +26,6 @@ export const camSlice = createSlice({
     },
     setSelectedActivity: (state, action: PayloadAction<string | null>) => {
       state.selectedActivityId = action.payload
-      if (action.payload) state.selectedConnectionKey = null
-    },
-    setSelectedConnection: (
-      state,
-      action: PayloadAction<SelectedConnectionKey | null>
-    ) => {
-      state.selectedConnectionKey = action.payload
-      if (action.payload) state.selectedActivityId = null
     },
   },
 })
@@ -54,7 +33,6 @@ export const camSlice = createSlice({
 export const {
   setModel,
   setSelectedActivity,
-  setSelectedConnection,
 } = camSlice.actions
 
 // ── Base selectors ─────────────────────────────────────────────────
@@ -62,8 +40,6 @@ export const {
 export const selectCamModel = (state: { cam: CamState }) => state.cam.model
 const selectSelectedActivityId = (state: { cam: CamState }) =>
   state.cam.selectedActivityId
-const selectSelectedConnectionKey = (state: { cam: CamState }) =>
-  state.cam.selectedConnectionKey
 
 // ── Derived selectors ──────────────────────────────────────────────
 
@@ -72,25 +48,6 @@ export const selectSelectedActivity = createSelector(
   (model, id): Activity | null => {
     if (!model || !id) return null
     return model.activities.find(a => a.uid === id) ?? null
-  }
-)
-
-export const selectSelectedConnection = createSelector(
-  [selectCamModel, selectSelectedConnectionKey],
-  (model, key): SelectedConnection | null => {
-    if (!model || !key) return null
-    const source = model.activities.find(a => a.uid === key.sourceActivityUid)
-    const target = model.activities.find(a => a.uid === key.targetActivityUid)
-    if (!source || !target) return null
-    const edge = model.activityConnections.find(
-      c =>
-        (c.sourceId === source.rootNode?.uid &&
-          c.targetId === target.rootNode?.uid) ||
-        (c.sourceId === target.rootNode?.uid &&
-          c.targetId === source.rootNode?.uid)
-    )
-    if (!edge) return null
-    return { sourceActivity: source, targetActivity: target, edge }
   }
 )
 

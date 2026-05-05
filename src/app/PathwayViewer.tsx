@@ -5,7 +5,6 @@ import { useAppDispatch, useAppSelector } from './hooks'
 import {
   setModel,
   setSelectedActivity,
-  setSelectedConnection,
 } from '@/features/gocam/slices/camSlice'
 import { useSearchParams } from 'react-router-dom'
 import PathwayGraph from '@/features/pathway/components/PathwayGraph'
@@ -16,7 +15,7 @@ import {
   setRightPanelTab,
   RightPanelTab,
 } from '@/@noctua.core/components/drawer/drawerSlice'
-import type { Activity } from '@/features/gocam/models/cam'
+import type { Activity, Edge } from '@/features/gocam/models/cam'
 import type { ActivityFormType } from '@/features/gocam/models/formModels'
 import { resetForm, initCreateForm } from '@/features/gocam/slices/activityFormSlice'
 import { Button, Modal } from '@mantine/core'
@@ -34,9 +33,15 @@ interface ConnectorDialog {
   open: boolean
   source: Activity | null
   target: Activity | null
+  edge: Edge | null
 }
 
-const closedConnector: ConnectorDialog = { open: false, source: null, target: null }
+const closedConnector: ConnectorDialog = {
+  open: false,
+  source: null,
+  target: null,
+  edge: null,
+}
 
 const PathwayEditor: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -90,16 +95,22 @@ const PathwayEditor: React.FC = () => {
 
   const handleLinkClick = useCallback(
     (sourceId: string, targetId: string) => {
-      dispatch(
-        setSelectedConnection({
-          sourceActivityUid: sourceId,
-          targetActivityUid: targetId,
-        })
+      const model = graphModel?.data
+      if (!model) return
+      const source = model.activities.find(a => a.uid === sourceId)
+      const target = model.activities.find(a => a.uid === targetId)
+      if (!source || !target) return
+      const edge = model.activityConnections.find(
+        c =>
+          (c.sourceId === source.rootNode?.uid &&
+            c.targetId === target.rootNode?.uid) ||
+          (c.sourceId === target.rootNode?.uid &&
+            c.targetId === source.rootNode?.uid)
       )
-      dispatch(setRightPanelTab(RightPanelTab.CONNECTOR_TABLE))
-      dispatch(setRightDrawerOpen(true))
+      if (!edge) return
+      setConnector({ open: true, source, target, edge })
     },
-    [dispatch]
+    [graphModel]
   )
 
   const handleLinkCreated = useCallback(
@@ -107,7 +118,7 @@ const PathwayEditor: React.FC = () => {
       const source = graphModel?.data?.activities.find(a => a.uid === sourceId)
       const target = graphModel?.data?.activities.find(a => a.uid === targetId)
       if (source && target) {
-        setConnector({ open: true, source, target })
+        setConnector({ open: true, source, target, edge: null })
       }
     },
     [graphModel]
@@ -232,13 +243,16 @@ const PathwayEditor: React.FC = () => {
         classNames={{ content: 'overflow-hidden' }}
       >
         <DialogHeader
-          title="Causal Relation Form"
+          title={connector.edge ? 'Edit Causal Relation' : 'Causal Relation Form'}
           onClose={() => setConnector(closedConnector)}
         />
         {connector.source && connector.target && (
           <ConnectorForm
             sourceActivity={connector.source}
             targetActivity={connector.target}
+            existingEdgeId={connector.edge?.id}
+            existingSourceUid={connector.edge?.sourceId}
+            existingTargetUid={connector.edge?.targetId}
             onClose={() => setConnector(closedConnector)}
             onSaved={() => setConnector(closedConnector)}
           />

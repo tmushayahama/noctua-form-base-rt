@@ -1,12 +1,14 @@
 import type React from 'react'
 import type { KeyboardEvent } from 'react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { FiFile } from 'react-icons/fi'
 import { useSearchTermsQuery } from '../slices/lookupApiSlice'
 import type { GOlrResponse } from '../models/search'
 import { AutocompleteType } from '../models/search'
 import { Loader, Portal, Textarea } from '@mantine/core'
 import { DEBOUNCE_MS, BLUR_CLOSE_DELAY_MS, MIN_SEARCH_LENGTH } from '@/@noctua.core/data/uiConstants'
+
+const VIEWPORT_PAD = 4
 
 interface TermAutocompleteProps {
   label: string
@@ -132,6 +134,34 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
     }
   }, [highlightedIndex])
 
+  useLayoutEffect(() => {
+    const list = listRef.current
+    const anchor = anchorRef.current
+    if (!open || !list || !anchor) return
+
+    const anchorRect = anchor.getBoundingClientRect()
+
+    list.style.position = 'fixed'
+    list.style.visibility = 'hidden'
+    list.style.top = `${anchorRect.bottom + VIEWPORT_PAD}px`
+    list.style.left = `${Math.max(VIEWPORT_PAD, anchorRect.left)}px`
+    list.style.right = ''
+
+    const listRect = list.getBoundingClientRect()
+    if (listRect.right > window.innerWidth - VIEWPORT_PAD) {
+      list.style.left = ''
+      list.style.right = `${Math.max(VIEWPORT_PAD, window.innerWidth - anchorRect.right)}px`
+    }
+
+    const settled = list.getBoundingClientRect()
+    if (settled.bottom > window.innerHeight - VIEWPORT_PAD) {
+      const flippedTop = anchorRect.top - settled.height - VIEWPORT_PAD
+      list.style.top = `${Math.max(VIEWPORT_PAD, flippedTop)}px`
+    }
+
+    list.style.visibility = 'visible'
+  }, [open, displayOptions, searching])
+
   const handleOptionSelect = (option: GOlrResponse) => {
     onChange(option)
     setInputValue(option.id ? `${option.label} (${option.id})` : option.label)
@@ -168,15 +198,8 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
         <Portal>
           <div
             ref={listRef}
-            className="!bg-accent-50 fixed z-[1300] mt-1 max-h-60 w-[400px] overflow-y-auto rounded-md bg-white shadow-lg"
-            style={{
-              top:
-                anchorRef.current.getBoundingClientRect().bottom +
-                window.scrollY,
-              left:
-                anchorRef.current.getBoundingClientRect().left +
-                window.scrollX,
-            }}
+            className="!bg-accent-50 z-[1300] max-h-60 w-[400px] overflow-y-auto rounded-md bg-white shadow-lg"
+            style={{ position: 'fixed', visibility: 'hidden' }}
           >
           {!searching && displayOptions.length === 0 && (
             <div className="p-4 text-center text-xs text-gray-500">

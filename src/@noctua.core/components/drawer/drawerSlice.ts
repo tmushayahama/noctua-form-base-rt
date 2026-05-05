@@ -4,7 +4,6 @@ import type { RootState } from '@/app/store/store'
 
 export enum RightPanelTab {
   ACTIVITY_TABLE = 'activityTable',
-  CONNECTOR_TABLE = 'connectorTable',
   CAM_ERRORS = 'camErrors',
 }
 

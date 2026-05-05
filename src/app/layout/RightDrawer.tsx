@@ -8,23 +8,16 @@ import {
 import { Button } from '@mantine/core'
 import {
   selectSelectedActivity,
-  selectSelectedConnection,
   selectCamModel,
 } from '@/features/gocam/slices/camSlice'
 import ActivityTable from '@/features/gocam/components/ActivityTable'
-import ConnectorTable from '@/features/gocam/components/ConnectorTable'
 import CamErrors from '@/features/gocam/components/CamErrors'
 
 const RightDrawerContent: React.FC = () => {
   const dispatch = useAppDispatch()
   const activity = useAppSelector(selectSelectedActivity)
-  const selectedConnection = useAppSelector(selectSelectedConnection)
   const model = useAppSelector(selectCamModel)
   const activeTab = useAppSelector(selectRightPanelTab)
-
-  if (activeTab === RightPanelTab.CONNECTOR_TABLE && selectedConnection) {
-    return <ConnectorTable />
-  }
 
   if (activeTab === RightPanelTab.CAM_ERRORS && model) {
     return <CamErrors model={model} />

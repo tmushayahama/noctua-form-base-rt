@@ -1,5 +1,5 @@
-import type { ReactNode, CSSProperties } from 'react'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { Portal } from '@mantine/core'
 
 interface AnchoredPopoverProps {
@@ -8,9 +8,12 @@ interface AnchoredPopoverProps {
   onClose: () => void
   children: ReactNode
   className?: string
-  /** "bottom-start" places below+aligned-left; "bottom-end" places below+aligned-right */
+  /** Preferred placement; auto-flips when the popover would overflow the viewport. */
   placement?: 'bottom-start' | 'bottom-end'
 }
+
+const VIEWPORT_PAD = 4
+const ANCHOR_GAP = 4
 
 const AnchoredPopover = ({
   anchorEl,
@@ -21,24 +24,42 @@ const AnchoredPopover = ({
   placement = 'bottom-start',
 }: AnchoredPopoverProps) => {
   const ref = useRef<HTMLDivElement>(null)
-  const [style, setStyle] = useState<CSSProperties>({ visibility: 'hidden' })
 
   useLayoutEffect(() => {
-    if (!open || !anchorEl) return
-    const rect = anchorEl.getBoundingClientRect()
+    const el = ref.current
+    if (!open || !anchorEl || !el) return
+
+    const anchorRect = anchorEl.getBoundingClientRect()
+
+    el.style.position = 'fixed'
+    el.style.visibility = 'hidden'
+    el.style.top = `${anchorRect.bottom + ANCHOR_GAP}px`
+    el.style.left = ''
+    el.style.right = ''
+
     if (placement === 'bottom-end') {
-      setStyle({
-        position: 'fixed',
-        top: rect.bottom + 4,
-        right: window.innerWidth - rect.right,
-      })
+      el.style.right = `${Math.max(VIEWPORT_PAD, window.innerWidth - anchorRect.right)}px`
     } else {
-      setStyle({
-        position: 'fixed',
-        top: rect.bottom + 4,
-        left: rect.left,
-      })
+      el.style.left = `${Math.max(VIEWPORT_PAD, anchorRect.left)}px`
     }
+
+    const popRect = el.getBoundingClientRect()
+
+    if (placement === 'bottom-start' && popRect.right > window.innerWidth - VIEWPORT_PAD) {
+      el.style.left = ''
+      el.style.right = `${Math.max(VIEWPORT_PAD, window.innerWidth - anchorRect.right)}px`
+    } else if (placement === 'bottom-end' && popRect.left < VIEWPORT_PAD) {
+      el.style.right = ''
+      el.style.left = `${Math.max(VIEWPORT_PAD, anchorRect.left)}px`
+    }
+
+    const settled = el.getBoundingClientRect()
+    if (settled.bottom > window.innerHeight - VIEWPORT_PAD) {
+      const flippedTop = anchorRect.top - settled.height - ANCHOR_GAP
+      el.style.top = `${Math.max(VIEWPORT_PAD, flippedTop)}px`
+    }
+
+    el.style.visibility = 'visible'
   }, [open, anchorEl, placement])
 
   useEffect(() => {
@@ -80,7 +101,7 @@ const AnchoredPopover = ({
       <div
         ref={ref}
         className={`z-[1300] rounded-md border border-gray-200 bg-white shadow-lg ${className ?? ''}`}
-        style={style}
+        style={{ position: 'fixed', visibility: 'hidden' }}
       >
         {children}
       </div>
