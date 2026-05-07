@@ -1,0 +1,34 @@
+.wrap {
+  position: relative;
+}
+
+.wrap .label {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  left: 8px;
+  margin: 0;
+  padding: 0 4px;
+  pointer-events: none;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--mantine-color-placeholder);
+  background-color: transparent;
+  transform-origin: left top;
+  transition:
+    transform 150ms ease,
+    color 150ms ease,
+    background-color 150ms ease;
+}
+
+.wrap[data-floating='true'] .label {
+  transform: translate(-2px, -18px) scale(0.80);
+  color: var(--color-primary-400);
+  background-color: white;
+}
+
+.input {
+  background-color: white;
+  border-radius: 4px;
+  padding-top: 10px!important;
+}

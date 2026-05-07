@@ -1,6 +1,5 @@
 import type React from 'react'
 import { useState, useCallback, useRef } from 'react'
-import { FaPencilAlt, FaTrash } from 'react-icons/fa'
 import type { Evidence, UserContext } from '../models/cam'
 import { EditorCategory } from '../models/editorCategory'
 import { AnnotationKey } from '../models/operations'
@@ -10,20 +9,9 @@ import {
   buildEditEvidenceAnnotationOperations,
 } from '../services/activityOperations'
 import { ENVIRONMENT } from '@/@noctua.core/data/constants'
+import EditableCell from '@/@noctua.core/components/cell/EditableCell'
 import EditorDropdown from './forms/EditorDropdown'
 import type { EditorDropdownValues } from './forms/EditorDropdown'
-
-const cellBase =
-  'group/cell relative min-h-[38px] border border-blue-800/30 px-2 py-1 text-2xs leading-tight'
-
-const floatingLabel =
-  'pointer-events-none absolute -top-2 left-1.5 z-10 bg-white px-0.5 text-[9px] font-semibold text-gray-500'
-
-const deleteBtn =
-  'absolute right-0 top-0 hidden h-5 w-5 items-center justify-center text-red-400 hover:bg-red-400 hover:text-white group-hover/cell:flex'
-
-const editBtn =
-  'absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center text-gray-500 opacity-0 hover:bg-gray-200 group-hover/cell:opacity-100'
 
 interface EvidenceRowProps {
   ev: Evidence
@@ -89,8 +77,13 @@ const EvidenceRow: React.FC<EvidenceRowProps> = ({
 
   return (
     <div className="mb-2 flex h-full flex-row items-stretch last:mb-0">
-      <div ref={evCellRef} className={`${cellBase} ml-1 flex grow flex-col items-stretch rounded-lg`}>
-        <div className={floatingLabel}>Evidence</div>
+      <EditableCell
+        ref={evCellRef}
+        label="Evidence"
+        className="ml-1 grow"
+        onEdit={() => openEditor(evCellRef, EditorCategory.evidence)}
+        onDelete={() => onRemoveEvidence(ev)}
+      >
         <span>
           {ev.evidenceCode?.label || '—'}
           {ev.evidenceCode?.id && (
@@ -107,16 +100,15 @@ const EvidenceRow: React.FC<EvidenceRowProps> = ({
             </>
           )}
         </span>
-        <button onClick={() => onRemoveEvidence(ev)} className={deleteBtn}>
-          <FaTrash size={10} />
-        </button>
-        <button onClick={() => openEditor(evCellRef, EditorCategory.evidence)} className={editBtn}>
-          <FaPencilAlt size={9} />
-        </button>
-      </div>
+      </EditableCell>
 
-      <div ref={refCellRef} className={`${cellBase} ml-1 flex w-[100px] shrink-0 flex-col items-stretch rounded-lg`}>
-        <div className={floatingLabel}>Reference</div>
+      <EditableCell
+        ref={refCellRef}
+        label="Reference"
+        className="ml-1 w-[100px] shrink-0"
+        onEdit={() => openEditor(refCellRef, EditorCategory.reference)}
+        onDelete={ev.reference ? () => onClearField(ev, AnnotationKey.SOURCE) : undefined}
+      >
         {ev.referenceUrl ? (
           <a href={ev.referenceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
             {ev.reference}
@@ -124,28 +116,17 @@ const EvidenceRow: React.FC<EvidenceRowProps> = ({
         ) : (
           <span>{ev.reference || '—'}</span>
         )}
-        {ev.reference && (
-          <button onClick={() => onClearField(ev, AnnotationKey.SOURCE)} className={deleteBtn}>
-            <FaTrash size={10} />
-          </button>
-        )}
-        <button onClick={() => openEditor(refCellRef, EditorCategory.reference)} className={editBtn}>
-          <FaPencilAlt size={9} />
-        </button>
-      </div>
+      </EditableCell>
 
-      <div ref={withCellRef} className={`${cellBase} ml-1 flex w-[100px] shrink-0 flex-col items-stretch rounded-lg`}>
-        <div className={floatingLabel}>With</div>
+      <EditableCell
+        ref={withCellRef}
+        label="With"
+        className="ml-1 w-[100px] shrink-0"
+        onEdit={() => openEditor(withCellRef, EditorCategory.with)}
+        onDelete={ev.with ? () => onClearField(ev, AnnotationKey.WITH) : undefined}
+      >
         <span>{ev.with || '—'}</span>
-        {ev.with && (
-          <button onClick={() => onClearField(ev, AnnotationKey.WITH)} className={deleteBtn}>
-            <FaTrash size={10} />
-          </button>
-        )}
-        <button onClick={() => openEditor(withCellRef, EditorCategory.with)} className={editBtn}>
-          <FaPencilAlt size={9} />
-        </button>
-      </div>
+      </EditableCell>
 
       <EditorDropdown
         anchorEl={editorAnchor}

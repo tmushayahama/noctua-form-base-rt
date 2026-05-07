@@ -1,7 +1,7 @@
 import type React from 'react'
 import { useState } from 'react'
-import { Textarea } from '@mantine/core'
 import { FaFileMedical } from 'react-icons/fa'
+import FloatingTextarea from '@/@noctua.core/components/textarea/FloatingTextarea'
 import ReferenceDropdown from './ReferenceDropdown'
 import WithDropdown from './WithDropdown'
 
@@ -25,7 +25,7 @@ const DatabaseField: React.FC<DatabaseFieldProps> = ({
 
   return (
     <>
-      <Textarea
+      <FloatingTextarea
         size="xs"
         label={resolvedLabel}
         value={value}
@@ -35,7 +35,6 @@ const DatabaseField: React.FC<DatabaseFieldProps> = ({
           if (trimmed !== e.target.value) onChange(trimmed)
         }}
         rows={2}
-        classNames={{ input: 'bg-white rounded' }}
         rightSection={
           <button
             type="button"

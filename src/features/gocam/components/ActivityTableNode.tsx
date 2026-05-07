@@ -2,11 +2,12 @@ import type React from 'react'
 import { useCallback, useRef } from 'react'
 import { ActionIcon, Menu } from '@mantine/core'
 import { usePopover } from '@/@noctua.core/hooks/usePopover'
-import { FaEllipsisV, FaPencilAlt, FaPlus, FaTrash } from 'react-icons/fa'
+import { FaEllipsisV, FaPlus } from 'react-icons/fa'
 import type { Edge, UserContext, DisplayTreeNode } from '../models/cam'
 import { RootTypes, Aspect } from '../models/cam'
 import { EditorCategory } from '../models/editorCategory'
 import { ENVIRONMENT } from '@/@noctua.core/data/constants'
+import EditableCell from '@/@noctua.core/components/cell/EditableCell'
 import EvidenceRow from './EvidenceRow'
 import { useAppDispatch } from '@/app/hooks'
 import { openDialog, DialogComponent } from '@/@noctua.core/components/dialog/dialogSlice'
@@ -36,18 +37,6 @@ function getAspectFromRootTypes(rootTypes: string[]): Aspect | null {
   if (rootTypes.includes(RootTypes.CELLULAR_COMPONENT)) return Aspect.CELLULAR_COMPONENT
   return null
 }
-
-const cellBase =
-  'group/cell relative break-words border border-[#aaa] px-[5px] py-2 text-xs text-black hover:border-primary-500'
-
-const floatingLabel =
-  'absolute left-1 -top-1.5 h-3 max-w-[80%] truncate bg-white px-1 text-[8px] leading-3 text-gray-500 group-hover/cell:text-primary-500'
-
-const deleteBtn =
-  'absolute right-0 top-0 hidden h-5 w-5 items-center justify-center text-red-400 hover:bg-red-400 hover:text-white group-hover/cell:flex'
-
-const editBtn =
-  'absolute right-0 bottom-0 hidden h-5 w-5 items-center justify-center text-gray-400 hover:bg-primary-500 hover:text-white group-hover/cell:flex'
 
 // ── Main ActivityTableNode ──────────────────────────────────────────
 
@@ -171,12 +160,18 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
         style={{ paddingLeft: nodePadding }}
       >
         {/* Term cell */}
-        <div
+        <EditableCell
           ref={termCellRef}
-          className={`${cellBase} shrink-0 rounded-md`}
+          label={treeNode.floatingLabel}
+          onEdit={() => {
+            if (termCellRef.current) {
+              editor.open(termCellRef.current, { category: EditorCategory.term, insert: null })
+            }
+          }}
+          onDelete={canDelete ? handleDeleteNode : undefined}
+          className="shrink-0"
           style={{ flexBasis: termWidth }}
         >
-          <div className={floatingLabel}>{treeNode.floatingLabel}</div>
           {node.label ? (
             <span>
               {node.label}
@@ -193,22 +188,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
           ) : (
             <span className="italic text-gray-400">—</span>
           )}
-          {canDelete && (
-            <button onClick={handleDeleteNode} className={deleteBtn}>
-              <FaTrash size={10} />
-            </button>
-          )}
-          <button
-            onClick={() => {
-              if (termCellRef.current) {
-                editor.open(termCellRef.current, { category: EditorCategory.term, insert: null })
-              }
-            }}
-            className={editBtn}
-          >
-            <FaPencilAlt size={9} />
-          </button>
-        </div>
+        </EditableCell>
 
         {/* Evidence cells */}
         {showEvidence && (

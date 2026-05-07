@@ -5,7 +5,8 @@ import { FiFile } from 'react-icons/fi'
 import { useSearchTermsQuery } from '../slices/lookupApiSlice'
 import type { GOlrResponse } from '../models/search'
 import { AutocompleteType } from '../models/search'
-import { Loader, Portal, Textarea } from '@mantine/core'
+import { Loader, Portal } from '@mantine/core'
+import FloatingTextarea from '@/@noctua.core/components/textarea/FloatingTextarea'
 import { DEBOUNCE_MS, BLUR_CLOSE_DELAY_MS, MIN_SEARCH_LENGTH } from '@/@noctua.core/data/uiConstants'
 
 const VIEWPORT_PAD = 4
@@ -172,7 +173,7 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
   return (
     <div className="w-full">
       <div ref={anchorRef} onKeyDown={handleKeyDown}>
-        <Textarea
+        <FloatingTextarea
           id={`autocomplete-${name}`}
           name={name}
           label={label}
@@ -189,7 +190,6 @@ const TermAutocomplete: React.FC<TermAutocompleteProps> = ({
           }}
           disabled={disabled}
           rows={2}
-          classNames={{ input: 'bg-white rounded' }}
           rightSection={searching ? <Loader size={20} /> : null}
         />
       </div>
