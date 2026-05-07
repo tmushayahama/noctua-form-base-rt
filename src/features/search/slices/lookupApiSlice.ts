@@ -156,6 +156,27 @@ const lookupApi = apiService
       >({
         queryFn: async ({ gpId, aspect, term, evidence }) => {
           try {
+            const fqFilters: string[] = [
+              'document_category: "annotation"',
+              '-qualifier:"not"',
+              `bioentity: "${gpId}"`,
+            ]
+
+            if (aspect === 'C') {
+              fqFilters.push('isa_partof_closure:"GO:0005575"')
+              fqFilters.push('-isa_partof_closure:"GO:0032991"')
+            } else {
+              fqFilters.push(`aspect: "${aspect}"`)
+            }
+
+            if (term) {
+              fqFilters.push(`annotation_class:"${term}"`)
+            }
+
+            if (evidence) {
+              fqFilters.push(`evidence:"${evidence}"`)
+            }
+
             const requestParams = {
               defType: 'edismax',
               qt: 'standard',
@@ -170,27 +191,16 @@ const lookupApi = apiService
               'facet.sort': 'count',
               'json.nl': 'arrarr',
               'facet.limit': '2000',
-              fq: [
-                'document_category: "annotation"',
-                `aspect: "${aspect}"`,
-                `bioentity: "${gpId}"`,
-              ],
+              fq: fqFilters,
               'facet.field': [
                 'source',
                 'assigned_by',
                 'aspect',
                 'evidence_type_closure',
+                'isa_partof_closure_label',
                 'annotation_class_label',
               ],
               q: '*:*',
-            }
-
-            if (term) {
-              requestParams.fq.push(`annotation_class:"${term}"`)
-            }
-
-            if (evidence) {
-              requestParams.fq.push(`evidence:"${evidence}"`)
             }
 
             const params = new URLSearchParams()
