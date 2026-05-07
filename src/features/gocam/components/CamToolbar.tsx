@@ -18,6 +18,7 @@ import {
   setRightPanelTab,
   RightPanelTab,
 } from '@/@noctua.core/components/drawer/drawerSlice'
+import Chip from '@/@noctua.core/components/chip/Chip'
 import { useModelUrls } from '../hooks/useModelUrls'
 import { getStateColor } from '../data/stateColors'
 import ContributorChips from './ContributorChips'
@@ -34,7 +35,17 @@ const CamToolbar: React.FC = () => {
       openDialog({
         component: DialogComponent.CAM_METADATA_FORM,
         title: 'Edit Model',
-        size: 'sm',
+        size: 'cam',
+      })
+    )
+  }
+
+  const openCopyDialog = () => {
+    dispatch(
+      openDialog({
+        component: DialogComponent.COPY_MODEL_DIALOG,
+        title: 'Copy Model',
+        size: 'cam',
       })
     )
   }
@@ -66,134 +77,101 @@ const CamToolbar: React.FC = () => {
   if (!cam) return null
 
   const commentCount = cam.comments?.length || 0
+  const stateColor = getStateColor(cam.state)
 
   return (
-    <div className="flex h-10 w-full items-center border-b border-gray-400 bg-white px-2 py-1 text-xs">
-      {/* Title */}
+    <div className="flex h-10 w-full items-center gap-2 bg-white px-3 text-xs shadow-md">
       {cam.title && (
-        <div className="flex h-full max-w-[250px] items-center border-r border-gray-300 px-2">
-          <span className="grow truncate pr-2">
-            <span className="mr-2 font-bold">Title:</span>
-            {cam.title}
-          </span>
-          <button
-            className="text-gray-500 hover:text-gray-700 focus:outline-hidden"
-            onClick={openCamForm}
-          >
-            <FaPen size={12} />
-          </button>
-        </div>
+        <Tooltip label={cam.title} withArrow openDelay={500} position="bottom">
+          <div className="flex h-full max-w-[260px] items-center border-r border-gray-200 pr-3">
+            <span className="grow truncate pr-2 text-gray-800">
+              <span className="mr-1 font-semibold text-gray-900">Title:</span>
+              {cam.title}
+            </span>
+            <button
+              className="text-gray-500 hover:text-gray-800 focus:outline-hidden"
+              onClick={openCamForm}
+            >
+              <FaPen size={12} />
+            </button>
+          </div>
+        </Tooltip>
       )}
 
-      {/* Error chip */}
       {totalErrors > 0 && (
-        <div className="flex items-center px-2">
-          <button
-            onClick={openCamErrors}
-            className="flex h-6 cursor-pointer items-center rounded-full border border-gray-400 bg-gray-100 pr-2 text-xs hover:bg-gray-200"
-          >
-            <div className="mr-1 flex h-full w-6 items-center justify-center rounded-full border-r border-red-300 bg-red-200 text-red-600">
-              <FaExclamationTriangle size={12} />
-            </div>
-            <span>{totalErrors} Error(s) Found</span>
-          </button>
-        </div>
+        <Chip
+          icon={<FaExclamationTriangle size={12} />}
+          chipClass="border-red-300 bg-red-100 text-red-900 font-medium"
+          circleClass="border-red-300 bg-red-200 text-red-700"
+          onClick={openCamErrors}
+        >
+          {totalErrors} Error{totalErrors > 1 ? 's' : ''} Found
+        </Chip>
       )}
 
-      {/* Comments */}
-      <div className="h-full px-1">
+      <div className="flex h-full items-center border-l border-r border-gray-200 px-1">
         <Tooltip
           label={cam.comments.length > 0 ? cam.comments.join(', ') : 'No comments'}
-          position="top"
+          position="bottom"
+          withArrow
         >
           <ActionIcon
             variant="subtle"
             color="gray"
             size="lg"
-            className="text-gray-600 hover:text-gray-800"
+            className="text-gray-600 hover:text-gray-900"
             onClick={openCamForm}
           >
             <FaComment size={16} />
-            <span className="text-2xs absolute right-0 top-0 rounded-md bg-green-800 px-1 py-px text-white">
-              {commentCount}
-            </span>
+            {commentCount > 0 && (
+              <span className="absolute right-0 top-0 rounded-md bg-green-700 px-1 py-px text-[10px] font-medium text-white">
+                {commentCount}
+              </span>
+            )}
           </ActionIcon>
         </Tooltip>
-      </div>
 
-      {/* Clone */}
-      <div className="border-r border-gray-300 px-1">
-        <Tooltip label="Make a copy of this model" position="top">
+        <Tooltip label="Make a copy of this model" position="bottom" withArrow>
           <ActionIcon
             variant="subtle"
             color="gray"
             size="lg"
-            className="text-gray-600 hover:text-gray-800"
-            onClick={() =>
-              dispatch(
-                openDialog({
-                  component: DialogComponent.COPY_MODEL_DIALOG,
-                  title: 'Copy Model',
-                  size: 'sm',
-                })
-              )
-            }
+            className="text-gray-600 hover:text-gray-900"
+            onClick={openCopyDialog}
           >
             <FaClone size={16} />
           </ActionIcon>
         </Tooltip>
       </div>
 
-      {/* State */}
       {cam.state && (
-        <div className="flex h-full max-w-[150px] items-center border-r border-gray-300 px-2">
-          {(() => {
-            const stateColor = getStateColor(cam.state)
-            return (
-              <div
-                className="flex h-6 cursor-pointer items-center rounded-full border border-gray-400 bg-gray-100 pr-2 text-xs"
-                onClick={openCamForm}
-              >
-                <div
-                  className={`mr-1 flex h-full w-6 items-center justify-center rounded-full border-r ${stateColor.circle}`}
-                >
-                  <FaTasks size={12} />
-                </div>
-                <span>{cam.state}</span>
-                <button
-                  className="ml-1 text-gray-500 hover:text-gray-700 focus:outline-hidden"
-                  onClick={openCamForm}
-                >
-                  <FaPen size={10} />
-                </button>
-              </div>
-            )
-          })()}
-        </div>
+        <Chip
+          icon={<FaTasks size={12} />}
+          chipClass={`${stateColor.chip} capitalize`}
+          circleClass={stateColor.circle}
+          onClick={openCamForm}
+          trailing={<FaPen size={9} className="mr-1 opacity-60" />}
+        >
+          {cam.state}
+        </Chip>
       )}
 
-      {/* Date */}
       {cam.date && (
-        <div className="flex items-center border-r border-gray-300 px-2">
-          <div
-            className="flex h-6 cursor-pointer items-center rounded-full border border-gray-400 bg-gray-100 pr-2 text-xs"
-            onClick={openCamForm}
-          >
-            <div className="mr-1 flex h-full w-6 items-center justify-center rounded-full border-r bg-sky-50 border-sky-300 text-sky-400">
-              <FaCalendarDay size={12} />
-            </div>
-            <span>{cam.date}</span>
-          </div>
-        </div>
+        <Chip
+          icon={<FaCalendarDay size={12} />}
+          chipClass="border-sky-300 bg-sky-100 text-sky-900"
+          circleClass="border-sky-300 bg-sky-200 text-sky-700"
+          onClick={openCamForm}
+        >
+          {cam.date}
+        </Chip>
       )}
 
-      {/* Contributors */}
       <ContributorChips contributors={cam.contributors || []} />
 
-      {/* Right-side action buttons */}
-      <div className="flex shrink-0 items-center justify-end gap-2">
-        <ToolbarLinkMenu label="View In" items={viewInItems} />
-        <ToolbarLinkMenu label="Export As" items={exportItems} />
+      <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
+        <ToolbarLinkMenu label="VIEW IN" items={viewInItems} />
+        <ToolbarLinkMenu label="EXPORT AS" items={exportItems} />
       </div>
     </div>
   )

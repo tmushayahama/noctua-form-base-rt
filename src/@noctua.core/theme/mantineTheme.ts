@@ -5,6 +5,7 @@ import {
   Textarea,
   Select,
   Checkbox,
+  Menu,
   Modal,
   ActionIcon,
   Tooltip,
@@ -97,6 +98,17 @@ export const mantineTheme = createTheme({
         withArrow: true,
         openDelay: 200,
         transitionProps: { transition: 'fade', duration: 150 },
+      },
+    }),
+    Menu: Menu.extend({
+      styles: {
+        dropdown: {
+          backgroundColor: noctuaColors.noctuadark[100],
+          color: noctuaColors.noctuadark[900],
+        },
+        item: {
+          color: noctuaColors.noctuadark[900],
+        },
       },
     }),
     Modal: Modal.extend({

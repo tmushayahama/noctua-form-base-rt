@@ -11,7 +11,7 @@ export enum DialogComponent {
 interface DialogState {
   open: boolean;
   title: string;
-  size: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  size: 'xs' | 'sm' | 'cam' | 'md' | 'lg' | 'xl';
   fullWidth: boolean;
   showActions: boolean;
   confirmLabel: string;

@@ -79,6 +79,8 @@ const ReferenceDropdown: React.FC<ReferenceDropdownProps> = ({
       onClose={onClose}
       placement="bottom-end"
       className="!bg-accent-50 !shadow-lg"
+      closeOnClickOutside={false}
+      closeOnEscape={false}
     >
       <div
         className="flex w-full flex-col items-stretch justify-start px-2 py-2"

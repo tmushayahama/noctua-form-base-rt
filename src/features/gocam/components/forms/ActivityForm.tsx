@@ -256,11 +256,11 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-stretch justify-start">
+    <div className="flex min-h-0 w-full flex-1 flex-col">
       {/* Body */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50">
         {activityType === ActivityType.PROTEIN_COMPLEX && (
-          <div className="mx-3 mt-2 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs italic text-amber-800">
+          <div className="mx-3 mt-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs italic text-amber-800">
             Note that this should be used rarely, and only in the case where the activity cannot be
             ascribed to a single subunit of a complex
           </div>
@@ -269,13 +269,13 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
         {gpRows.length > 0 && (
           <div className="flex flex-col items-stretch justify-start">
             <div className="flex h-[30px] items-center bg-[rgba(121,143,184,0.3)] px-3">
-              <span className="text-xs text-gray-600">{sectionTitles.gp}</span>
+              <span className="text-xs font-medium text-gray-700">{sectionTitles.gp}</span>
             </div>
-            <div className="flex flex-col items-stretch justify-start px-2 py-1">
+            <div className="flex flex-col items-stretch justify-start px-3 py-3">
               {gpRows.map(row => (
                 <div
                   key={row.termNode.uid}
-                  className={`mb-1 bg-white ${getAspectBorderClass(row.termNode)}`}
+                  className={`mb-3 rounded-sm bg-white px-2 pt-3 shadow-sm ${getAspectBorderClass(row.termNode)}`}
                 >
                   <EntityRow
                     node={row.termNode}
@@ -295,7 +295,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
         {/* FD Section */}
         <div className="flex flex-col items-stretch justify-start">
           <div className="flex h-[30px] items-center bg-[rgba(121,143,184,0.3)] px-3">
-            <span className="w-[250px] shrink-0 text-xs text-gray-600">{sectionTitles.fd}</span>
+            <span className="w-[250px] shrink-0 text-xs font-medium text-gray-700">{sectionTitles.fd}</span>
             <div className="flex flex-1 items-center">
               <span className="w-1/2" />
               <div className="flex w-1/4 justify-center">
@@ -323,18 +323,18 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
             </div>
             <span className="w-10 shrink-0" />
           </div>
-          <div className="flex flex-col items-stretch justify-start px-2 py-1">
+          <div className="flex flex-col items-stretch justify-start px-3 py-3">
             {fdRows.map(row => (
               <div
                 key={row.termNode.uid}
-                className={`mb-2 flex flex-row items-stretch justify-start bg-white ${getAspectBorderClass(row.termNode)}`}
+                className={`mb-3 flex flex-row items-stretch justify-start rounded-sm bg-white pt-3 shadow-sm ${getAspectBorderClass(row.termNode)}`}
               >
                 {row.termNode.isComplement && (
-                  <div className="flex w-[50px] flex-col items-center justify-center bg-gray-300 text-center text-2xs">
+                  <div className="flex w-[50px] flex-col items-center justify-center bg-gray-300 text-center text-2xs font-bold text-gray-700">
                     <div>IS NOT</div>
                   </div>
                 )}
-                <div className="w-full">
+                <div className="w-full px-2">
                   <EntityRow
                     node={row.termNode}
                     relation={row.relation}

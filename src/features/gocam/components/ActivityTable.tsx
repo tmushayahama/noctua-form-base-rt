@@ -1,10 +1,8 @@
 import type React from 'react'
 import { useState, useCallback, useMemo } from 'react'
-import { usePopover } from '@/@noctua.core/hooks/usePopover'
-import { ActionIcon, Button, Modal } from '@mantine/core'
+import { ActionIcon, Button, Menu, Modal } from '@mantine/core'
 import { resolveModalSize } from '@/@noctua.core/components/dialog/modalSize'
 import DialogHeader from '@/@noctua.core/components/dialog/DialogHeader'
-import AnchoredMenu, { MenuItem } from '@/@noctua.core/components/menu/AnchoredMenu'
 import { FaEllipsisV } from 'react-icons/fa'
 import { FiX } from 'react-icons/fi'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
@@ -135,7 +133,6 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
   const userContext = useUserContext()
   const [updateGraphModel] = useUpdateGraphModelMutation()
 
-  const headerMenu = usePopover()
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const modelId = model?.id ?? ''
@@ -174,9 +171,18 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
             </div>
           )}
         </div>
-        <ActionIcon variant="subtle" color="gray" size="md" onClick={e => headerMenu.open(e.currentTarget)}>
-          <FaEllipsisV size={14} />
-        </ActionIcon>
+        <Menu shadow="md" position="bottom-end" withinPortal>
+          <Menu.Target>
+            <ActionIcon variant="subtle" color="gray" size="md">
+              <FaEllipsisV size={14} />
+            </ActionIcon>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item color="red" onClick={() => setConfirmDelete(true)}>
+              Delete Activity
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
         <ActionIcon variant="subtle" color="gray" size="md" onClick={handleClose} title="Close">
           <FiX size={16} />
         </ActionIcon>
@@ -224,23 +230,6 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
           </div>
         </div>
       </div>
-
-      {/* ── Header menu ── */}
-      <AnchoredMenu
-        anchorEl={headerMenu.anchor}
-        open={headerMenu.isOpen}
-        onClose={headerMenu.close}
-      >
-        <MenuItem
-          onClick={() => {
-            setConfirmDelete(true)
-            headerMenu.close()
-          }}
-          className="text-red-600"
-        >
-          Delete Activity
-        </MenuItem>
-      </AnchoredMenu>
 
       {/* ── Delete confirmation ── */}
       <Modal

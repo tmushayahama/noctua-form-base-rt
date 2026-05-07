@@ -1,4 +1,4 @@
-import { ActionIcon } from '@mantine/core'
+import { ActionIcon, Tooltip } from '@mantine/core'
 import { MdClose as CloseIcon } from 'react-icons/md'
 
 interface DialogHeaderProps {
@@ -7,11 +7,21 @@ interface DialogHeaderProps {
 }
 
 const DialogHeader = ({ title, onClose }: DialogHeaderProps) => (
-  <div className="flex h-11 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4">
-    <span className="text-sm font-semibold text-gray-800">{title}</span>
-    <ActionIcon onClick={onClose} aria-label="close">
-      <CloseIcon size={18} />
-    </ActionIcon>
+  <div className="flex h-14 shrink-0 items-center justify-between border-b-2 border-b-primary-500 bg-white px-4">
+    <span className="text-lg font-semibold tracking-tight text-gray-900">{title}</span>
+    <Tooltip label="Close" withArrow position="left">
+      <ActionIcon
+        onClick={onClose}
+        aria-label="Close"
+        variant="subtle"
+        color="gray"
+        size="lg"
+        radius="xl"
+        className="!text-gray-500 hover:!bg-gray-100 hover:!text-gray-900"
+      >
+        <CloseIcon size={20} />
+      </ActionIcon>
+    </Tooltip>
   </div>
 )
 

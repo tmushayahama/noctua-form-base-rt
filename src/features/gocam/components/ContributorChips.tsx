@@ -1,9 +1,14 @@
 import type React from 'react'
+import { FaUser } from 'react-icons/fa'
 import { usePopover } from '@/@noctua.core/hooks/usePopover'
 import AnchoredMenu, { MenuItem } from '@/@noctua.core/components/menu/AnchoredMenu'
+import Chip from '@/@noctua.core/components/chip/Chip'
 import type { Contributor } from '@/features/users/models/contributor'
 
 const MAX_VISIBLE = 2
+
+const SLATE_CHIP = 'border-slate-300 bg-slate-100 text-slate-800'
+const SLATE_CIRCLE = 'border-slate-300 bg-slate-200 text-slate-600'
 
 interface ContributorChipsProps {
   contributors: Contributor[]
@@ -16,27 +21,27 @@ const ContributorChips: React.FC<ContributorChipsProps> = ({ contributors }) => 
   const hidden = contributors.slice(MAX_VISIBLE)
 
   return (
-    <div className="flex grow items-center overflow-x-auto px-2">
-      <div className="flex flex-nowrap">
+    <div className="flex grow items-center overflow-x-auto">
+      <div className="flex flex-nowrap gap-2">
         {visible.map(contributor => (
-          <div
+          <Chip
             key={contributor.uri}
-            className="mr-2 flex h-6 max-w-[180px] items-center truncate rounded-full border border-gray-400 bg-gray-100 pr-2 text-xs"
+            icon={<FaUser size={11} />}
+            chipClass={SLATE_CHIP}
+            circleClass={SLATE_CIRCLE}
+            className="max-w-[180px]"
           >
-            <div className="text-2xs mr-1 flex h-full min-w-6 items-center justify-center rounded-full border-r border-slate-300 bg-slate-50 text-center font-bold text-slate-600">
-              {contributor.initials}
-            </div>
-            <span className="grow truncate">{contributor.name}</span>
-          </div>
+            {contributor.name}
+          </Chip>
         ))}
 
         {hidden.length > 0 && (
           <>
             <button
-              className="flex h-6 cursor-pointer items-center rounded-full border border-gray-400 bg-gray-100 px-2"
+              className={`flex h-[26px] cursor-pointer items-center rounded-full border px-3 text-[11px] transition-shadow hover:shadow-sm hover:brightness-95 ${SLATE_CHIP}`}
               onClick={e => overflowMenu.open(e.currentTarget)}
             >
-              <span>...</span>
+              +{hidden.length} more
             </button>
             <AnchoredMenu
               anchorEl={overflowMenu.anchor}
@@ -45,9 +50,9 @@ const ContributorChips: React.FC<ContributorChipsProps> = ({ contributors }) => 
             >
               {hidden.map(contributor => (
                 <MenuItem key={contributor.uri} onClick={overflowMenu.close}>
-                  <div className="flex items-center">
-                    <div className="text-2xs mr-1 flex h-6 w-6 items-center justify-center rounded-full bg-grey-400 text-center font-bold">
-                      {contributor.initials}
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-600">
+                      <FaUser size={11} />
                     </div>
                     <span>{contributor.name}</span>
                   </div>

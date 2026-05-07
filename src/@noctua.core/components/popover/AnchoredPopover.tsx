@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { Portal } from '@mantine/core'
 
 interface AnchoredPopoverProps {
@@ -10,10 +10,20 @@ interface AnchoredPopoverProps {
   className?: string
   /** Preferred placement; auto-flips when the popover would overflow the viewport. */
   placement?: 'bottom-start' | 'bottom-end'
+  /** When false, clicks on the backdrop do not trigger onClose. Default: true. */
+  closeOnClickOutside?: boolean
+  /** When false, pressing Escape does not trigger onClose. Default: true. */
+  closeOnEscape?: boolean
 }
 
 const VIEWPORT_PAD = 4
 const ANCHOR_GAP = 4
+
+// Sit between Mantine's Modal (z=200) and its nested Popover/Combobox (z=300).
+// This way the backdrop blocks parent-modal interactions, but Selects opened
+// from inside the popover still render above us.
+const BACKDROP_Z = 250
+const POPOVER_Z = 260
 
 const AnchoredPopover = ({
   anchorEl,
@@ -22,14 +32,24 @@ const AnchoredPopover = ({
   children,
   className,
   placement = 'bottom-start',
+  closeOnClickOutside = true,
+  closeOnEscape = true,
 }: AnchoredPopoverProps) => {
-  const ref = useRef<HTMLDivElement>(null)
+  // State-backed ref: Mantine's Portal returns null on first render and only
+  // mounts its children after its own internal effect runs. A plain useRef
+  // would never trigger re-positioning because this component doesn't
+  // re-render when the portal child finally attaches.
+  const [el, setEl] = useState<HTMLDivElement | null>(null)
 
-  useLayoutEffect(() => {
-    const el = ref.current
-    if (!open || !anchorEl || !el) return
+  const updatePosition = useCallback(() => {
+    if (!anchorEl || !el) return
 
     const anchorRect = anchorEl.getBoundingClientRect()
+
+    if (anchorRect.width === 0 && anchorRect.height === 0 && anchorRect.top === 0) {
+      el.style.visibility = 'hidden'
+      return
+    }
 
     el.style.position = 'fixed'
     el.style.visibility = 'hidden'
@@ -60,48 +80,63 @@ const AnchoredPopover = ({
     }
 
     el.style.visibility = 'visible'
-  }, [open, anchorEl, placement])
+  }, [anchorEl, placement, el])
+
+  useLayoutEffect(() => {
+    if (!open) return
+    updatePosition()
+  }, [open, updatePosition])
+
+  useEffect(() => {
+    if (!open || !el || !anchorEl) return
+
+    const handle = () => updatePosition()
+    window.addEventListener('resize', handle)
+    // Capture phase so scrolls in any nested container are caught.
+    window.addEventListener('scroll', handle, true)
+
+    const observer = new ResizeObserver(handle)
+    observer.observe(el)
+    observer.observe(anchorEl)
+
+    return () => {
+      window.removeEventListener('resize', handle)
+      window.removeEventListener('scroll', handle, true)
+      observer.disconnect()
+    }
+  }, [open, el, anchorEl, updatePosition])
 
   useEffect(() => {
     if (!open) return
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      if (ref.current?.contains(target)) return
-      if (anchorEl?.contains(target)) return
-      // Don't close when clicking inside any portaled overlay (Select dropdowns,
-      // Combobox, Menus, Modals, Tooltips). Mantine portals their children to
-      // body and tags interactive surfaces with these roles/attributes.
-      if (
-        target.closest(
-          '[role="listbox"], [role="menu"], [role="dialog"], [role="tooltip"], [role="combobox"], [data-portal], [data-mantine-stop-propagation]'
-        )
-      ) {
-        return
-      }
-      if (target.closest('[class*="Select"], [class*="Combobox"], [class*="Popover-dropdown"], [class*="Menu-dropdown"]')) {
-        return
-      }
-      onClose()
-    }
+    // Capture-phase ESC: consume the event so it doesn't reach the parent
+    // dialog's keydown handler (otherwise pressing Escape would close both).
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      if (closeOnEscape) onClose()
     }
-    document.addEventListener('mousedown', handleClick)
-    document.addEventListener('keydown', handleKey)
-    return () => {
-      document.removeEventListener('mousedown', handleClick)
-      document.removeEventListener('keydown', handleKey)
-    }
-  }, [open, anchorEl, onClose])
+    document.addEventListener('keydown', handleKey, true)
+    return () => document.removeEventListener('keydown', handleKey, true)
+  }, [open, onClose, closeOnEscape])
 
   if (!open) return null
 
   return (
     <Portal>
+      {/* Backdrop: blocks pointer events to everything underneath. Click
+          dismisses when allowed, otherwise just absorbs the event. */}
       <div
-        ref={ref}
-        className={`z-[1300] rounded-md border border-gray-200 bg-white shadow-lg ${className ?? ''}`}
-        style={{ position: 'fixed', visibility: 'hidden' }}
+        className="fixed inset-0"
+        style={{ zIndex: BACKDROP_Z, backgroundColor: 'rgba(0, 50, 100, 0.1)' }}
+        onMouseDown={e => {
+          e.stopPropagation()
+          if (closeOnClickOutside) onClose()
+        }}
+      />
+      <div
+        ref={setEl}
+        className={`rounded-md border border-gray-200 bg-primary-100 text-gray-900 shadow-lg ${className ?? ''}`}
+        style={{ position: 'fixed', visibility: 'hidden', zIndex: POPOVER_Z }}
       >
         {children}
       </div>

@@ -9,7 +9,7 @@ const STATE_COLORS: Record<string, StateColor> = {
     circle: 'bg-orange-200 border-orange-300 text-amber-700',
   },
   production: {
-    chip: 'bg-green-100 text-green-900 border-green-300',
+    chip: 'bg-green-500/10 text-green-900 border-green-300',
     circle: 'bg-green-200 border-green-300 text-green-700',
   },
   review: {

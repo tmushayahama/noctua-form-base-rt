@@ -1,7 +1,6 @@
 import type React from 'react'
 import { useCallback, useRef } from 'react'
-import { ActionIcon } from '@mantine/core'
-import AnchoredMenu, { MenuItem } from '@/@noctua.core/components/menu/AnchoredMenu'
+import { ActionIcon, Menu } from '@mantine/core'
 import { usePopover } from '@/@noctua.core/hooks/usePopover'
 import { FaEllipsisV, FaPencilAlt, FaPlus, FaTrash } from 'react-icons/fa'
 import type { Edge, UserContext, DisplayTreeNode } from '../models/cam'
@@ -67,8 +66,6 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
 
   const termCellRef = useRef<HTMLDivElement>(null)
   const actionCellRef = useRef<HTMLDivElement>(null)
-  const nodeMenu = usePopover()
-  const addMenu = usePopover()
   const editor = usePopover<{ category: EditorCategory; insert: InsertMenuItem | null }>()
 
   const {
@@ -156,18 +153,15 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
 
   const handleDeleteNode = useCallback(async () => {
     await handleDeleteNodeRaw()
-    nodeMenu.close()
-  }, [handleDeleteNodeRaw, nodeMenu])
+  }, [handleDeleteNodeRaw])
 
   const handleInsertNode = useCallback(
     (item: InsertMenuItem) => {
       if (actionCellRef.current) {
         editor.open(actionCellRef.current, { category: EditorCategory.all, insert: item })
       }
-      addMenu.close()
-      nodeMenu.close()
     },
-    [editor, addMenu, nodeMenu]
+    [editor]
   )
 
   return (
@@ -245,14 +239,75 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
         {/* Action cell */}
         <div ref={actionCellRef} className="flex w-10 shrink-0 flex-col items-center justify-center p-0">
           {showMenu && (
-            <ActionIcon variant="subtle" color="gray" size="md" onClick={e => nodeMenu.open(e.currentTarget)} className="!h-10 !w-10 !shadow-md">
-              <FaEllipsisV size={12} />
-            </ActionIcon>
+            <Menu shadow="md" position="bottom-end" withinPortal>
+              <Menu.Target>
+                <ActionIcon variant="subtle" color="gray" size="md" className="!h-10 !w-10 !shadow-md">
+                  <FaEllipsisV size={12} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                {insertMenuItems.length > 0 && (
+                  <Menu.Sub position="left-start">
+                    <Menu.Sub.Target>
+                      <Menu.Sub.Item>Add</Menu.Sub.Item>
+                    </Menu.Sub.Target>
+                    <Menu.Sub.Dropdown>
+                      {insertMenuItems.map(item => (
+                        <Menu.Item
+                          key={`${item.predicate.id}-${item.targetType}`}
+                          onClick={() => handleInsertNode(item)}
+                        >
+                          <div className="flex flex-col items-start">
+                            <span>{item.label}</span>
+                            <span className="text-xs text-gray-500">{item.rangeLabel}</span>
+                          </div>
+                        </Menu.Item>
+                      ))}
+                    </Menu.Sub.Dropdown>
+                  </Menu.Sub>
+                )}
+                {edge && (
+                  <Menu.Item
+                    onClick={() => {
+                      if (actionCellRef.current)
+                        editor.open(actionCellRef.current, {
+                          category: EditorCategory.evidenceAll,
+                          insert: null,
+                        })
+                    }}
+                  >
+                    Add Evidence
+                  </Menu.Item>
+                )}
+                {canDelete && (
+                  <Menu.Item color="red" onClick={handleDeleteNode}>
+                    Delete
+                  </Menu.Item>
+                )}
+              </Menu.Dropdown>
+            </Menu>
           )}
           {showAddButton && insertMenuItems.length > 0 && (
-            <ActionIcon variant="subtle" color="gray" size="md" onClick={() => { if (actionCellRef.current) addMenu.open(actionCellRef.current) }} className="!h-10 !w-10 !shadow-md">
-              <FaPlus size={12} />
-            </ActionIcon>
+            <Menu shadow="md" position="bottom-start" withinPortal>
+              <Menu.Target>
+                <ActionIcon variant="subtle" color="gray" size="md" className="!h-10 !w-10 !shadow-md">
+                  <FaPlus size={12} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                {insertMenuItems.map(item => (
+                  <Menu.Item
+                    key={`${item.predicate.id}-${item.targetType}`}
+                    onClick={() => handleInsertNode(item)}
+                  >
+                    <div className="flex flex-col items-start">
+                      <span>{item.label}</span>
+                      <span className="text-xs text-gray-500">{item.rangeLabel}</span>
+                    </div>
+                  </Menu.Item>
+                ))}
+              </Menu.Dropdown>
+            </Menu>
           )}
         </div>
       </div>
@@ -284,41 +339,6 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
         />
       ))}
 
-      <AnchoredMenu anchorEl={nodeMenu.anchor} open={nodeMenu.isOpen} onClose={nodeMenu.close}>
-        {insertMenuItems.length > 0 && (
-          <MenuItem onClick={() => { if (actionCellRef.current) addMenu.open(actionCellRef.current); nodeMenu.close() }}>
-            Add
-          </MenuItem>
-        )}
-        {edge && (
-          <MenuItem onClick={() => { if (actionCellRef.current) editor.open(actionCellRef.current, { category: EditorCategory.evidenceAll, insert: null }); nodeMenu.close() }}>
-            Add Evidence
-          </MenuItem>
-        )}
-        {canDelete && (
-          <MenuItem onClick={handleDeleteNode} className="text-red-600">Delete</MenuItem>
-        )}
-      </AnchoredMenu>
-
-      <AnchoredMenu
-        anchorEl={addMenu.anchor}
-        open={addMenu.isOpen}
-        onClose={addMenu.close}
-        className="!bg-blue-100"
-      >
-        {insertMenuItems.map(item => (
-          <MenuItem
-            key={`${item.predicate.id}-${item.targetType}`}
-            onClick={() => handleInsertNode(item)}
-            className="border-b border-[rgba(59,89,152,0.6)] py-1 text-2xs leading-3"
-          >
-            <div className="flex w-full flex-col items-start justify-start">
-              <span>{item.label}</span>
-              <span className="text-xs text-gray-500">{item.rangeLabel}</span>
-            </div>
-          </MenuItem>
-        ))}
-      </AnchoredMenu>
     </>
   )
 }

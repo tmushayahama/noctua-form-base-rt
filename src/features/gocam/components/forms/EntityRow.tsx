@@ -1,8 +1,6 @@
 import type React from 'react'
 import { useCallback, useMemo } from 'react'
-import { ActionIcon } from '@mantine/core'
-import AnchoredMenu, { MenuItem } from '@/@noctua.core/components/menu/AnchoredMenu'
-import { usePopover } from '@/@noctua.core/hooks/usePopover'
+import { ActionIcon, Menu } from '@mantine/core'
 import { FaEllipsisV, FaPlus } from 'react-icons/fa'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import TermAutocomplete from '@/features/search/components/Autocomplete'
@@ -56,9 +54,6 @@ const EntityRow: React.FC<EntityRowProps> = ({
   const selectTerms = useMemo(makeSelectModelTerms, [])
   const termInitialOptions = useAppSelector(state => selectTerms(state, node.rootTypes))
   const evidenceInitialOptions = useAppSelector(selectModelEvidence)
-  const entityMenu = usePopover()
-  const addMenu = usePopover()
-  const evidenceMenu = usePopover()
 
   const evidence = relation?.evidence ?? []
 
@@ -103,76 +98,61 @@ const EntityRow: React.FC<EntityRowProps> = ({
     [dispatch, relation]
   )
 
-  const closeAllMenus = () => {
-    entityMenu.close()
-    addMenu.close()
-    evidenceMenu.close()
-  }
-
   const handleToggleComplement = () => {
     dispatch(toggleComplement({ uid: node.uid }))
-    closeAllMenus()
   }
 
   const handleAddEvidence = () => {
     if (relation) {
       dispatch(addEvidenceForm({ relationUid: relation.uid }))
     }
-    closeAllMenus()
   }
 
-  const handleRemoveEvidence = (evidenceIndex: number) => {
-    if (relation && evidence[evidenceIndex]) {
+  const handleRemoveLastEvidence = () => {
+    if (relation && evidence.length > 0) {
       dispatch(
         removeEvidenceForm({
           relationUid: relation.uid,
-          evidenceUid: evidence[evidenceIndex].uid,
+          evidenceUid: evidence[evidence.length - 1].uid,
         })
       )
     }
-    closeAllMenus()
   }
 
   const handleRemoveNode = () => {
     if (parentTermUid && relation) {
       dispatch(removeRelationForm({ parentTermUid, relationUid: relation.uid }))
     }
-    closeAllMenus()
   }
 
   const handleFillRootTerm = () => {
     if (relation) {
       dispatch(fillRootTerm({ termUid: node.uid, relationUid: relation.uid }))
     }
-    closeAllMenus()
   }
 
   const handleAddISSEvidence = () => {
     if (relation) {
       dispatch(addISSEvidence({ relationUid: relation.uid }))
     }
-    closeAllMenus()
   }
 
   const handleClearValues = () => {
     if (relation) {
       dispatch(clearNodeValues({ termUid: node.uid, relationUid: relation.uid }))
     }
-    closeAllMenus()
   }
 
   const handleCloneEvidence = () => {
     if (relation && onCloneEvidence) {
       onCloneEvidence(relation.uid)
     }
-    closeAllMenus()
   }
 
   const handleSearchAnnotations = () => {
     if (onSearchAnnotations) {
       onSearchAnnotations(node, relation)
     }
-    closeAllMenus()
   }
 
   const insertMenuItems = getInsertMenuItems(node.category)
@@ -189,197 +169,181 @@ const EntityRow: React.FC<EntityRowProps> = ({
         aspect: targetCategory?.aspect ?? null,
       })
     )
-    closeAllMenus()
   }
 
   return (
-    <>
-      <div className="flex w-full flex-row items-stretch justify-start overflow-hidden">
-        {/* Tree connector lines */}
-        {treeLevel > 1 &&
-          Array.from({ length: treeLevel - 1 }, (_, i) => {
-            const isConnector = i === treeLevel - 2
-            return (
-              <div key={i} className="relative flex w-5 shrink-0 flex-col items-stretch">
-                <div className="ml-2 h-full border-l border-[rgba(121,143,184,0.4)]" />
-                {isConnector && (
-                  <div className="absolute left-2 right-0 top-1/2 border-t border-[rgba(121,143,184,0.4)]" />
-                )}
-              </div>
-            )
-          })}
+    <div className="flex w-full flex-row items-stretch justify-start">
+      {/* Tree connector lines */}
+      {treeLevel > 1 &&
+        Array.from({ length: treeLevel - 1 }, (_, i) => {
+          const isConnector = i === treeLevel - 2
+          return (
+            <div key={i} className="relative flex w-5 shrink-0 flex-col items-stretch">
+              <div className="ml-2 h-full border-l border-[rgba(121,143,184,0.4)]" />
+              {isConnector && (
+                <div className="absolute left-2 right-0 top-1/2 border-t border-[rgba(121,143,184,0.4)]" />
+              )}
+            </div>
+          )
+        })}
 
-        {/* Term field */}
-        <div
-          className="min-w-0 shrink px-2 py-2"
-          style={{ flexBasis: 250 - (treeLevel - 1) * 16 }}
-        >
-          <TermAutocomplete
-            label={node.label}
-            name={`term-${node.uid}`}
-            autocompleteType={AutocompleteType.TERM}
-            rootTypeIds={node.rootTypes}
-            value={node.term}
-            onChange={handleTermChange}
-            variant="outlined"
-            initialOptions={termInitialOptions}
-          />
-        </div>
-
-        {/* Evidence columns */}
-        {node.showEvidence !== false && (
-          <div className="flex min-w-0 flex-1 flex-col items-stretch justify-start">
-            {evidence.map(ev => (
-              <div
-                key={ev.uid}
-                className="flex w-full flex-row items-stretch justify-start"
-              >
-                <div className="w-1/2 px-2 py-2">
-                  <TermAutocomplete
-                    label="Evidence"
-                    name={`evidence-${ev.uid}`}
-                    autocompleteType={AutocompleteType.EVIDENCE_CODE}
-                    rootTypeIds={[RootTypes.EVIDENCE]}
-                    value={
-                      ev.evidenceCode?.id
-                        ? ({
-                          id: ev.evidenceCode.id,
-                          label: ev.evidenceCode.label,
-                        } as GOlrResponse)
-                        : null
-                    }
-                    onChange={handleEvidenceCodeChange(ev)}
-                    variant="outlined"
-                    initialOptions={evidenceInitialOptions}
-                  />
-                </div>
-                <div className="w-1/4 px-2 py-2">
-                  <DatabaseField
-                    type="reference"
-                    value={ev.reference}
-                    onChange={value => handleEvidenceFieldChange(ev, 'reference', value)}
-                  />
-                </div>
-                <div className="w-1/4 px-2 py-2">
-                  <DatabaseField
-                    type="with"
-                    value={ev.withFrom}
-                    onChange={value => handleEvidenceFieldChange(ev, 'withFrom', value)}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Menu button (ellipsis) */}
-        {displayMenuButton && (
-          <div className="flex shrink-0 items-center justify-center px-2">
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="md"
-              onClick={e => entityMenu.open(e.currentTarget)}
-            >
-              <FaEllipsisV size={14} />
-            </ActionIcon>
-          </div>
-        )}
+      {/* Term field */}
+      <div
+        className="min-w-0 shrink px-2 py-2"
+        style={{ flexBasis: 250 - (treeLevel - 1) * 16 }}
+      >
+        <TermAutocomplete
+          label={node.label}
+          name={`term-${node.uid}`}
+          autocompleteType={AutocompleteType.TERM}
+          rootTypeIds={node.rootTypes}
+          value={node.term}
+          onChange={handleTermChange}
+          variant="outlined"
+          initialOptions={termInitialOptions}
+        />
       </div>
+
+      {/* Evidence columns */}
+      {node.showEvidence !== false && (
+        <div className="flex min-w-0 flex-1 flex-col items-stretch justify-start">
+          {evidence.map(ev => (
+            <div
+              key={ev.uid}
+              className="flex w-full flex-row items-stretch justify-start"
+            >
+              <div className="w-1/2 px-2 py-2">
+                <TermAutocomplete
+                  label="Evidence"
+                  name={`evidence-${ev.uid}`}
+                  autocompleteType={AutocompleteType.EVIDENCE_CODE}
+                  rootTypeIds={[RootTypes.EVIDENCE]}
+                  value={
+                    ev.evidenceCode?.id
+                      ? ({
+                        id: ev.evidenceCode.id,
+                        label: ev.evidenceCode.label,
+                      } as GOlrResponse)
+                      : null
+                  }
+                  onChange={handleEvidenceCodeChange(ev)}
+                  variant="outlined"
+                  initialOptions={evidenceInitialOptions}
+                />
+              </div>
+              <div className="w-1/4 px-2 py-2">
+                <DatabaseField
+                  type="reference"
+                  value={ev.reference}
+                  onChange={value => handleEvidenceFieldChange(ev, 'reference', value)}
+                />
+              </div>
+              <div className="w-1/4 px-2 py-2">
+                <DatabaseField
+                  type="with"
+                  value={ev.withFrom}
+                  onChange={value => handleEvidenceFieldChange(ev, 'withFrom', value)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Menu button (ellipsis) */}
+      {displayMenuButton && (
+        <div className="flex shrink-0 items-center justify-center px-2">
+          <Menu shadow="md" position="bottom-end" withinPortal>
+            <Menu.Target>
+              <ActionIcon variant="subtle" color="gray" size="md">
+                <FaEllipsisV size={14} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              {node.aspect && (
+                <Menu.Item onClick={handleSearchAnnotations}>Search Annotations</Menu.Item>
+              )}
+              <Menu.Item onClick={handleToggleComplement}>NOT Qualifier</Menu.Item>
+
+              {insertMenuItems.length > 0 && (
+                <Menu.Sub position="left-start">
+                  <Menu.Sub.Target>
+                    <Menu.Sub.Item>Add</Menu.Sub.Item>
+                  </Menu.Sub.Target>
+                  <Menu.Sub.Dropdown>
+                    {insertMenuItems.map(item => (
+                      <Menu.Item
+                        key={`${item.predicate.id}-${item.targetType}`}
+                        onClick={() => handleInsertNode(item)}
+                      >
+                        <div className="flex flex-col items-start">
+                          <span>{item.label}</span>
+                          <span className="text-xs text-gray-500">{item.rangeLabel}</span>
+                        </div>
+                      </Menu.Item>
+                    ))}
+                  </Menu.Sub.Dropdown>
+                </Menu.Sub>
+              )}
+
+              {relation && (
+                <Menu.Sub position="left-start">
+                  <Menu.Sub.Target>
+                    <Menu.Sub.Item>Evidence</Menu.Sub.Item>
+                  </Menu.Sub.Target>
+                  <Menu.Sub.Dropdown>
+                    <Menu.Item onClick={handleAddEvidence}>Add Evidence</Menu.Item>
+                    {evidence.length > 0 && (
+                      <Menu.Item onClick={handleRemoveLastEvidence}>Remove Evidence</Menu.Item>
+                    )}
+                    {onCloneEvidence && (
+                      <Menu.Item onClick={handleCloneEvidence}>Clone Evidence</Menu.Item>
+                    )}
+                  </Menu.Sub.Dropdown>
+                </Menu.Sub>
+              )}
+
+              {node.aspect && relation && (
+                <Menu.Item onClick={handleFillRootTerm}>Fill with root term</Menu.Item>
+              )}
+              {node.aspect && relation && (
+                <Menu.Item onClick={handleAddISSEvidence}>Add ISS Evidence</Menu.Item>
+              )}
+              <Menu.Item onClick={handleClearValues}>Clear Values</Menu.Item>
+              {node.canDelete && parentTermUid && (
+                <Menu.Item color="red" onClick={handleRemoveNode}>
+                  Remove
+                </Menu.Item>
+              )}
+            </Menu.Dropdown>
+          </Menu>
+        </div>
+      )}
 
       {/* Add button (shown below row, for GP section) */}
       {displayAddButton && insertMenuItems.length > 0 && (
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          size="md"
-          onClick={e => addMenu.open(e.currentTarget)}
-          className="mt-2 shadow-sm"
-        >
-          <FaPlus size={14} />
-        </ActionIcon>
+        <Menu shadow="md" position="bottom-start" withinPortal>
+          <Menu.Target>
+            <ActionIcon variant="subtle" color="gray" size="md" className="mt-2 shadow-sm">
+              <FaPlus size={14} />
+            </ActionIcon>
+          </Menu.Target>
+          <Menu.Dropdown>
+            {insertMenuItems.map(item => (
+              <Menu.Item
+                key={`${item.predicate.id}-${item.targetType}`}
+                onClick={() => handleInsertNode(item)}
+              >
+                <div className="flex flex-col items-start">
+                  <span>{item.label}</span>
+                  <span className="text-xs text-gray-500">{item.rangeLabel}</span>
+                </div>
+              </Menu.Item>
+            ))}
+          </Menu.Dropdown>
+        </Menu>
       )}
-
-      {/* Entity menu */}
-      <AnchoredMenu
-        anchorEl={entityMenu.anchor}
-        open={entityMenu.isOpen}
-        onClose={entityMenu.close}
-      >
-        {node.aspect && (
-          <MenuItem onClick={handleSearchAnnotations}>
-            Search Annotations
-          </MenuItem>
-        )}
-        <MenuItem onClick={handleToggleComplement}>NOT Qualifier</MenuItem>
-        {insertMenuItems.length > 0 && (
-          <MenuItem
-            onClick={e => {
-              addMenu.open(e.currentTarget)
-              entityMenu.close()
-            }}
-          >
-            Add
-          </MenuItem>
-        )}
-        {relation && (
-          <MenuItem
-            onClick={e => {
-              evidenceMenu.open(e.currentTarget)
-              entityMenu.close()
-            }}
-          >
-            Evidence
-          </MenuItem>
-        )}
-        {node.aspect && relation && (
-          <MenuItem onClick={handleFillRootTerm}>Fill with root term</MenuItem>
-        )}
-        {node.aspect && relation && (
-          <MenuItem onClick={handleAddISSEvidence}>Add ISS Evidence</MenuItem>
-        )}
-        <MenuItem onClick={handleClearValues}>Clear Values</MenuItem>
-        {node.canDelete && parentTermUid && (
-          <MenuItem onClick={handleRemoveNode}>Remove</MenuItem>
-        )}
-      </AnchoredMenu>
-
-      {/* Add submenu */}
-      <AnchoredMenu
-        anchorEl={addMenu.anchor}
-        open={addMenu.isOpen}
-        onClose={addMenu.close}
-      >
-        {insertMenuItems.map(item => (
-          <MenuItem
-            key={`${item.predicate.id}-${item.targetType}`}
-            onClick={() => handleInsertNode(item)}
-          >
-            <div className="flex w-full flex-col items-start">
-              <span>{item.label}</span>
-              <span className="text-xs text-gray-500">{item.rangeLabel}</span>
-            </div>
-          </MenuItem>
-        ))}
-      </AnchoredMenu>
-
-      {/* Evidence submenu */}
-      <AnchoredMenu
-        anchorEl={evidenceMenu.anchor}
-        open={evidenceMenu.isOpen}
-        onClose={evidenceMenu.close}
-      >
-        <MenuItem onClick={handleAddEvidence}>Add Evidence</MenuItem>
-        {evidence.length > 0 && (
-          <MenuItem onClick={() => handleRemoveEvidence(evidence.length - 1)}>
-            Remove Evidence
-          </MenuItem>
-        )}
-        {onCloneEvidence && relation && (
-          <MenuItem onClick={handleCloneEvidence}>Clone Evidence</MenuItem>
-        )}
-      </AnchoredMenu>
-    </>
+    </div>
   )
 }
 

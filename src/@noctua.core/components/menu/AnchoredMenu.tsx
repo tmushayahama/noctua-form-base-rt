@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { Portal } from '@mantine/core'
 
 interface AnchoredMenuProps {
@@ -23,13 +23,21 @@ const AnchoredMenu = ({
   className,
   placement = 'bottom-start',
 }: AnchoredMenuProps) => {
-  const ref = useRef<HTMLDivElement>(null)
+  // State-backed ref: Mantine's Portal returns null on first render and only
+  // mounts its children after its own internal effect runs. A plain useRef
+  // would never trigger re-positioning because this component doesn't
+  // re-render when the portal child finally attaches.
+  const [el, setEl] = useState<HTMLDivElement | null>(null)
 
-  useLayoutEffect(() => {
-    const el = ref.current
-    if (!open || !anchorEl || !el) return
+  const updatePosition = useCallback(() => {
+    if (!anchorEl || !el) return
 
     const anchorRect = anchorEl.getBoundingClientRect()
+
+    if (anchorRect.width === 0 && anchorRect.height === 0 && anchorRect.top === 0) {
+      el.style.visibility = 'hidden'
+      return
+    }
 
     el.style.position = 'fixed'
     el.style.visibility = 'hidden'
@@ -60,17 +68,44 @@ const AnchoredMenu = ({
     }
 
     el.style.visibility = 'visible'
-  }, [open, anchorEl, placement])
+  }, [anchorEl, placement, el])
+
+  useLayoutEffect(() => {
+    if (!open) return
+    updatePosition()
+  }, [open, updatePosition])
+
+  useEffect(() => {
+    if (!open || !el || !anchorEl) return
+
+    const handle = () => updatePosition()
+    window.addEventListener('resize', handle)
+    // Capture phase so scrolls in any nested container are caught.
+    window.addEventListener('scroll', handle, true)
+
+    const observer = new ResizeObserver(handle)
+    observer.observe(el)
+    observer.observe(anchorEl)
+
+    return () => {
+      window.removeEventListener('resize', handle)
+      window.removeEventListener('scroll', handle, true)
+      observer.disconnect()
+    }
+  }, [open, el, anchorEl, updatePosition])
 
   useEffect(() => {
     if (!open) return
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement
-      if (ref.current?.contains(target)) return
+      if (el?.contains(target)) return
       if (anchorEl?.contains(target)) return
+      // Exempt nested popups opened from inside the menu (Select/Combobox/Menu
+      // dropdowns), but NOT ancestor dialogs or portals — those would prevent
+      // dismissal when clicking another anchor in the same parent dialog.
       if (
         target.closest(
-          '[role="listbox"], [role="menu"], [role="dialog"], [role="tooltip"], [role="combobox"], [data-portal], [data-mantine-stop-propagation]'
+          '[role="listbox"], [role="menu"], [role="tooltip"], [data-mantine-stop-propagation]'
         )
       ) {
         return
@@ -89,15 +124,15 @@ const AnchoredMenu = ({
       document.removeEventListener('mousedown', handleClick)
       document.removeEventListener('keydown', handleKey)
     }
-  }, [open, anchorEl, onClose])
+  }, [open, anchorEl, onClose, el])
 
   if (!open) return null
 
   return (
     <Portal>
       <div
-        ref={ref}
-        className={`z-[1300] min-w-[160px] rounded-md border border-gray-200 bg-white py-1 shadow-lg ${className ?? ''}`}
+        ref={setEl}
+        className={`z-[1300] min-w-[160px] rounded-md border border-gray-200 bg-primary-100 py-1 text-gray-900 shadow-lg ${className ?? ''}`}
         style={{ position: 'fixed', visibility: 'hidden' }}
       >
         {children}
@@ -116,7 +151,7 @@ export const MenuItem = ({ onClick, className, children }: MenuItemProps) => (
   <button
     type="button"
     onClick={onClick}
-    className={`block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 ${className ?? ''}`}
+    className={`block w-full px-3 py-1.5 text-left text-sm text-gray-900 hover:bg-primary-200 ${className ?? ''}`}
   >
     {children}
   </button>

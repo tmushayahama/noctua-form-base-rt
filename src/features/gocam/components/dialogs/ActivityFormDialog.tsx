@@ -36,11 +36,29 @@ const ActivityFormDialog: React.FC<ActivityFormDialogProps> = ({ open, onClose, 
     <Modal
       opened={open}
       onClose={onClose}
-      size={resolveModalSize('lg')}
-      classNames={{ content: 'overflow-hidden' }}
+      size={resolveModalSize('md')}
+      padding={0}
+      withCloseButton={false}
+      centered
+      styles={{
+        content: {
+          height: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        },
+        body: {
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden',
+          padding: 0,
+        },
+      }}
     >
       <DialogHeader title={title} onClose={onClose} />
-      <div>{children}</div>
+      {children}
     </Modal>
   )
 }

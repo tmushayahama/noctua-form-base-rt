@@ -33,11 +33,11 @@ const Layout: React.FC<LayoutProps> = ({ rightDrawerContent }) => {
       <div className="fixed left-0 top-0 z-50 h-12 w-full border-b-2 border-b-primary-500">
         <Toolbar />
       </div>
-      <div className="fixed flex w-full flex-1" style={{ top: 50 }}>
+      <div className="fixed z-40 flex w-full flex-1" style={{ top: 50 }}>
         <CamToolbar />
       </div>
 
-      <div className="fixed flex w-full flex-1" style={{ top: 90, bottom: 0 }}>
+      <div className="fixed flex w-full flex-1" style={{ top: 94, bottom: 0 }}>
 
         <div className="flex-1 overflow-auto">
           <Outlet />

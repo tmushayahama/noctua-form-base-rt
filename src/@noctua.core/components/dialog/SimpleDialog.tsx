@@ -8,7 +8,7 @@ interface SimpleDialogProps {
   onClose: () => void
   onConfirm?: () => void
   title?: string
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  size?: 'xs' | 'sm' | 'cam' | 'md' | 'lg' | 'xl'
   fullWidth?: boolean
   showActions?: boolean
   confirmLabel?: string
@@ -16,6 +16,8 @@ interface SimpleDialogProps {
   preventBackdropClose?: boolean
   children: ReactNode
 }
+
+const TALL_SIZES = new Set(['cam'])
 
 const SimpleDialog = ({
   open,
@@ -35,6 +37,8 @@ const SimpleDialog = ({
     onClose()
   }
 
+  const tall = TALL_SIZES.has(size)
+
   return (
     <Modal
       opened={open}
@@ -42,12 +46,30 @@ const SimpleDialog = ({
       size={resolveModalSize(size, 'lg')}
       closeOnClickOutside={!preventBackdropClose}
       closeOnEscape={!preventBackdropClose}
-      classNames={{ content: 'overflow-hidden' }}
+      padding={0}
+      withCloseButton={false}
+      centered
+      styles={{
+        content: {
+          ...(tall ? { height: '90vh' } : {}),
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        },
+        body: {
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden',
+          padding: 0,
+        },
+      }}
     >
       <DialogHeader title={title} onClose={onClose} />
-      <div>{children}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
       {showActions && (
-        <div className="flex items-center justify-end gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3">
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3">
           <Button onClick={onClose} variant="outline">
             {cancelLabel}
           </Button>
