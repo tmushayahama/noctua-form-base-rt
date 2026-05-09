@@ -1,9 +1,9 @@
 import type React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ActionIcon, Button, Modal } from '@mantine/core'
+import { Button, Modal } from '@mantine/core'
 import { resolveModalSize } from '@/@noctua.core/components/dialog/modalSize'
 import DialogHeader from '@/@noctua.core/components/dialog/DialogHeader'
-import { FaExclamationCircle, FaInfoCircle } from 'react-icons/fa'
+import { FaExclamationCircle, FaInfoCircle, FaSave } from 'react-icons/fa'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { useUserContext } from '@/app/hooks/useUserContext'
 import { selectCamModel } from '../../slices/camSlice'
@@ -28,7 +28,7 @@ import {
   buildEditActivityOperations,
 } from '../../services/activityOperations'
 import { FormMode } from '../../models/formModels'
-import type { TermNode, RelationNode, FlatRow } from '../../models/formModels'
+import type { TermNode, RelationNode, ValidationError } from '../../models/formModels'
 import { ActivityType } from '../../models/cam'
 import type { Evidence } from '../../models/cam'
 import { referenceAllowedDBs, withFromAllowedDBs } from '../../data/allowedDatabases'
@@ -36,7 +36,13 @@ import EntityRow from './EntityRow'
 import CloneEvidenceDialog from './CloneEvidenceDialog'
 import AllowedDatabasesPopover from './AllowedDatabasesPopover'
 import { v4 as uuidv4 } from 'uuid'
-import { flattenNode, getAspectBorderClass, findTargetUidByRelation } from '../../services/formUtils'
+import {
+  buildGroupedRows,
+  findTargetUidByRelation,
+  rebaseTreeLevels,
+} from '../../services/formUtils'
+import { DisplayGroup, GROUP_ORDER } from '../../data/insertMenuConfig'
+import type { GroupedRow } from '../../models/formModels'
 
 /** Collect all unique evidences from the current activity (for clone evidence) */
 function collectUniqueEvidences(root: TermNode): Evidence[] {
@@ -66,6 +72,66 @@ function collectUniqueEvidences(root: TermNode): Evidence[] {
 
   walk(root)
   return result
+}
+
+interface GroupCardProps {
+  group: DisplayGroup
+  rows: GroupedRow[]
+  errors: ValidationError[]
+  bgClass: string
+  displayMenuButton: boolean
+  displayAddButton?: boolean
+  onSearchAnnotations?: (node: TermNode, relation: RelationNode | null) => void
+  onCloneEvidence?: (relationUid: string) => void
+}
+
+const GROUP_BG: Record<DisplayGroup, string> = {
+  [DisplayGroup.GP]: 'bg-blue-200',
+  [DisplayGroup.MF]: 'bg-green-200',
+  [DisplayGroup.BP]: 'bg-orange-200',
+  [DisplayGroup.CC]: 'bg-purple-200',
+}
+
+const GroupCard: React.FC<GroupCardProps> = ({
+  group,
+  rows,
+  errors,
+  bgClass,
+  displayMenuButton,
+  displayAddButton,
+  onSearchAnnotations,
+  onCloneEvidence,
+}) => {
+  if (rows.length === 0) return null
+  return (
+    <div className="flex flex-row items-stretch">
+      <div className={`w-2 shrink-0 ${GROUP_BG[group]}`} />
+      <div className={`flex w-full flex-col items-stretch ${bgClass}`}>
+        {rows.map(row => (
+          <div key={row.termNode.uid} className="flex flex-row items-stretch">
+            {row.termNode.isComplement && (
+              <div className="flex w-[28px] shrink-0 items-center justify-center bg-gray-200 text-center text-[8px] font-bold tracking-wide text-gray-700">
+                IS NOT
+              </div>
+            )}
+            <div className="w-full">
+              <EntityRow
+                node={row.termNode}
+                relation={row.relation}
+                parentTermUid={row.parentTermUid}
+                treeLevel={row.treeLevel}
+                errors={errors}
+                displayMenuButton={displayMenuButton}
+                displayAddButton={displayAddButton}
+                onSearchAnnotations={onSearchAnnotations}
+                onCloneEvidence={onCloneEvidence}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 interface ActivityFormProps {
@@ -118,51 +184,54 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
     }
   }, [activityType])
 
-  // Separate GP (enabled_by) and FD (everything else) sections
-  const { gpRows, fdRows } = useMemo(() => {
-    if (!root) return { gpRows: [] as FlatRow[], fdRows: [] as FlatRow[] }
-
-    const gp: FlatRow[] = []
-    const fd: FlatRow[] = []
-
-    const enabledByRelation =
-      root.relations.find(r => r.predicate.id === Relations.ENABLED_BY) ?? null
-
-    // GP section
-    for (const rel of root.relations) {
-      if (rel.predicate.id === Relations.ENABLED_BY) {
-        gp.push({
-          termNode: rel.target,
-          relation: null,
-          parentTermUid: root.uid,
-          treeLevel: 1,
-        })
-        for (const childRel of rel.target.relations) {
-          const rows: FlatRow[] = []
-          flattenNode(childRel.target, childRel, rel.target.uid, 2, rows)
-          gp.push(...rows)
-        }
+  /**
+   * Build display-group cards.
+   * - All nodes flatten into rows tagged with their displayGroup card.
+   * - Within FD, cards render in (mf, bp, cc) order; within each card, members
+   *   sort by weight. Same idea for GP (single gp card).
+   * - Special case: the MF root row carries the enabled_by relation so its
+   *   evidence cells render on the MF row (matches old form). The GP row's
+   *   own relation is then nulled so evidence isn't shown twice.
+   */
+  const { gpGroups, fdGroups } = useMemo(() => {
+    if (!root) {
+      return {
+        gpGroups: [] as Array<[DisplayGroup, GroupedRow[]]>,
+        fdGroups: [] as Array<[DisplayGroup, GroupedRow[]]>,
       }
     }
 
-    // FD section — skip hidden nodes (e.g. MF root in Protein Complex)
-    if (root.visible !== false) {
-      fd.push({
-        termNode: root,
-        relation: enabledByRelation,
-        parentTermUid: null,
-        treeLevel: 1,
-      })
-    }
-    for (const rel of root.relations) {
-      if (rel.predicate.id !== Relations.ENABLED_BY) {
-        const rows: FlatRow[] = []
-        flattenNode(rel.target, rel, root.uid, 2, rows)
-        fd.push(...rows)
-      }
+    const all = buildGroupedRows(root)
+
+    const enabledByRel = root.relations.find(r => r.predicate.id === Relations.ENABLED_BY) ?? null
+    if (enabledByRel) {
+      const mfRow = all.find(r => r.termNode.uid === root.uid)
+      const gpRow = all.find(r => r.termNode.uid === enabledByRel.target.uid)
+      if (mfRow) mfRow.relation = enabledByRel
+      if (gpRow) gpRow.relation = null
     }
 
-    return { gpRows: gp, fdRows: fd }
+    const bucket = (rows: GroupedRow[]) => {
+      const map = new Map<DisplayGroup, GroupedRow[]>()
+      for (const r of rows) {
+        const list = map.get(r.displayGroup) ?? []
+        list.push(r)
+        map.set(r.displayGroup, list)
+      }
+      // Each card resets indentation: sort by (treeLevel asc, weight asc) then rebase depth.
+      for (const [g, list] of map.entries()) {
+        list.sort((a, b) => a.treeLevel - b.treeLevel || a.weight - b.weight)
+        map.set(g, rebaseTreeLevels(list))
+      }
+      return Array.from(map.entries()).sort(
+        ([a], [b]) => (GROUP_ORDER[a] ?? 99) - (GROUP_ORDER[b] ?? 99)
+      )
+    }
+
+    const gpRows = all.filter(r => r.displayGroup === DisplayGroup.GP)
+    const fdRows = all.filter(r => r.displayGroup !== DisplayGroup.GP)
+
+    return { gpGroups: bucket(gpRows), fdGroups: bucket(fdRows) }
   }, [root])
 
   const handleSave = useCallback(async () => {
@@ -258,7 +327,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
       {/* Body */}
-      <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-white">
         {activityType === ActivityType.PROTEIN_COMPLEX && (
           <div className="mx-3 mt-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs italic text-amber-800">
             Note that this should be used rarely, and only in the case where the activity cannot be
@@ -266,27 +335,24 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
           </div>
         )}
         {/* GP Section */}
-        {gpRows.length > 0 && (
+        {gpGroups.length > 0 && (
           <div className="flex flex-col items-stretch justify-start">
-            <div className="flex h-[30px] items-center bg-[rgba(121,143,184,0.3)] px-3">
-              <span className="text-xs font-medium text-gray-700">{sectionTitles.gp}</span>
+            <div className="flex items-center border-l-4 border-primary-500 bg-primary-50 px-3 py-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary-700">
+                {sectionTitles.gp}
+              </span>
             </div>
-            <div className="flex flex-col items-stretch justify-start px-3 py-3">
-              {gpRows.map(row => (
-                <div
-                  key={row.termNode.uid}
-                  className={`mb-3 rounded-sm bg-white px-2 pt-3 shadow-sm ${getAspectBorderClass(row.termNode)}`}
-                >
-                  <EntityRow
-                    node={row.termNode}
-                    relation={row.relation}
-                    parentTermUid={row.parentTermUid}
-                    treeLevel={row.treeLevel}
-                    errors={errors}
-                    displayMenuButton={false}
-                    displayAddButton={true}
-                  />
-                </div>
+            <div className="flex flex-col items-stretch justify-start">
+              {gpGroups.map(([group, rows]) => (
+                <GroupCard
+                  key={group}
+                  group={group}
+                  rows={rows}
+                  errors={errors}
+                  bgClass="bg-white"
+                  displayMenuButton={false}
+                  displayAddButton={true}
+                />
               ))}
             </div>
           </div>
@@ -294,89 +360,66 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
 
         {/* FD Section */}
         <div className="flex flex-col items-stretch justify-start">
-          <div className="flex h-[30px] items-center bg-[rgba(121,143,184,0.3)] px-3">
-            <span className="w-[250px] shrink-0 text-xs font-medium text-gray-700">{sectionTitles.fd}</span>
-            <div className="flex flex-1 items-center">
-              <span className="w-1/2" />
-              <div className="flex w-1/4 justify-center">
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  size="md"
-                  onClick={e => setRefInfoAnchor(e.currentTarget)}
-                  title="Allowed reference databases"
-                >
-                  <FaInfoCircle size={12} className="text-gray-500" />
-                </ActionIcon>
-              </div>
-              <div className="flex w-1/4 justify-center">
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  size="md"
-                  onClick={e => setWithInfoAnchor(e.currentTarget)}
-                  title="Allowed with/from databases"
-                >
-                  <FaInfoCircle size={12} className="text-gray-500" />
-                </ActionIcon>
-              </div>
-            </div>
-            <span className="w-10 shrink-0" />
-          </div>
-          <div className="flex flex-col items-stretch justify-start px-3 py-3">
-            {fdRows.map(row => (
-              <div
-                key={row.termNode.uid}
-                className={`mb-3 flex flex-row items-stretch justify-start rounded-sm bg-white pt-3 shadow-sm ${getAspectBorderClass(row.termNode)}`}
+          <div className="flex items-center justify-between border-l-4 border-primary-500 bg-primary-50 px-3 py-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary-700">
+              {sectionTitles.fd}
+            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={e => setRefInfoAnchor(e.currentTarget)}
+                className="flex items-center gap-1 text-2xs font-medium text-gray-500 hover:text-primary-600"
               >
-                {row.termNode.isComplement && (
-                  <div className="flex w-[50px] flex-col items-center justify-center bg-gray-300 text-center text-2xs font-bold text-gray-700">
-                    <div>IS NOT</div>
-                  </div>
-                )}
-                <div className="w-full px-2">
-                  <EntityRow
-                    node={row.termNode}
-                    relation={row.relation}
-                    parentTermUid={row.parentTermUid}
-                    treeLevel={row.treeLevel}
-                    errors={errors}
-                    displayMenuButton={true}
-                    onSearchAnnotations={handleSearchAnnotations}
-                    onCloneEvidence={handleCloneEvidence}
-                  />
-                </div>
-              </div>
+                <FaInfoCircle size={10} />
+                Reference DBs
+              </button>
+              <button
+                type="button"
+                onClick={e => setWithInfoAnchor(e.currentTarget)}
+                className="flex items-center gap-1 text-2xs font-medium text-gray-500 hover:text-primary-600"
+              >
+                <FaInfoCircle size={10} />
+                With/From DBs
+              </button>
+            </div>
+          </div>
+          <div className="flex flex-col items-stretch justify-start">
+            {fdGroups.map(([group, rows]) => (
+              <GroupCard
+                key={group}
+                group={group}
+                rows={rows}
+                errors={errors}
+                bgClass="bg-slate-200"
+                displayMenuButton={true}
+                onSearchAnnotations={handleSearchAnnotations}
+                onCloneEvidence={handleCloneEvidence}
+              />
             ))}
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="flex h-[50px] shrink-0 flex-row items-center justify-start border-t border-gray-300 bg-gray-100 px-3">
+      <div className="flex h-[50px] shrink-0 flex-row items-center justify-end gap-2 border-t border-gray-300 bg-gray-100 px-3">
         {hasErrors && (
-          <Button
-            variant="subtle"
-            color="yellow"
-            size="xs"
+          <button
+            type="button"
             onClick={() => setShowErrorsDialog(true)}
+            className="mr-auto flex items-center gap-1.5 text-xs font-medium text-amber-700 underline decoration-dotted underline-offset-2 hover:text-amber-800"
           >
+            <FaExclamationCircle size={12} />
             Why is the &quot;Save&quot; button disabled?
-          </Button>
+          </button>
         )}
-        <span className="grow" />
-        <Button
-          variant="outline"
-          onClick={handleCancel}
-          disabled={isSaving}
-          className="mr-2"
-        >
+        <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
           Clear
         </Button>
         <Button
           variant="filled"
           onClick={handleSave}
           disabled={isSaving || hasErrors}
+          leftSection={<FaSave size={12} />}
         >
           {isSaving ? 'Saving...' : 'Save'}
         </Button>

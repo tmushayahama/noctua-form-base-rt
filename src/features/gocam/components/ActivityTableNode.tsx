@@ -18,6 +18,7 @@ import {
 import { useActivityNodeEditor } from '../hooks/useActivityNodeEditor'
 import { getInsertMenuItems } from '../data/insertMenuConfig'
 import type { InsertMenuItem } from '../data/insertMenuConfig'
+import { getNodeCategory } from '../data/nodeCategories'
 import { createEvidenceForm } from '../models/formModels'
 import EditorDropdown from './forms/EditorDropdown'
 import type { EditorDropdownValues } from './forms/EditorDropdown'
@@ -65,7 +66,14 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
     handleDeleteNode: handleDeleteNodeRaw,
   } = useActivityNodeEditor({ nodeUid: node.uid, modelId, userContext, allEdges, onNodeDeleted })
 
-  const insertMenuItems = getInsertMenuItems(node.rootTypes[0] ?? '')
+  const usedEdges = allEdges
+    .filter(e => e.sourceId === node.uid)
+    .map(e => {
+      const targetType =
+        e.target?.rootTypes?.find(rt => getNodeCategory(rt)) ?? e.target?.rootTypes?.[0] ?? ''
+      return { predicateId: e.id, targetType }
+    })
+  const insertMenuItems = getInsertMenuItems(node.rootTypes[0] ?? '', usedEdges)
   const nodePadding = treeLevel * 16
   const termWidth = 250 - nodePadding
   const { aspect } = treeNode

@@ -155,7 +155,10 @@ const EntityRow: React.FC<EntityRowProps> = ({
     }
   }
 
-  const insertMenuItems = getInsertMenuItems(node.category)
+  const insertMenuItems = getInsertMenuItems(
+    node.category,
+    node.relations.map(r => ({ predicateId: r.predicate.id, targetType: r.target.category }))
+  )
 
   const handleInsertNode = (item: InsertMenuItem) => {
     const targetCategory = getNodeCategory(item.targetType)
@@ -179,9 +182,9 @@ const EntityRow: React.FC<EntityRowProps> = ({
           const isConnector = i === treeLevel - 2
           return (
             <div key={i} className="relative flex w-5 shrink-0 flex-col items-stretch">
-              <div className="ml-2 h-full border-l border-[rgba(121,143,184,0.4)]" />
+              <div className="ml-2 h-full border-l border-gray-400" />
               {isConnector && (
-                <div className="absolute left-2 right-0 top-1/2 border-t border-[rgba(121,143,184,0.4)]" />
+                <div className="absolute left-2 right-0 top-1/2 border-t border-gray-400" />
               )}
             </div>
           )
@@ -189,8 +192,8 @@ const EntityRow: React.FC<EntityRowProps> = ({
 
       {/* Term field */}
       <div
-        className="min-w-0 shrink px-2 py-2"
-        style={{ flexBasis: 250 - (treeLevel - 1) * 16 }}
+        className="min-w-0 shrink p-1"
+        style={{ flexBasis: 250 - (treeLevel - 1) * 20 }}
       >
         <TermAutocomplete
           label={node.label}
@@ -212,7 +215,7 @@ const EntityRow: React.FC<EntityRowProps> = ({
               key={ev.uid}
               className="flex w-full flex-row items-stretch justify-start"
             >
-              <div className="w-1/2 px-2 py-2">
+              <div className="w-1/2 p-1">
                 <TermAutocomplete
                   label="Evidence"
                   name={`evidence-${ev.uid}`}
@@ -231,14 +234,14 @@ const EntityRow: React.FC<EntityRowProps> = ({
                   initialOptions={evidenceInitialOptions}
                 />
               </div>
-              <div className="w-1/4 px-2 py-2">
+              <div className="w-1/4 p-1">
                 <DatabaseField
                   type="reference"
                   value={ev.reference}
                   onChange={value => handleEvidenceFieldChange(ev, 'reference', value)}
                 />
               </div>
-              <div className="w-1/4 px-2 py-2">
+              <div className="w-1/4 p-1">
                 <DatabaseField
                   type="with"
                   value={ev.withFrom}
@@ -255,8 +258,8 @@ const EntityRow: React.FC<EntityRowProps> = ({
         <div className="flex shrink-0 items-center justify-center px-2">
           <Menu shadow="md" position="bottom-end" withinPortal>
             <Menu.Target>
-              <ActionIcon variant="subtle" color="gray" size="md">
-                <FaEllipsisV size={14} />
+              <ActionIcon variant="light" color="primary" radius="xl" size="md">
+                <FaEllipsisV size={12} />
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown>
@@ -324,8 +327,8 @@ const EntityRow: React.FC<EntityRowProps> = ({
       {displayAddButton && insertMenuItems.length > 0 && (
         <Menu shadow="md" position="bottom-start" withinPortal>
           <Menu.Target>
-            <ActionIcon variant="subtle" color="gray" size="md" className="mt-2 shadow-sm">
-              <FaPlus size={14} />
+            <ActionIcon variant="light" color="primary" radius="xl" size="md" className="mt-2">
+              <FaPlus size={12} />
             </ActionIcon>
           </Menu.Target>
           <Menu.Dropdown>

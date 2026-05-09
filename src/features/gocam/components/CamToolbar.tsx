@@ -101,7 +101,7 @@ const CamToolbar: React.FC = () => {
       {totalErrors > 0 && (
         <Chip
           icon={<FaExclamationTriangle size={12} />}
-          chipClass="border-red-300 bg-red-100 text-red-900 font-medium"
+          chipClass="border-red-300 bg-red-100 text-red-900"
           circleClass="border-red-300 bg-red-200 text-red-700"
           onClick={openCamErrors}
         >

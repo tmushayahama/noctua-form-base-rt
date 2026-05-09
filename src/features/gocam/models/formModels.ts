@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import type { Aspect, Entity } from './cam'
 import type { GOlrResponse } from '@/features/search/models/search'
+import type { DisplayGroup } from '../data/insertMenuConfig'
 
 export type ActivityFormType = 'activity' | 'molecule' | 'proteinComplex'
 
@@ -88,6 +89,16 @@ export interface FlatRow {
   relation: RelationNode | null
   parentTermUid: string | null
   treeLevel: number
+}
+
+/** Row tagged with its displayGroup card + sort weight + tree depth */
+export interface GroupedRow {
+  termNode: TermNode
+  relation: RelationNode | null
+  parentTermUid: string | null
+  treeLevel: number
+  displayGroup: DisplayGroup
+  weight: number
 }
 
 // ── With/From field types (used by WithDropdown) ────────────────────

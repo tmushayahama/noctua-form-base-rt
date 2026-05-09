@@ -1,7 +1,23 @@
-import type { TermNode, RelationNode, FlatRow } from '../models/formModels'
+import type { TermNode, RelationNode, FlatRow, GroupedRow } from '../models/formModels'
 import { Aspect } from '../models/cam'
+import { getInsertWeight, getDisplayGroup, DisplayGroup } from '../data/insertMenuConfig'
 
-/** Recursively flatten a TermNode tree into renderable rows */
+/**
+ * Sort a parent's relations by the weight configured in canInsertEntity.
+ * Mirrors the old graph editor's `sort(compareTripleWeight)` before tree-build.
+ */
+export function sortRelationsByWeight(
+  parentCategory: string,
+  relations: RelationNode[]
+): RelationNode[] {
+  return [...relations].sort(
+    (a, b) =>
+      getInsertWeight(parentCategory, a.predicate.id, a.target.category) -
+      getInsertWeight(parentCategory, b.predicate.id, b.target.category)
+  )
+}
+
+/** Recursively flatten a TermNode tree into renderable rows, sorted by weight */
 export function flattenNode(
   node: TermNode,
   relation: RelationNode | null,
@@ -10,9 +26,57 @@ export function flattenNode(
   rows: FlatRow[]
 ): void {
   rows.push({ termNode: node, relation, parentTermUid, treeLevel })
-  for (const rel of node.relations) {
+  const sorted = sortRelationsByWeight(node.category, node.relations)
+  for (const rel of sorted) {
     flattenNode(rel.target, rel, node.uid, treeLevel + 1, rows)
   }
+}
+
+/**
+ * Walk the whole TermNode tree producing one GroupedRow per visible node,
+ * tagged with its displayGroup, weight, and tree depth (treeLevel: root=1).
+ */
+export function buildGroupedRows(root: TermNode): GroupedRow[] {
+  const rows: GroupedRow[] = []
+
+  function walk(
+    node: TermNode,
+    parent: TermNode | null,
+    relation: RelationNode | null,
+    treeLevel: number
+  ) {
+    if (node.visible !== false) {
+      const dg =
+        getDisplayGroup(parent?.category ?? null, relation?.predicate.id ?? null, node.category) ??
+        DisplayGroup.MF
+      const weight =
+        parent && relation
+          ? getInsertWeight(parent.category, relation.predicate.id, node.category)
+          : 0
+      rows.push({
+        termNode: node,
+        relation,
+        parentTermUid: parent?.uid ?? null,
+        treeLevel,
+        displayGroup: dg,
+        weight,
+      })
+    }
+    const sortedChildren = sortRelationsByWeight(node.category, node.relations)
+    for (const rel of sortedChildren) {
+      walk(rel.target, node, rel, treeLevel + 1)
+    }
+  }
+
+  walk(root, null, null, 1)
+  return rows
+}
+
+/** Rebase a group's rows so the shallowest is treeLevel 1 (cards reset depth) */
+export function rebaseTreeLevels(rows: GroupedRow[]): GroupedRow[] {
+  if (rows.length === 0) return rows
+  const minLevel = Math.min(...rows.map(r => r.treeLevel))
+  return rows.map(r => ({ ...r, treeLevel: r.treeLevel - minLevel + 1 }))
 }
 
 /** Find the target TermNode uid for a given relation uid */

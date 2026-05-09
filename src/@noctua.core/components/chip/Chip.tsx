@@ -11,9 +11,9 @@ interface ChipProps {
 }
 
 const BASE =
-  'flex h-[26px] items-center rounded-full border text-[11px] transition-shadow hover:shadow-sm hover:brightness-95'
+  'flex h-[26px] items-center rounded-full border text-xs transition-shadow hover:shadow-sm hover:brightness-95'
 const CIRCLE =
-  'flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-full border-r text-[13px]'
+  'flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-full border-r text-xs'
 
 const Chip: React.FC<ChipProps> = ({
   icon,

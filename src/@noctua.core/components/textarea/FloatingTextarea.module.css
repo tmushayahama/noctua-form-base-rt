@@ -5,10 +5,10 @@
 .wrap .label {
   position: absolute;
   z-index: 2;
-  top: 12px;
-  left: 8px;
+  top: 14px;
+  left: 10px;
   margin: 0;
-  padding: 0 4px;
+  padding: 0;
   pointer-events: none;
   font-size: 14px;
   line-height: 1;
@@ -17,18 +17,36 @@
   transform-origin: left top;
   transition:
     transform 150ms ease,
-    color 150ms ease,
-    background-color 150ms ease;
+    color 150ms ease;
 }
 
 .wrap[data-floating='true'] .label {
-  transform: translate(-2px, -18px) scale(0.80);
-  color: var(--color-primary-400);
-  background-color: white;
+  transform: translate(0, -10px) scale(0.75);
+  color: var(--color-primary-500);
 }
 
 .input {
-  background-color: white;
-  border-radius: 4px;
-  padding-top: 10px!important;
+  background-color: #FFFFFF !important;
+  border: none !important;
+  border-bottom: 2px solid var(--color-primary-100) !important;
+  border-radius: 4px 4px 0 0 !important;
+  padding-top: 22px !important;
+  padding-bottom: 6px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  transition:
+    background-color 150ms ease,
+    border-bottom-color 150ms ease,
+    border-bottom-width 150ms ease;
+}
+
+.input:hover {
+  background-color: rgba(0, 0, 0, 0.09) !important;
+}
+
+.input:focus {
+  outline: none !important;
+  background-color: rgba(0, 0, 0, 0.09) !important;
+  border-bottom: 2px solid var(--color-primary-500) !important;
+  padding-bottom: 5px !important;
 }

@@ -8,26 +8,24 @@ import WithDropdown from './WithDropdown'
 interface DatabaseFieldProps {
   value: string
   onChange: (value: string) => void
-  label?: string
   type: 'reference' | 'with'
 }
 
 const DatabaseField: React.FC<DatabaseFieldProps> = ({
   value,
   onChange,
-  label,
   type,
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
-  const resolvedLabel = label ?? (type === 'reference' ? 'Reference' : 'With')
 
   const Dropdown = type === 'reference' ? ReferenceDropdown : WithDropdown
+  const label = type === 'reference' ? 'Reference' : 'With/From'
 
   return (
     <>
       <FloatingTextarea
         size="xs"
-        label={resolvedLabel}
+        label={label}
         value={value}
         onChange={e => onChange(e.target.value)}
         onBlur={e => {
