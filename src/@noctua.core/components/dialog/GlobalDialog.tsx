@@ -17,6 +17,7 @@ const GlobalDialog: React.FC<GlobalDialogProps> = ({ componentMap }) => {
     showActions,
     confirmLabel,
     cancelLabel,
+    bodyScroll,
     component,
     customProps,
   } = useAppSelector(selectDialogState)
@@ -34,6 +35,7 @@ const GlobalDialog: React.FC<GlobalDialogProps> = ({ componentMap }) => {
       showActions={showActions}
       confirmLabel={confirmLabel}
       cancelLabel={cancelLabel}
+      bodyScroll={bodyScroll}
       onClose={() => dispatch(closeDialog())}
       onConfirm={() => dispatch(closeDialog())}
     >

@@ -17,6 +17,8 @@ interface DialogState {
   confirmLabel: string;
   cancelLabel: string;
   preventBackdropClose: boolean;
+  /** 'auto' wraps body in overflow-y-auto. 'none' lets the child manage its own scroll regions. */
+  bodyScroll: 'auto' | 'none';
   component: DialogComponent | null;
   customProps: Record<string, unknown>;
 }
@@ -30,6 +32,7 @@ const initialState: DialogState = {
   confirmLabel: 'Confirm',
   cancelLabel: 'Cancel',
   preventBackdropClose: false,
+  bodyScroll: 'auto',
   component: null,
   customProps: {},
 };

@@ -14,6 +14,8 @@ interface SimpleDialogProps {
   confirmLabel?: string
   cancelLabel?: string
   preventBackdropClose?: boolean
+  /** 'auto' wraps body in overflow-y-auto. 'none' lets the child manage its own scroll regions. */
+  bodyScroll?: 'auto' | 'none'
   children: ReactNode
 }
 
@@ -30,6 +32,7 @@ const SimpleDialog = ({
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   preventBackdropClose = false,
+  bodyScroll = 'auto',
   children,
 }: SimpleDialogProps) => {
   const handleConfirm = () => {
@@ -67,7 +70,15 @@ const SimpleDialog = ({
       }}
     >
       <DialogHeader title={title} onClose={onClose} />
-      <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+      <div
+        className={
+          bodyScroll === 'none'
+            ? 'flex min-h-0 flex-1 flex-col overflow-hidden'
+            : 'min-h-0 flex-1 overflow-y-auto'
+        }
+      >
+        {children}
+      </div>
       {showActions && (
         <div className="flex shrink-0 items-center justify-end gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3">
           <Button onClick={onClose} variant="outline">

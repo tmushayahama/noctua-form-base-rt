@@ -276,7 +276,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
         openDialog({
           component: DialogComponent.SEARCH_ANNOTATIONS,
           title: 'Search Annotations',
-          size: 'lg',
+          size: 'cam',
+          bodyScroll: 'none',
           customProps: {
             gpId: gpNode.term.id,
             aspect: node.aspect,

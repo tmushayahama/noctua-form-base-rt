@@ -74,8 +74,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
       return { predicateId: e.id, targetType }
     })
   const insertMenuItems = getInsertMenuItems(node.rootTypes[0] ?? '', usedEdges)
-  const nodePadding = treeLevel * 16
-  const termWidth = 250 - nodePadding
+  const termWidth = 250 - (treeLevel - 1) * 20
   const { aspect } = treeNode
 
   const handleSearchAnnotations = useCallback(() => {
@@ -84,9 +83,10 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
       openDialog({
         component: DialogComponent.SEARCH_ANNOTATIONS,
         title: 'Search Annotations',
-        size: 'md',
+        size: 'cam',
         fullWidth: true,
         showActions: false,
+        bodyScroll: 'none',
         customProps: { gpId: gpNodeId, aspect },
       })
     )
@@ -163,10 +163,21 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
 
   return (
     <>
-      <div
-        className="mb-2 flex w-full flex-row items-stretch justify-start"
-        style={{ paddingLeft: nodePadding }}
-      >
+      <div className="mb-2 flex w-full flex-row items-stretch justify-start">
+        {/* Tree connector lines */}
+        {treeLevel > 1 &&
+          Array.from({ length: treeLevel - 1 }, (_, i) => {
+            const isConnector = i === treeLevel - 2
+            return (
+              <div key={i} className="relative flex w-5 shrink-0 flex-col items-stretch">
+                <div className="ml-2 h-full border-l border-gray-400" />
+                {isConnector && (
+                  <div className="absolute left-2 right-0 top-1/2 border-t border-gray-400" />
+                )}
+              </div>
+            )
+          })}
+
         {/* Term cell */}
         <EditableCell
           ref={termCellRef}
@@ -229,7 +240,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
           {showMenu && (
             <Menu shadow="md" position="bottom-end" withinPortal>
               <Menu.Target>
-                <ActionIcon variant="subtle" color="gray" size="md" className="!h-10 !w-10 !shadow-md">
+                <ActionIcon variant="light" color="primary" radius="xl" size="md">
                   <FaEllipsisV size={12} />
                 </ActionIcon>
               </Menu.Target>
@@ -278,7 +289,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
           {showAddButton && insertMenuItems.length > 0 && (
             <Menu shadow="md" position="bottom-start" withinPortal>
               <Menu.Target>
-                <ActionIcon variant="subtle" color="gray" size="md" className="!h-10 !w-10 !shadow-md">
+                <ActionIcon variant="light" color="primary" radius="xl" size="md">
                   <FaPlus size={12} />
                 </ActionIcon>
               </Menu.Target>

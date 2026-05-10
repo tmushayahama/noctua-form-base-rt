@@ -3,8 +3,10 @@ import { useState, useCallback, useMemo } from 'react'
 import { ActionIcon, Button, Menu, Modal } from '@mantine/core'
 import { resolveModalSize } from '@/@noctua.core/components/dialog/modalSize'
 import DialogHeader from '@/@noctua.core/components/dialog/DialogHeader'
-import { FaEllipsisV } from 'react-icons/fa'
+import { FaEllipsisV, FaInfoCircle } from 'react-icons/fa'
 import { FiX } from 'react-icons/fi'
+import { referenceAllowedDBs, withFromAllowedDBs } from '../data/allowedDatabases'
+import AllowedDatabasesPopover from './forms/AllowedDatabasesPopover'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { useUserContext } from '@/app/hooks/useUserContext'
 import { selectCamModel } from '../slices/camSlice'
@@ -134,6 +136,8 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
   const [updateGraphModel] = useUpdateGraphModelMutation()
 
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [refInfoAnchor, setRefInfoAnchor] = useState<HTMLElement | null>(null)
+  const [withInfoAnchor, setWithInfoAnchor] = useState<HTMLElement | null>(null)
 
   const modelId = model?.id ?? ''
   const { gpTree, fdTree } = useMemo(() => buildDisplayTree(activity), [activity])
@@ -189,12 +193,14 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
       </div>
 
       {/* ── Body — scrollable ── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-white">
         {/* GP Section */}
         {gpTree.length > 0 && (
           <div>
-            <div className="noc-section-header h-[30px] bg-[rgba(121,143,184,0.3)] px-3 text-xs font-semibold uppercase leading-[30px] tracking-wide text-gray-600">
-              {gpLabel}
+            <div className="flex items-center border-l-4 border-primary-500 bg-primary-50 px-3 py-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary-700">
+                {gpLabel}
+              </span>
             </div>
             <div className="relative px-2 pb-2 pt-3">
               {gpTree.map(treeNode => (
@@ -213,8 +219,28 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
 
         {/* FD Section */}
         <div>
-          <div className="noc-section-header h-[30px] bg-[rgba(121,143,184,0.3)] px-3 text-xs font-semibold uppercase leading-[30px] tracking-wide text-gray-600">
-            Function Description
+          <div className="flex items-center justify-between border-l-4 border-primary-500 bg-primary-50 px-3 py-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary-700">
+              Function Description
+            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={e => setRefInfoAnchor(e.currentTarget)}
+                className="flex items-center gap-1 text-2xs font-medium text-gray-500 hover:text-primary-600"
+              >
+                <FaInfoCircle size={10} />
+                Reference DBs
+              </button>
+              <button
+                type="button"
+                onClick={e => setWithInfoAnchor(e.currentTarget)}
+                className="flex items-center gap-1 text-2xs font-medium text-gray-500 hover:text-primary-600"
+              >
+                <FaInfoCircle size={10} />
+                With/From DBs
+              </button>
+            </div>
           </div>
           <div className="relative px-2 pb-2 pt-3">
             {fdTree.map(treeNode => (
@@ -251,6 +277,19 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
         </div>
       </Modal>
 
+      {/* ── Allowed-database popovers ── */}
+      <AllowedDatabasesPopover
+        anchorEl={refInfoAnchor}
+        onClose={() => setRefInfoAnchor(null)}
+        title="Allowed Reference Databases"
+        databases={referenceAllowedDBs}
+      />
+      <AllowedDatabasesPopover
+        anchorEl={withInfoAnchor}
+        onClose={() => setWithInfoAnchor(null)}
+        title="Allowed With/From Databases"
+        databases={withFromAllowedDBs}
+      />
     </div>
   )
 }
