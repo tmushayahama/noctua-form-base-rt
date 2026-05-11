@@ -61,6 +61,7 @@ export default defineConfig(({ command, mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        '@tests': path.resolve(__dirname, './tests'),
       },
     },
     server: {
@@ -73,7 +74,8 @@ export default defineConfig(({ command, mode }) => {
     test: {
       globals: true,
       environment: 'jsdom',
-      setupFiles: 'src/setupTests',
+      setupFiles: 'tests/setup.ts',
+      include: ['tests/**/*.test.{ts,tsx}'],
       mockReset: true,
     },
     define: {

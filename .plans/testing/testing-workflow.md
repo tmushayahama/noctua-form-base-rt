@@ -20,7 +20,7 @@ Set up a thorough testing workflow covering unit tests (Vitest), integration tes
 | **API slices** | `camApiSlice.ts`, `lookupApiSlice.ts`, `authApiSlice.ts`, `metadataApiSlice.ts` |
 | **Hooks** | `useActivityNodeEditor.ts`, `useModelUrls.ts`, `useAuthSetup.ts`, `useRelationFormConfig.ts`, `useDeleteConfirmation.ts`, `usePathwayCanvas.ts`, `useUserContext.ts`, `usePopover.ts` |
 | **Components** | `ActivityForm.tsx`, `EntityRow.tsx`, `EvidenceRow.tsx`, `Autocomplete.tsx`, `ConnectorForm.tsx`, `RelationForm.tsx`, `ActivityTable.tsx`, `CamErrors.tsx`, `SplashScreen.tsx` |
-| **Test infra** | `src/setupTests.ts`, `src/utils/test-utils.tsx`, `vite.config.ts` (test section) |
+| **Test infra** | `tests/setup.ts`, `tests/test-utils.tsx`, `vite.config.ts` (test section), `tsconfig.app.json` (`include`) |
 
 ---
 
@@ -33,15 +33,25 @@ Set up a thorough testing workflow covering unit tests (Vitest), integration tes
 ## Steps
 
 ### Phase 1: Test Infrastructure & Fixtures
-Set up shared test data, factories, and enhance test config before writing any tests.
+Move test infra into a dedicated `tests/` folder mirroring `src/`, then add fixtures, coverage, and Playwright.
 
+- [x] Move `src/setupTests.ts` → `tests/setup.ts`
+- [x] Move `src/utils/test-utils.tsx` → `tests/test-utils.tsx` (use `@/` alias for store imports)
+- [x] Update `vite.config.ts` test block: `setupFiles: 'tests/setup.ts'`, `include: ['tests/**/*.test.{ts,tsx}']`
+- [x] Add `tests` to `tsconfig.app.json` `include` so `tsc --noEmit` covers tests
+- [x] Add `@tests/*` path alias in `vite.config.ts` and `tsconfig.app.json`
+- [x] Copy real Barista responses into `tests/fixtures/raw/` (downloads/ is gitignored):
+  - [x] `swiss-1.json` — 74 inds / 37 facts / 10 relations (smallest, fastest)
+  - [x] `another-model.json` — 160 inds / 72 facts / **14 relations** (most diverse — adds causally-upstream+, indirectly +/-, small_molecule_inhibitor)
+  - [x] `large-val.json` — 376 inds / 170 facts / 9 relations (biggest; uniquely covers provides_input_for, constitutively_upstream)
+- [x] Create `tests/fixtures/models.ts` — exports `*Raw` and transformed `*Model` for each sample, with relation-coverage doc
+- [x] Create `tests/fixtures/builders.ts` — synthetic `buildNode/buildEdgeWithEvidence/buildActivity/buildModel` for controlled slice/component tests
+- [x] Smoke test: `tests/fixtures/models.test.ts` confirms `transformGraphData` succeeds on each sample
 - [ ] Add coverage config to `vite.config.ts` (`vitest` section): `coverage: { provider: 'v8', reporter: ['text', 'html'], include: ['src/**'], exclude: ['src/**/*.test.*'] }`
 - [ ] Install `@vitest/coverage-v8` dev dependency
-- [ ] Create `src/__fixtures__/` directory for shared test data:
-  - [ ] `src/__fixtures__/graph.ts` — sample `GraphModel`, `Activity`, `GraphNode[]`, `Edge[]` objects (based on `downloads/models/large_val.json` structure)
-  - [ ] `src/__fixtures__/form.ts` — sample `TermNode`, `RelationNode`, `EvidenceForm`, `ActivityFormState` objects
-  - [ ] `src/__fixtures__/users.ts` — sample `Contributor`, `Group`, `UserContext` objects
-  - [ ] `src/__fixtures__/api.ts` — raw Barista API response JSON (individuals + facts + annotations) for `transformGraphData` tests
+- [ ] Add fixtures for form + users domains:
+  - [ ] `tests/fixtures/form.ts` — sample `TermNode`, `RelationNode`, `EvidenceForm`, `ActivityFormState` objects
+  - [ ] `tests/fixtures/users.ts` — sample `Contributor`, `Group`, `UserContext` objects
 - [ ] Add `test:watch` and `test:coverage` scripts to `package.json`
 - [ ] Install Playwright: `npm init playwright@latest` (chromium only, `e2e/` directory)
 - [ ] Configure `playwright.config.ts`: base URL `http://localhost:4208`, webServer command `npm run start`
@@ -50,7 +60,7 @@ Set up shared test data, factories, and enhance test config before writing any t
 These have no React/Redux dependencies — pure input/output, highest ROI.
 
 #### 2A: Graph Services (`graphServices.ts`)
-File: `src/features/gocam/services/__tests__/graphServices.test.ts`
+File: `tests/features/gocam/services/graphServices.test.ts`
 - [ ] `transformGraphData` — empty/null input returns empty model
 - [ ] `transformGraphData` — parses individuals into `GraphNode[]` with correct fields
 - [ ] `transformGraphData` — parses complement types correctly (`isComplement: true`)
@@ -71,7 +81,7 @@ File: `src/features/gocam/services/__tests__/graphServices.test.ts`
 **Note:** `graphServices.ts` calls `store.getState()` directly in `getContributor`/`getGroup`. Tests need to mock the store or the functions. Consider refactoring to accept contributors/groups as params instead of reading from store — flag for discussion.
 
 #### 2B: Form Validation (`formValidation.ts`)
-File: `src/features/gocam/services/__tests__/formValidation.test.ts`
+File: `tests/features/gocam/services/formValidation.test.ts`
 - [ ] Returns root error when `state.root` is null
 - [ ] Returns error when required node has no term
 - [ ] No error when optional node has no term
@@ -86,7 +96,7 @@ File: `src/features/gocam/services/__tests__/formValidation.test.ts`
 - [ ] Returns empty array for fully valid form
 
 #### 2C: Form Utilities (`formUtils.ts`)
-File: `src/features/gocam/services/__tests__/formUtils.test.ts`
+File: `tests/features/gocam/services/formUtils.test.ts`
 - [ ] `flattenNode` — flattens single root with no relations
 - [ ] `flattenNode` — flattens 2-level tree into correct order with treeLevel increments
 - [ ] `flattenNode` — flattens deep 3+ level tree preserving parent UIDs
@@ -97,7 +107,7 @@ File: `src/features/gocam/services/__tests__/formUtils.test.ts`
 - [ ] `getAspectBorderClass` — returns empty string for undefined/unknown aspect
 
 #### 2D: Violation Service (`violationService.ts`)
-File: `src/features/gocam/services/__tests__/violationService.test.ts`
+File: `tests/features/gocam/services/violationService.test.ts`
 - [ ] `processViolations` — returns empty array when no violations
 - [ ] `processViolations` — skips violations for nodes not in any activity
 - [ ] `processViolations` — creates CardinalityViolation error from cardinality constraint
@@ -109,7 +119,7 @@ File: `src/features/gocam/services/__tests__/violationService.test.ts`
 - [ ] `computeTotalErrors` — sums violations + diffNodes + diffEdges
 
 #### 2E: Activity Operations (`activityOperations.ts`)
-File: `src/features/gocam/services/__tests__/activityOperations.test.ts`
+File: `tests/features/gocam/services/activityOperations.test.ts`
 - [ ] `buildCreateActivityOperations` — creates individual ADD ops for each term node
 - [ ] `buildCreateActivityOperations` — creates edge ADD ops between parent→child
 - [ ] `buildCreateActivityOperations` — handles complement expressions
@@ -132,7 +142,7 @@ File: `src/features/gocam/services/__tests__/activityOperations.test.ts`
 - [ ] `buildClearEvidenceAnnotationOperations` — removes annotation, no replacement
 
 #### 2F: Connector Services (`connectorServices.ts`)
-File: `src/features/relations/services/__tests__/connectorServices.test.ts`
+File: `tests/features/relations/services/connectorServices.test.ts`
 - [ ] `buildConnectorOperations` — creates edge ADD between source/target rootNodes
 - [ ] `buildConnectorOperations` — creates evidence individuals with annotations
 - [ ] `buildConnectorOperations` — attaches evidence to edge via ADD_ANNOTATION
@@ -144,7 +154,7 @@ File: `src/features/relations/services/__tests__/connectorServices.test.ts`
 - [ ] `buildConnectorDeleteOperations` — removes edge + stores
 
 #### 2G: Decision Tree (`decisionTree.ts`)
-File: `src/features/relations/services/__tests__/decisionTree.test.ts`
+File: `tests/features/relations/services/decisionTree.test.ts`
 - [ ] `determineRelation` — activity→activity regulation/positive/direct returns correct RO ID
 - [ ] `determineRelation` — activity→activity regulation/negative/indirect returns correct RO ID
 - [ ] `determineRelation` — activity→molecule product returns correct RO ID
@@ -161,7 +171,7 @@ File: `src/features/relations/services/__tests__/decisionTree.test.ts`
 Test reducers and selectors in isolation (no components).
 
 #### 3A: Activity Form Slice (`activityFormSlice.ts`)
-File: `src/features/gocam/slices/__tests__/activityFormSlice.test.ts`
+File: `tests/features/gocam/slices/activityFormSlice.test.ts`
 - [ ] `initializeForm` — sets root from template, resets errors
 - [ ] `setTerm` — updates term on correct node by UID
 - [ ] `addRelation` — adds a new RelationNode to target TermNode
@@ -172,29 +182,34 @@ File: `src/features/gocam/slices/__tests__/activityFormSlice.test.ts`
 - [ ] `setValidationErrors` — stores errors array
 - [ ] Selectors: `selectRoot`, `selectValidationErrors`, etc.
 
-#### 3B: CAM Slice (`camSlice.ts`)
-File: `src/features/gocam/slices/__tests__/camSlice.test.ts`
-- [ ] `setSelectedActivity` — stores selected activity
-- [ ] `clearSelectedActivity` — resets to null
-- [ ] `setSelectedConnection` — stores selected connection edge
-- [ ] Selectors return correct derived state
+#### 3B: CAM Slice (`camSlice.ts`) — DONE
+File: `tests/features/gocam/slices/camSlice.test.ts` (17 tests passing)
+- [x] `setModel` — stores graph model on state
+- [x] `setSelectedActivity` — stores activity id
+- [x] `setSelectedActivity(null)` — clears selection
+- [x] `selectCamModel` — returns null when empty, model when loaded
+- [x] `selectSelectedActivity` — null when no model/no id; matching activity by uid; null when id misses
+- [x] `selectModelEvidence` — empty when no model; dedupes evidence codes across edges; skips edges without evidence
+- [x] `makeSelectModelTerms` — empty when no model; dedupes terms by id; filters by `rootTypes` overlap; skips empty id/label
+
+> Note: actual slice has only `setModel` and `setSelectedActivity` (no `setSelectedConnection`). Original plan was based on a stale slice surface.
 
 #### 3C: Relation Slice (`relationSlice.ts`)
-File: `src/features/relations/slices/__tests__/relationSlice.test.ts`
+File: `tests/features/relations/slices/relationSlice.test.ts`
 - [ ] Initial state matches defaults
 - [ ] All reducers update state correctly
 - [ ] Evidence CRUD within the slice
 
 #### 3D: Simple Slices (auth, metadata, dialog, drawer, toast)
-File: `src/@noctua.core/components/__tests__/uiSlices.test.ts` (dialog, drawer, toast)
-File: `src/features/auth/slices/__tests__/authSlice.test.ts`
+File: `tests/@noctua.core/components/uiSlices.test.ts` (dialog, drawer, toast)
+File: `tests/features/auth/slices/authSlice.test.ts`
 - [ ] Each slice: initial state, each reducer action, selectors
 
 ### Phase 4: Component Integration Tests
 Test components with Redux store + user interactions via RTL.
 
 #### 4A: Activity Form Components
-File: `src/features/gocam/components/forms/__tests__/ActivityForm.test.tsx`
+File: `tests/features/gocam/components/forms/ActivityForm.test.tsx`
 - [ ] Renders form with template data (root node + initial relations)
 - [ ] Displays entity rows for each node in the tree
 - [ ] Shows validation errors after submit with empty required fields
@@ -202,42 +217,42 @@ File: `src/features/gocam/components/forms/__tests__/ActivityForm.test.tsx`
 - [ ] Adding/removing evidence rows updates form state
 
 #### 4B: Connector/Relation Components
-File: `src/features/relations/components/__tests__/ConnectorForm.test.tsx`
+File: `tests/features/relations/components/ConnectorForm.test.tsx`
 - [ ] Renders radio pill groups for connector type selection
 - [ ] Selecting regulation → shows direction → shows directness
 - [ ] Selecting product → no further steps
 - [ ] Submit button disabled until relation resolved
 
-File: `src/features/relations/components/__tests__/RelationForm.test.tsx`
+File: `tests/features/relations/components/RelationForm.test.tsx`
 - [ ] Renders with default selection
 - [ ] Radio selection updates relation slice state
 
 #### 4C: Activity Table
-File: `src/features/gocam/components/__tests__/ActivityTable.test.tsx`
+File: `tests/features/gocam/components/ActivityTable.test.tsx`
 - [ ] Renders list of activities from store
 - [ ] Clicking an activity dispatches selection
 - [ ] Shows activity type badges (Activity vs Molecule)
 
 #### 4D: CamErrors
-File: `src/features/gocam/components/__tests__/CamErrors.test.tsx`
+File: `tests/features/gocam/components/CamErrors.test.tsx`
 - [ ] Renders violation errors with messages
 - [ ] Renders orphaned node/edge diffs
 - [ ] Shows total error count
 
 #### 4E: Autocomplete
-File: `src/features/search/components/__tests__/Autocomplete.test.tsx`
+File: `tests/features/search/components/Autocomplete.test.tsx`
 - [ ] Renders input field
 - [ ] Typing triggers debounced search (mock GOlr)
 - [ ] Selecting option calls onChange with term
 - [ ] Shows loading state during search
 
 #### 4F: SplashScreen
-File: `src/features/users/components/__tests__/SplashScreen.test.tsx`
+File: `tests/features/users/components/SplashScreen.test.tsx`
 - [ ] Renders when no model is loaded
 - [ ] Displays user info when authenticated
 
 #### 4G: Layout Components
-File: `src/app/layout/__tests__/Toolbar.test.tsx`
+File: `tests/app/layout/Toolbar.test.tsx`
 - [ ] Renders toolbar with model title
 - [ ] Toolbar buttons dispatch correct actions
 
@@ -299,9 +314,9 @@ File: `e2e/model-metadata.spec.ts`
 ## Test File Naming Convention
 
 ```
-src/features/{feature}/services/__tests__/{service}.test.ts    # pure service tests
-src/features/{feature}/slices/__tests__/{slice}.test.ts        # Redux slice tests
-src/features/{feature}/components/__tests__/{Component}.test.tsx  # component tests
+tests/features/{feature}/services/{service}.test.ts    # pure service tests
+tests/features/{feature}/slices/{slice}.test.ts        # Redux slice tests
+tests/features/{feature}/components/{Component}.test.tsx  # component tests
 e2e/{flow}.spec.ts                                              # E2E tests
 ```
 
@@ -310,8 +325,9 @@ e2e/{flow}.spec.ts                                              # E2E tests
 ### Pure Service Tests
 ```ts
 import { describe, it, expect } from 'vitest'
-import { myFunction } from '../myService'
-import { sampleData } from '@/__fixtures__/graph'
+import { myFunction } from '@/features/foo/services/myService'
+// Once @tests/* alias is added (Phase 1), use:
+//   import { sampleData } from '@tests/fixtures/graph'
 
 describe('myFunction', () => {
   it('does X when given Y', () => {
@@ -323,14 +339,13 @@ describe('myFunction', () => {
 ### Redux Slice Tests
 ```ts
 import { describe, it, expect } from 'vitest'
-import { makeStore } from '@/app/store/store'
-import { myAction } from '../mySlice'
+import myReducer, { myAction } from '@/features/foo/slices/mySlice'
 
 describe('mySlice', () => {
   it('handles myAction', () => {
-    const store = makeStore()
-    store.dispatch(myAction(payload))
-    expect(store.getState().mySlice.field).toBe(expected)
+    const initial = myReducer(undefined, { type: '@@INIT' })
+    const next = myReducer(initial, myAction(payload))
+    expect(next.field).toBe(expected)
   })
 })
 ```
@@ -339,8 +354,8 @@ describe('mySlice', () => {
 ```ts
 import { describe, it, expect } from 'vitest'
 import { screen } from '@testing-library/react'
-import { renderWithProviders } from '@/utils/test-utils'
-import MyComponent from '../MyComponent'
+import { renderWithProviders } from '../../../test-utils' // or '@tests/test-utils' once aliased
+import MyComponent from '@/features/foo/components/MyComponent'
 
 describe('MyComponent', () => {
   it('renders correctly', () => {
@@ -374,8 +389,10 @@ test('loads model', async ({ page }) => {
 
 ## Recovery Checkpoint
 
-> **Last completed action:** Plan created
-> **Next immediate action:** Discuss plan with user, confirm Phase 1 approach
+> **Last completed action:** Phase 1 hardened. Fixture sanity tests now verify rootNode populated, edges resolve source/target, evidence present, all documented relations survive transform, model metadata parses. camSlice tests cover overwrite + loading/error preservation + memoization. `renderWithProviders` smoke test verifies preloadedState injection, store wiring, user-event helpers, store isolation. **47 tests passing, tsc clean, `npm run build` green.**
+> **Next immediate action:** Either (a) finish Phase 1 — coverage + Playwright + form/users fixtures, or (b) Phase 2 (graphServices unit tests using real-data fixtures).
+>
+> **Known data finding (documented in fixture test):** `largeVal` contains `GO:0140378` without a `label` in the raw Barista response — transform propagates `label: undefined` faithfully. UI must handle this case.
 
 ## Failed Approaches
 | What was tried | Why it failed | Date |
@@ -385,7 +402,23 @@ test('loads model', async ({ page }) => {
 ## Files Modified
 | File | Action | Status |
 | ---- | ------ | ------ |
-| `.plans/testing/testing-workflow.md` | Created | Done |
+| `.plans/testing/testing-workflow.md` | Created, then rewritten for `tests/` mirror layout | Done |
+| `tests/setup.ts` | Created (moved from `src/setupTests.ts`) | Done |
+| `tests/test-utils.tsx` | Created (moved from `src/utils/test-utils.tsx`, uses `@/` alias) | Done |
+| `src/setupTests.ts` | Deleted | Done |
+| `src/utils/test-utils.tsx` | Deleted | Done |
+| `vite.config.ts` | `setupFiles` → `tests/setup.ts`, added `include: ['tests/**/*.test.{ts,tsx}']` | Done |
+| `tsconfig.app.json` | `include` now `['src', 'tests']` | Done |
+| `tests/features/gocam/slices/camSlice.test.ts` | Created — 17 tests covering reducers + 4 selectors; refactored to import from `@tests/fixtures/builders` | Done |
+| `vite.config.ts` | Added `'@tests'` alias | Done |
+| `tsconfig.app.json` | Added `'@tests/*'` paths entry | Done |
+| `tests/fixtures/raw/swiss-1.json` | Copied from `downloads/models/` | Done |
+| `tests/fixtures/raw/another-model.json` | Copied from `downloads/models/` | Done |
+| `tests/fixtures/raw/large-val.json` | Copied from `downloads/models/` | Done |
+| `tests/fixtures/models.ts` | Created — raw + transformed exports for all three samples | Done |
+| `tests/fixtures/builders.ts` | Created — synthetic builders for controlled tests | Done |
+| `tests/fixtures/models.test.ts` | Hardened — 21 tests covering rootNode/edges/evidence/relations/metadata across all three fixtures + specific anchors | Done |
+| `tests/test-utils.test.tsx` | Created — 4 smoke tests proving Provider wiring, preloadedState injection, dispatch propagation, store isolation | Done |
 
 ## Blockers
 - `graphServices.ts` calls `store.getState()` directly — needs discussion on whether to refactor for testability or mock the store
