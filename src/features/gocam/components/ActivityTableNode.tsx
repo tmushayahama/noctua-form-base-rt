@@ -39,6 +39,14 @@ function getAspectFromRootTypes(rootTypes: string[]): Aspect | null {
   return null
 }
 
+// Aspect-based tree connector colors — mirrors EntityRow's TREE_BORDER.
+// Null aspect (gene products, molecules) falls back to blue (GP).
+const TREE_BORDER_BY_ASPECT: Record<Aspect, string> = {
+  [Aspect.MOLECULAR_FUNCTION]: 'border-green-400',
+  [Aspect.BIOLOGICAL_PROCESS]: 'border-orange-400',
+  [Aspect.CELLULAR_COMPONENT]: 'border-purple-400',
+}
+
 // ── Main ActivityTableNode ──────────────────────────────────────────
 
 const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
@@ -76,6 +84,7 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
   const insertMenuItems = getInsertMenuItems(node.rootTypes[0] ?? '', usedEdges)
   const termWidth = 250 - (treeLevel - 1) * 20
   const { aspect } = treeNode
+  const treeBorder = aspect ? TREE_BORDER_BY_ASPECT[aspect] : 'border-blue-400'
 
   const handleSearchAnnotations = useCallback(() => {
     if (!gpNodeId || !aspect) return
@@ -170,9 +179,9 @@ const ActivityTableNode: React.FC<ActivityTableNodeProps> = ({
             const isConnector = i === treeLevel - 2
             return (
               <div key={i} className="relative flex w-5 shrink-0 flex-col items-stretch">
-                <div className="ml-2 h-full border-l border-gray-400" />
+                <div className={`ml-2 h-full border-l-2 ${treeBorder}`} />
                 {isConnector && (
-                  <div className="absolute left-2 right-0 top-1/2 border-t border-gray-400" />
+                  <div className={`absolute left-2 right-0 top-1/2 border-t-2 ${treeBorder}`} />
                 )}
               </div>
             )

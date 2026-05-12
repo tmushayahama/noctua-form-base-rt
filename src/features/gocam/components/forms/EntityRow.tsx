@@ -23,15 +23,23 @@ import {
 } from '../../slices/activityFormSlice'
 import { makeSelectModelTerms, selectModelEvidence } from '../../slices/camSlice'
 import { getNodeCategory } from '../../data/nodeCategories'
-import { getInsertMenuItems } from '../../data/insertMenuConfig'
+import { getInsertMenuItems, DisplayGroup } from '../../data/insertMenuConfig'
 import type { InsertMenuItem } from '../../data/insertMenuConfig'
 import DatabaseField from './DatabaseField'
+
+const TREE_BORDER: Record<DisplayGroup, string> = {
+  [DisplayGroup.GP]: 'border-blue-400',
+  [DisplayGroup.MF]: 'border-green-400',
+  [DisplayGroup.BP]: 'border-orange-400',
+  [DisplayGroup.CC]: 'border-purple-400',
+}
 
 interface EntityRowProps {
   node: TermNode
   relation: RelationNode | null
   parentTermUid: string | null
   treeLevel: number
+  displayGroup?: DisplayGroup
   errors: ValidationError[]
   displayMenuButton?: boolean
   displayAddButton?: boolean
@@ -44,12 +52,14 @@ const EntityRow: React.FC<EntityRowProps> = ({
   relation,
   parentTermUid,
   treeLevel,
+  displayGroup,
   errors: _errors,
   displayMenuButton = true,
   displayAddButton = false,
   onSearchAnnotations,
   onCloneEvidence,
 }) => {
+  const treeBorder = displayGroup ? TREE_BORDER[displayGroup] : 'border-gray-400'
   const dispatch = useAppDispatch()
   const selectTerms = useMemo(makeSelectModelTerms, [])
   const termInitialOptions = useAppSelector(state => selectTerms(state, node.rootTypes))
@@ -182,9 +192,9 @@ const EntityRow: React.FC<EntityRowProps> = ({
           const isConnector = i === treeLevel - 2
           return (
             <div key={i} className="relative flex w-5 shrink-0 flex-col items-stretch">
-              <div className="ml-2 h-full border-l border-gray-400" />
+              <div className={`ml-2 h-full border-l-2 ${treeBorder}`} />
               {isConnector && (
-                <div className="absolute left-2 right-0 top-1/2 border-t border-gray-400" />
+                <div className={`absolute left-2 right-0 top-1/2 border-t-2 ${treeBorder}`} />
               )}
             </div>
           )

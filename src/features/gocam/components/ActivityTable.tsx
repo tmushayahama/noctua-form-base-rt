@@ -1,6 +1,6 @@
 import type React from 'react'
 import { useState, useCallback, useMemo } from 'react'
-import { ActionIcon, Button, Menu, Modal } from '@mantine/core'
+import { ActionIcon, Button, Menu, Modal, Tooltip } from '@mantine/core'
 import { resolveModalSize } from '@/@noctua.core/components/dialog/modalSize'
 import DialogHeader from '@/@noctua.core/components/dialog/DialogHeader'
 import { FaEllipsisV, FaInfoCircle } from 'react-icons/fa'
@@ -197,7 +197,7 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
         {/* GP Section */}
         {gpTree.length > 0 && (
           <div>
-            <div className="flex items-center border-l-4 border-primary-500 bg-primary-50 px-3 py-2">
+            <div className="flex items-center border-l-4 border-primary-500 bg-primary-50 px-2 py-2">
               <span className="text-xs font-bold uppercase tracking-wider text-primary-700">
                 {gpLabel}
               </span>
@@ -219,28 +219,38 @@ const ActivityTable: React.FC<ActivityTableProps> = ({ activity }) => {
 
         {/* FD Section */}
         <div>
-          <div className="flex items-center justify-between border-l-4 border-primary-500 bg-primary-50 px-3 py-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-primary-700">
+          <div className="flex items-center border-l-4 border-primary-500 bg-primary-50 px-2 py-2">
+            <span className="grow text-xs font-bold uppercase tracking-wider text-primary-700">
               Function Description
             </span>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={e => setRefInfoAnchor(e.currentTarget)}
-                className="flex items-center gap-1 text-2xs font-medium text-gray-500 hover:text-primary-600"
-              >
-                <FaInfoCircle size={10} />
-                Reference DBs
-              </button>
-              <button
-                type="button"
-                onClick={e => setWithInfoAnchor(e.currentTarget)}
-                className="flex items-center gap-1 text-2xs font-medium text-gray-500 hover:text-primary-600"
-              >
-                <FaInfoCircle size={10} />
-                With/From DBs
-              </button>
+            {/* Mirrors EvidenceRow columns: [Evidence (grow)] [ml-1 Ref 100px] [ml-1 With 100px] + 40px action spacer */}
+            <div className="ml-1 flex w-[100px] shrink-0 items-center justify-center">
+              <Tooltip label="Allowed Reference DBs" position="bottom" withArrow openDelay={300}>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="sm"
+                  aria-label="View allowed Reference DBs"
+                  onClick={e => setRefInfoAnchor(e.currentTarget)}
+                >
+                  <FaInfoCircle size={12} />
+                </ActionIcon>
+              </Tooltip>
             </div>
+            <div className="ml-1 flex w-[100px] shrink-0 items-center justify-center">
+              <Tooltip label="Allowed With/From DBs" position="bottom" withArrow openDelay={300}>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="sm"
+                  aria-label="View allowed With/From DBs"
+                  onClick={e => setWithInfoAnchor(e.currentTarget)}
+                >
+                  <FaInfoCircle size={12} />
+                </ActionIcon>
+              </Tooltip>
+            </div>
+            <div className="w-10 shrink-0" aria-hidden="true" />
           </div>
           <div className="relative px-2 pb-2 pt-3">
             {fdTree.map(treeNode => (

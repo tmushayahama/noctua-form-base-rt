@@ -1,6 +1,6 @@
 import type React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Button, Modal } from '@mantine/core'
+import { ActionIcon, Button, Modal, Tooltip } from '@mantine/core'
 import { resolveModalSize } from '@/@noctua.core/components/dialog/modalSize'
 import DialogHeader from '@/@noctua.core/components/dialog/DialogHeader'
 import { FaExclamationCircle, FaInfoCircle, FaSave } from 'react-icons/fa'
@@ -84,13 +84,6 @@ interface GroupCardProps {
   onCloneEvidence?: (relationUid: string) => void
 }
 
-const GROUP_BG: Record<DisplayGroup, string> = {
-  [DisplayGroup.GP]: 'bg-blue-200',
-  [DisplayGroup.MF]: 'bg-green-200',
-  [DisplayGroup.BP]: 'bg-orange-200',
-  [DisplayGroup.CC]: 'bg-purple-200',
-}
-
 const GroupCard: React.FC<GroupCardProps> = ({
   group,
   rows,
@@ -103,32 +96,30 @@ const GroupCard: React.FC<GroupCardProps> = ({
 }) => {
   if (rows.length === 0) return null
   return (
-    <div className="flex flex-row items-stretch">
-      <div className={`w-2 shrink-0 ${GROUP_BG[group]}`} />
-      <div className={`flex w-full flex-col items-stretch ${bgClass}`}>
-        {rows.map(row => (
-          <div key={row.termNode.uid} className="flex flex-row items-stretch">
-            {row.termNode.isComplement && (
-              <div className="flex w-[28px] shrink-0 items-center justify-center bg-gray-200 text-center text-[8px] font-bold tracking-wide text-gray-700">
-                IS NOT
-              </div>
-            )}
-            <div className="w-full">
-              <EntityRow
-                node={row.termNode}
-                relation={row.relation}
-                parentTermUid={row.parentTermUid}
-                treeLevel={row.treeLevel}
-                errors={errors}
-                displayMenuButton={displayMenuButton}
-                displayAddButton={displayAddButton}
-                onSearchAnnotations={onSearchAnnotations}
-                onCloneEvidence={onCloneEvidence}
-              />
+    <div className={`flex w-full flex-col items-stretch ${bgClass}`}>
+      {rows.map(row => (
+        <div key={row.termNode.uid} className="flex flex-row items-stretch">
+          {row.termNode.isComplement && (
+            <div className="flex w-[28px] shrink-0 items-center justify-center bg-gray-200 text-center text-[8px] font-bold tracking-wide text-gray-700">
+              IS NOT
             </div>
+          )}
+          <div className="w-full">
+            <EntityRow
+              node={row.termNode}
+              relation={row.relation}
+              parentTermUid={row.parentTermUid}
+              treeLevel={row.treeLevel}
+              displayGroup={group}
+              errors={errors}
+              displayMenuButton={displayMenuButton}
+              displayAddButton={displayAddButton}
+              onSearchAnnotations={onSearchAnnotations}
+              onCloneEvidence={onCloneEvidence}
+            />
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -360,28 +351,57 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
 
         {/* FD Section */}
         <div className="flex flex-col items-stretch justify-start">
-          <div className="flex h-9 items-center justify-between border-b border-t border-gray-200 bg-gray-50 px-4">
-            <span className="text-sm font-semibold text-gray-700">
-              {sectionTitles.fd}
-            </span>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={e => setRefInfoAnchor(e.currentTarget)}
-                className="flex items-center gap-1 text-2xs font-medium text-gray-500 hover:text-primary-600"
-              >
-                <FaInfoCircle size={10} />
-                Reference DBs
-              </button>
-              <button
-                type="button"
-                onClick={e => setWithInfoAnchor(e.currentTarget)}
-                className="flex items-center gap-1 text-2xs font-medium text-gray-500 hover:text-primary-600"
-              >
-                <FaInfoCircle size={10} />
-                With/From DBs
-              </button>
+          {/* Header mirrors EntityRow columns: [Term 250px] [Evidence 50%] [Ref 25%] [With 25%] + menu spacer */}
+          <div className="flex h-9 flex-row items-stretch border-b border-t border-gray-200 bg-gray-50">
+            <div
+              className="flex shrink items-center p-1"
+              style={{ flexBasis: 250 }}
+            >
+              <span className="pl-2 text-sm font-semibold text-gray-700">
+                {sectionTitles.fd}
+              </span>
             </div>
+            <div className="flex min-w-0 flex-1 flex-row items-stretch">
+              <div className="w-1/2 p-1" aria-hidden="true" />
+              <div className="flex w-1/4 items-center justify-center p-1">
+                <Tooltip
+                  label="Allowed Reference DBs"
+                  position="bottom"
+                  withArrow
+                  openDelay={300}
+                >
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    aria-label="View allowed Reference DBs"
+                    onClick={e => setRefInfoAnchor(e.currentTarget)}
+                  >
+                    <FaInfoCircle size={12} />
+                  </ActionIcon>
+                </Tooltip>
+              </div>
+              <div className="flex w-1/4 items-center justify-center p-1">
+                <Tooltip
+                  label="Allowed With/From DBs"
+                  position="bottom"
+                  withArrow
+                  openDelay={300}
+                >
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    aria-label="View allowed With/From DBs"
+                    onClick={e => setWithInfoAnchor(e.currentTarget)}
+                  >
+                    <FaInfoCircle size={12} />
+                  </ActionIcon>
+                </Tooltip>
+              </div>
+            </div>
+            {/* Spacer for the row's ellipsis menu (ActionIcon size md + px-2 ≈ 48px) */}
+            <div className="w-12 shrink-0" aria-hidden="true" />
           </div>
           <div className="flex flex-col items-stretch justify-start">
             {fdGroups.map(([group, rows]) => (
