@@ -323,28 +323,30 @@ const EntityRow: React.FC<EntityRowProps> = ({
         </div>
       )}
 
-      {/* Add button (shown below row, for GP section) */}
+      {/* Add button — same slot as the ellipsis so position matches across sections */}
       {displayAddButton && insertMenuItems.length > 0 && (
-        <Menu shadow="md" position="bottom-start" withinPortal>
-          <Menu.Target>
-            <ActionIcon variant="light" color="primary" radius="xl" size="md" className="mt-2">
-              <FaPlus size={12} />
-            </ActionIcon>
-          </Menu.Target>
-          <Menu.Dropdown>
-            {insertMenuItems.map(item => (
-              <Menu.Item
-                key={`${item.predicate.id}-${item.targetType}`}
-                onClick={() => handleInsertNode(item)}
-              >
-                <div className="flex flex-col items-start">
-                  <span>{item.label}</span>
-                  <span className="text-xs text-gray-500">{item.rangeLabel}</span>
-                </div>
-              </Menu.Item>
-            ))}
-          </Menu.Dropdown>
-        </Menu>
+        <div className="flex shrink-0 items-center justify-center px-2">
+          <Menu shadow="md" position="bottom-end" withinPortal>
+            <Menu.Target>
+              <ActionIcon variant="light" color="primary" radius="xl" size="md">
+                <FaPlus size={12} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              {insertMenuItems.map(item => (
+                <Menu.Item
+                  key={`${item.predicate.id}-${item.targetType}`}
+                  onClick={() => handleInsertNode(item)}
+                >
+                  <div className="flex flex-col items-start">
+                    <span>{item.label}</span>
+                    <span className="text-xs text-gray-500">{item.rangeLabel}</span>
+                  </div>
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
+        </div>
       )}
     </div>
   )

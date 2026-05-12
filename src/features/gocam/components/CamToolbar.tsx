@@ -84,11 +84,16 @@ const CamToolbar: React.FC = () => {
       {cam.title && (
         <Tooltip label={cam.title} withArrow openDelay={500} position="bottom">
           <div className="flex h-full max-w-[260px] items-center border-r border-gray-200 pr-3">
-            <span className="grow truncate pr-2 text-gray-800">
+            <span
+              data-testid="model-title"
+              className="grow truncate pr-2 text-gray-800"
+            >
               <span className="mr-1 font-semibold text-gray-900">Title:</span>
               {cam.title}
             </span>
             <button
+              data-testid="edit-model-title"
+              aria-label="Edit model metadata"
               className="text-gray-500 hover:text-gray-800 focus:outline-hidden"
               onClick={openCamForm}
             >

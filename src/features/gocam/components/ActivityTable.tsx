@@ -77,17 +77,17 @@ function buildDisplayTree(activity: Activity): {
     e => e.sourceId === activity.rootNode.uid && e.id === Relations.ENABLED_BY
   )
 
-  // GP tree
+  // GP tree — MF is the implicit root (treeLevel 1); GP is one edge deeper.
   const gpTree: DisplayTreeNode[] = []
   if (enabledByEdge?.target) {
     const gpVisited = new Set<string>([activity.rootNode.uid, enabledByEdge.target.uid])
-    const gpChildren = buildChildren(enabledByEdge.target.uid, 2, gpVisited)
+    const gpChildren = buildChildren(enabledByEdge.target.uid, 3, gpVisited)
 
     gpTree.push({
       node: enabledByEdge.target,
       edge: enabledByEdge,
       children: gpChildren,
-      treeLevel: 1,
+      treeLevel: 2,
       canDelete: false,
       aspect: getAspectFromRootTypes(enabledByEdge.target.rootTypes),
       floatingLabel: enabledByEdge.label || 'enabled by',

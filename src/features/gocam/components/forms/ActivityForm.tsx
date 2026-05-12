@@ -39,7 +39,6 @@ import { v4 as uuidv4 } from 'uuid'
 import {
   buildGroupedRows,
   findTargetUidByRelation,
-  rebaseTreeLevels,
 } from '../../services/formUtils'
 import { DisplayGroup, GROUP_ORDER } from '../../data/insertMenuConfig'
 import type { GroupedRow } from '../../models/formModels'
@@ -218,10 +217,10 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
         list.push(r)
         map.set(r.displayGroup, list)
       }
-      // Each card resets indentation: sort by (treeLevel asc, weight asc) then rebase depth.
-      for (const [g, list] of map.entries()) {
+      // Preserve the real tree depth so MF stays at level 1 and its children
+      // (GP via enabled_by, BP, CC, etc.) render one level deeper.
+      for (const list of map.values()) {
         list.sort((a, b) => a.treeLevel - b.treeLevel || a.weight - b.weight)
-        map.set(g, rebaseTreeLevels(list))
       }
       return Array.from(map.entries()).sort(
         ([a], [b]) => (GROUP_ORDER[a] ?? 99) - (GROUP_ORDER[b] ?? 99)
@@ -328,7 +327,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
       {/* Body */}
-      <div className="min-h-0 flex-1 overflow-y-auto bg-white">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-slate-200">
         {activityType === ActivityType.PROTEIN_COMPLEX && (
           <div className="mx-3 mt-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs italic text-amber-800">
             Note that this should be used rarely, and only in the case where the activity cannot be
@@ -338,8 +337,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
         {/* GP Section */}
         {gpGroups.length > 0 && (
           <div className="flex flex-col items-stretch justify-start">
-            <div className="flex items-center border-l-4 border-primary-500 bg-primary-50 px-3 py-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary-700">
+            <div className="flex h-9 items-center border-b border-gray-200 bg-gray-50 px-4">
+              <span className="text-sm font-semibold text-gray-700">
                 {sectionTitles.gp}
               </span>
             </div>
@@ -350,7 +349,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
                   group={group}
                   rows={rows}
                   errors={errors}
-                  bgClass="bg-white"
+                  bgClass=""
                   displayMenuButton={false}
                   displayAddButton={true}
                 />
@@ -361,8 +360,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onSaved, onCancel }) => {
 
         {/* FD Section */}
         <div className="flex flex-col items-stretch justify-start">
-          <div className="flex items-center justify-between border-l-4 border-primary-500 bg-primary-50 px-3 py-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-primary-700">
+          <div className="flex h-9 items-center justify-between border-b border-t border-gray-200 bg-gray-50 px-4">
+            <span className="text-sm font-semibold text-gray-700">
               {sectionTitles.fd}
             </span>
             <div className="flex items-center gap-3">

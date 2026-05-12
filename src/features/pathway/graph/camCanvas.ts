@@ -4,6 +4,7 @@ import { NodeCellList, NodeCellMolecule, NodeLink, registerShapes } from './shap
 import { getEdgeColor } from './edgeDisplayService'
 import type { GraphModel, Activity, Edge } from '@/features/gocam/models/cam'
 import { ActivityType } from '@/features/gocam/models/cam'
+import { Relations } from '@/@noctua.core/models/relations'
 
 export type LayoutDetail = 'detailed' | 'activity' | 'simple'
 export type LayoutSpacing = 'compact' | 'relaxed'
@@ -436,18 +437,19 @@ export class CamCanvas {
 
     if (layoutDetail === 'detailed') {
       if (activity.molecularFunction) {
-        const enabledByEdge = activity.edges?.find(e => e.id === 'RO:0002333')
+        const enabledByEdge = activity.edges?.find(e => e.id === Relations.ENABLED_BY)
         const hasEvidence = !!enabledByEdge?.evidence?.length
         el.addEntity('', activity.molecularFunction.label, hasEvidence)
       }
       for (const edge of activity.edges ?? []) {
+        if (edge.id === Relations.ENABLED_BY) continue
         if (edge.target?.label) {
           el.addEntity(edge.label ?? '', edge.target.label, !!edge.evidence?.length)
         }
       }
     } else if (layoutDetail === 'activity') {
       if (activity.molecularFunction) {
-        const enabledByEdge = activity.edges?.find(e => e.id === 'RO:0002333')
+        const enabledByEdge = activity.edges?.find(e => e.id === Relations.ENABLED_BY)
         const hasEvidence = !!enabledByEdge?.evidence?.length
         el.addEntity('', activity.molecularFunction.label, hasEvidence)
       }
